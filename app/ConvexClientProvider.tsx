@@ -11,6 +11,7 @@ export default function ConvexClientProvider({children}: {children: ReactNode}) 
     <ClerkProvider
       afterSignOutUrl="/"
       signInForceRedirectUrl="/dashboard"
+      signUpForceRedirectUrl="/roleselection"
       appearance={{
         variables: {
           colorPrimary: "hsl(222.2, 47.4%, 11.2%)",

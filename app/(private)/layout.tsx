@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import {Toaster} from "@/components/ui/sonner";
 import type {Metadata} from "next";
 
 //TODO: change content
@@ -31,7 +32,8 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <>
       <Header />
-      <main className="flex min-h-[calc(100dvh-4rem)] flex-col items-center">{children}</main>
+      <main className="flex min-h-[calc(100dvh-4rem)] flex-col items-center p-2">{children}</main>
+      <Toaster />
     </>
   );
 }

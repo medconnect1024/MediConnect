@@ -12,10 +12,7 @@ export default function Logo() {
           <Cross className="h-10 w-10 text-blue-500" />
           <div className="flex flex-col leading-5 font-bold text-xl">
             <span>MEDI</span>
-            <span>
-              Connect
-              <span className="text-blue-500 ml-0.5">AI</span>
-            </span>
+            <span className="text-blue-500 ml-0.5">Connect</span>
           </div>
         </div>
       </Link>
