@@ -22,7 +22,7 @@ import { SignInButton, UserButton } from "@clerk/nextjs";
 const menuItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/docdashboard" },
   { name: "Consultation", icon: Users, path: "/consultation" },
-  { name: "AddPatient", icon: UserPlus, path: "/patientinfo" },
+  { name: "AddPatient", icon: UserPlus, path: "/registerpatient" },
 ];
 
 export default function FixedNavigation() {

@@ -1,106 +1,122 @@
-"use client"
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { Bell, Calendar, ChevronRight, ClipboardList, Home, Search, Settings, Users, Activity, Brain, Heart, Pill, Thermometer ,MessageCircle} from 'lucide-react'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useRouter } from 'next/navigation'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import Banner from "@/components/home/Banner"
-
+import { useState } from "react";
+import Link from "next/link";
+import {
+  Bell,
+  Calendar,
+  ChevronRight,
+  ClipboardList,
+  Home,
+  Search,
+  Settings,
+  Users,
+  Activity,
+  Brain,
+  Heart,
+  Pill,
+  Thermometer,
+  MessageCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useRouter } from "next/navigation";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import Banner from "@/components/home/Banner";
 
 export default function Component() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState('dashboard')
-  const router = useRouter()
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const router = useRouter();
 
   // Mock data
   const patientData = [
-    { id: 1, name: "John Doe", age: 45, lastVisit: "2023-10-15", nextAppointment: "2023-11-05", condition: "Hypertension" },
-    { id: 2, name: "Jane Smith", age: 32, lastVisit: "2023-10-18", nextAppointment: "2023-11-10", condition: "Pregnancy" },
-    { id: 3, name: "Bob Johnson", age: 58, lastVisit: "2023-10-10", nextAppointment: "2023-11-01", condition: "Diabetes" },
-    { id: 4, name: "Alice Brown", age: 27, lastVisit: "2023-10-20", nextAppointment: "2023-11-15", condition: "Asthma" },
-  ]
+    {
+      id: 1,
+      name: "John Doe",
+      age: 45,
+      lastVisit: "2023-10-15",
+      nextAppointment: "2023-11-05",
+      condition: "Hypertension",
+    },
+    {
+      id: 2,
+      name: "Jane Smith",
+      age: 32,
+      lastVisit: "2023-10-18",
+      nextAppointment: "2023-11-10",
+      condition: "Pregnancy",
+    },
+    {
+      id: 3,
+      name: "Bob Johnson",
+      age: 58,
+      lastVisit: "2023-10-10",
+      nextAppointment: "2023-11-01",
+      condition: "Diabetes",
+    },
+    {
+      id: 4,
+      name: "Alice Brown",
+      age: 27,
+      lastVisit: "2023-10-20",
+      nextAppointment: "2023-11-15",
+      condition: "Asthma",
+    },
+  ];
 
   const patientFlowData = [
-    { name: 'Mon', patients: 20 },
-    { name: 'Tue', patients: 25 },
-    { name: 'Wed', patients: 30 },
-    { name: 'Thu', patients: 22 },
-    { name: 'Fri', patients: 28 },
-    { name: 'Sat', patients: 15 },
-    { name: 'Sun', patients: 10 },
-  ]
+    { name: "Mon", patients: 20 },
+    { name: "Tue", patients: 25 },
+    { name: "Wed", patients: 30 },
+    { name: "Thu", patients: 22 },
+    { name: "Fri", patients: 28 },
+    { name: "Sat", patients: 15 },
+    { name: "Sun", patients: 10 },
+  ];
   const handleNavigation = (path: string) => {
-    router.push(path)
-  }
+    router.push(path);
+  };
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white shadow-sm">
-        <div className="container mx-auto px-4 h-full flex items-center justify-between">
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="mr-4 lg:hidden text-gray-600 hover:bg-gray-100"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              <ChevronRight className={`h-6 w-6 transition-transform ${sidebarOpen ? 'rotate-180' : ''}`} />
-            </Button>
-            <h1 className="font-bold text-gray-800 text-xl">
-              DocDashboard
-            </h1>
-          </div>
-          <nav className="hidden lg:block">
-      <ul className="flex space-x-6">
-        <li>
-          <Button 
-            variant="ghost" 
-            onClick={() => handleNavigation('/dashboard')} 
-            className="text-gray-600 hover:text-gray-800 flex items-center"
-          >
-            <Home className="mr-2" />
-            Dashboard
-          </Button>
-        </li>
-        <li>
-          <Button 
-            variant="ghost" 
-            onClick={() => handleNavigation('/dashboard3')} 
-            className="text-gray-600 hover:text-gray-800 flex items-center"
-          >
-            <Users className="mr-2" />
-            Consultation
-          </Button>
-        </li>
-      </ul>
-    </nav>
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100 relative">
-              <Bell className="h-4 w-4" />
-              <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
-            </Button>
-            <Button variant="ghost" size="icon" className="text-gray-600 hover:bg-gray-100">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </header> */}
       <div className="flex pt-16 justify-center items-center w-full">
-       
-        <div >
-          <h2 className="text-3xl font-bold text-gray-800 mb-6">Welcome, Dr. Smith</h2>
-          
+        <div>
+          <h2 className="text-3xl font-bold text-gray-800 mb-6">
+            Welcome, Dr. Smith
+          </h2>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card className="bg-white border-l-4 border-blue-500">
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium text-gray-700">Appointments Today</CardTitle>
+                <CardTitle className="text-lg font-medium text-gray-700">
+                  Appointments Today
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-gray-800">12</div>
@@ -109,7 +125,9 @@ export default function Component() {
             </Card>
             <Card className="bg-white border-l-4 border-green-500">
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium text-gray-700">Patients This Week</CardTitle>
+                <CardTitle className="text-lg font-medium text-gray-700">
+                  Patients This Week
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-gray-800">78</div>
@@ -118,7 +136,9 @@ export default function Component() {
             </Card>
             <Card className="bg-white border-l-4 border-yellow-500">
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium text-gray-700">Lab Results Pending</CardTitle>
+                <CardTitle className="text-lg font-medium text-gray-700">
+                  Lab Results Pending
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-gray-800">7</div>
@@ -127,7 +147,9 @@ export default function Component() {
             </Card>
             <Card className="bg-white border-l-4 border-purple-500">
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-medium text-gray-700">Messages</CardTitle>
+                <CardTitle className="text-lg font-medium text-gray-700">
+                  Messages
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-gray-800">15</div>
@@ -139,7 +161,9 @@ export default function Component() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <Card className="col-span-1 lg:col-span-2">
               <CardHeader>
-                <CardTitle className="text-gray-800">Patient Flow This Week</CardTitle>
+                <CardTitle className="text-gray-800">
+                  Patient Flow This Week
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -148,7 +172,12 @@ export default function Component() {
                     <XAxis dataKey="name" stroke="#6b7280" />
                     <YAxis stroke="#6b7280" />
                     <Tooltip />
-                    <Line type="monotone" dataKey="patients" stroke="#3b82f6" strokeWidth={2} />
+                    <Line
+                      type="monotone"
+                      dataKey="patients"
+                      stroke="#3b82f6"
+                      strokeWidth={2}
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -158,7 +187,9 @@ export default function Component() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <Card className="col-span-1 lg:col-span-2">
               <CardHeader>
-                <CardTitle className="text-gray-800">Upcoming Appointments</CardTitle>
+                <CardTitle className="text-gray-800">
+                  Upcoming Appointments
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -173,12 +204,30 @@ export default function Component() {
                   <TableBody>
                     {patientData.map((patient) => (
                       <TableRow key={patient.id}>
-                        <TableCell className="font-medium text-gray-800">{patient.name}</TableCell>
-                        <TableCell className="text-gray-600">{patient.nextAppointment}</TableCell>
-                        <TableCell className="text-gray-600">{patient.condition}</TableCell>
+                        <TableCell className="font-medium text-gray-800">
+                          {patient.name}
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          {patient.nextAppointment}
+                        </TableCell>
+                        <TableCell className="text-gray-600">
+                          {patient.condition}
+                        </TableCell>
                         <TableCell>
-                          <Button variant="outline" size="sm" className="mr-2 text-blue-600 border-blue-300 hover:bg-blue-50">View</Button>
-                          <Button variant="outline" size="sm" className="text-gray-600 border-gray-300 hover:bg-gray-50">Reschedule</Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mr-2 text-blue-600 border-blue-300 hover:bg-blue-50"
+                          >
+                            View
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-gray-600 border-gray-300 hover:bg-gray-50"
+                          >
+                            Reschedule
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -215,21 +264,38 @@ export default function Component() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-gray-800">Recent Patient Notes</CardTitle>
+              <CardTitle className="text-gray-800">
+                Recent Patient Notes
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                  <h4 className="font-semibold text-gray-800">John Doe - Hypertension</h4>
-                  <p className="text-gray-600 mt-1">Blood pressure slightly elevated. Adjusted medication dosage. Follow-up in 2 weeks.</p>
+                  <h4 className="font-semibold text-gray-800">
+                    John Doe - Hypertension
+                  </h4>
+                  <p className="text-gray-600 mt-1">
+                    Blood pressure slightly elevated. Adjusted medication
+                    dosage. Follow-up in 2 weeks.
+                  </p>
                 </div>
                 <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                  <h4 className="font-semibold text-gray-800">Jane Smith - Pregnancy</h4>
-                  <p className="text-gray-600 mt-1">20-week checkup. All vitals normal. Scheduled anatomy scan for next week.</p>
+                  <h4 className="font-semibold text-gray-800">
+                    Jane Smith - Pregnancy
+                  </h4>
+                  <p className="text-gray-600 mt-1">
+                    20-week checkup. All vitals normal. Scheduled anatomy scan
+                    for next week.
+                  </p>
                 </div>
                 <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                  <h4 className="font-semibold text-gray-800">Bob Johnson - Diabetes</h4>
-                  <p className="text-gray-600 mt-1">HbA1c levels improved. Continuing current treatment plan. Encouraged more physical activity.</p>
+                  <h4 className="font-semibold text-gray-800">
+                    Bob Johnson - Diabetes
+                  </h4>
+                  <p className="text-gray-600 mt-1">
+                    HbA1c levels improved. Continuing current treatment plan.
+                    Encouraged more physical activity.
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -237,5 +303,5 @@ export default function Component() {
         </div>
       </div>
     </div>
-  )
+  );
 }
