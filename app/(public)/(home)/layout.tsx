@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import type {Metadata} from "next";
+import type { Metadata } from "next";
 
 //TODO: change content
 export const metadata: Metadata = {
@@ -27,11 +27,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({children}: {children: React.ReactNode}) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <>
       <Header />
-      <main className="flex min-h-[calc(100dvh-4rem)] flex-col items-center">{children}</main>
+      <main className="flex min-h-[calc(100dvh-4rem)] flex-col items-center">
+        {children}
+      </main>
     </>
   );
 }
