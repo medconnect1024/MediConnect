@@ -1,5 +1,5 @@
-import {defineSchema, defineTable} from "convex/server";
-import {v} from "convex/values";
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
 
 export default defineSchema({
   users: defineTable({
@@ -54,4 +54,11 @@ export default defineSchema({
   })
     .index("by_patient_id", ["patientId"])
     .index("by_doctor_id", ["doctorId"]),
+  
+  // New symptoms table
+  symptoms: defineTable({
+    symptomId: v.string(), // ID for each symptom
+    name: v.string(), // Symptom name
+  })
+    .index("by_name", ["name"]), // Index to search by symptom name
 });

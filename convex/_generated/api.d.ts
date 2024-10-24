@@ -17,6 +17,8 @@ import type {
 } from "convex/server";
 import type * as http from "../http.js";
 import type * as patients from "../patients.js";
+import type * as patientsearch from "../patientsearch.js";
+import type * as symptoms from "../symptoms.js";
 import type * as users from "../users.js";
 
 /**
@@ -30,6 +32,8 @@ import type * as users from "../users.js";
 declare const fullApi: ApiFromModules<{
   http: typeof http;
   patients: typeof patients;
+  patientsearch: typeof patientsearch;
+  symptoms: typeof symptoms;
   users: typeof users;
 }>;
 export declare const api: FilterApi<
