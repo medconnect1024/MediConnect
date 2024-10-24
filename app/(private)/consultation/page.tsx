@@ -4,7 +4,9 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, UserPlus } from "lucide-react";
-import PrescriptionPage from "@/components/home/Prescription";
+import PrescriptionPage from "@/components/pages/Prescription";
+import LabReportPage from "@/components/pages/lab-report-page";
+import BillingPage from "@/components/pages/billing-page";
 
 // PatientCard Component
 interface PatientCardProps {
@@ -120,38 +122,68 @@ const Sidebar: React.FC = () => {
 };
 
 // ActionButtons Component
+// ActionButtons Component
 const ActionButtons: React.FC<{
   setSelectedSection: (section: string) => void;
-}> = ({ setSelectedSection }) => (
+  selectedSection: string; // Add selectedSection as a prop
+}> = ({ setSelectedSection, selectedSection }) => (
   <div className="mb-4">
     <div className="flex flex-wrap gap-2">
       <Button
-        variant="default"
-        className="bg-blue-500 text-white hover:bg-white hover:text-blue-500"
+        variant={selectedSection === "overview" ? "default" : "outline"} // Highlight if selected
+        className={`${
+          selectedSection === "overview"
+            ? "bg-blue-500 text-white hover:bg-white hover:text-blue-500"
+            : ""
+        }`}
         onClick={() => setSelectedSection("overview")}
       >
         Overview
       </Button>
-      <Button variant="outline" onClick={() => setSelectedSection("treatment")}>
-        Treatment
-      </Button>
+
       <Button
-        variant="outline"
+        variant={selectedSection === "prescription" ? "default" : "outline"} // Highlight if selected
+        className={`${
+          selectedSection === "prescription"
+            ? "bg-blue-500 text-white hover:bg-white hover:text-blue-500"
+            : ""
+        }`}
         onClick={() => setSelectedSection("prescription")}
       >
         Prescription
       </Button>
       <Button
-        variant="outline"
+        variant={selectedSection === "vaccination" ? "default" : "outline"} // Highlight if selected
+        className={`${
+          selectedSection === "vaccination"
+            ? "bg-blue-500 text-white hover:bg-white hover:text-blue-500"
+            : ""
+        }`}
         onClick={() => setSelectedSection("vaccination")}
       >
         Vaccination
       </Button>
       <Button
-        variant="outline"
+        variant={selectedSection === "labReports" ? "default" : "outline"} // Highlight if selected
+        className={`${
+          selectedSection === "labReports"
+            ? "bg-blue-500 text-white hover:bg-white hover:text-blue-500"
+            : ""
+        }`}
         onClick={() => setSelectedSection("labReports")}
       >
         Lab Reports
+      </Button>
+      <Button
+        variant={selectedSection === "billing" ? "default" : "outline"} // Highlight if selected
+        className={`${
+          selectedSection === "billing"
+            ? "bg-blue-500 text-white hover:bg-white hover:text-blue-500"
+            : ""
+        }`}
+        onClick={() => setSelectedSection("billing")}
+      >
+        Billing
       </Button>
 
       <div className="flex items-center space-x-4 justify-end ml-auto">
@@ -229,12 +261,17 @@ export default function Component() {
       <div className="flex flex-1 overflow-hidden w-full mt-10">
         <Sidebar />
         <main className="flex-1 overflow-y-auto p-4">
-          <ActionButtons setSelectedSection={setSelectedSection} />
+          <ActionButtons
+            setSelectedSection={setSelectedSection}
+            selectedSection={selectedSection} // Pass selectedSection here
+          />
           {/* Conditionally render sections based on the selected section */}
           {selectedSection === "overview" && <MedicalHistoryCard />}
           {selectedSection === "prescription" && <PrescriptionPage />}{" "}
-          {/* Show Banner for prescription */}
           {selectedSection === "vaccination" && <VaccinationCard />}
+          {selectedSection === "labReports" && <LabReportPage />}
+          {selectedSection === "billing" && <BillingPage />}
+          {/* Add more sections as needed */}
         </main>
       </div>
     </div>
