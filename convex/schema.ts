@@ -45,14 +45,14 @@ export default defineSchema({
     prescriptionId: v.string(),
     doctorId: v.string(),
     patientId: v.string(),
-    medications: v.array(
+    medications: v.optional(v.array(
       v.object({
         id: v.string(),  // Ensure this is added
         name: v.string(),
         timesPerDay: v.string(),
         durationDays: v.string(),
         timing: v.string(),
-      })
+      }))
     ),  // Update to 'medications' if this is the intended name
     prescribedAt: v.string(),
     instructions: v.optional(v.string()),
@@ -62,10 +62,10 @@ export default defineSchema({
     investigations: v.optional(v.array(v.object({ id: v.string(), name: v.string() }))),
     investigationNotes: v.optional(v.string()),
     followUpDate: v.optional(v.string()),
-    medicineReminder: v.object({
+    medicineReminder: v.optional(v.object({
       message: v.boolean(),
       call: v.boolean(),
-    }),
+    })),
     medicineInstructions: v.optional(v.string()),
   })
     .index("by_patient_id", ["patientId"])
