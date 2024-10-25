@@ -15,11 +15,10 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
-import type * as findings from "../findings.js";
 import type * as http from "../http.js";
 import type * as patients from "../patients.js";
 import type * as patientsearch from "../patientsearch.js";
-import type * as symptoms from "../symptoms.js";
+import type * as prescriptions from "../prescriptions.js";
 import type * as users from "../users.js";
 
 /**
@@ -31,11 +30,10 @@ import type * as users from "../users.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  findings: typeof findings;
   http: typeof http;
   patients: typeof patients;
   patientsearch: typeof patientsearch;
-  symptoms: typeof symptoms;
+  prescriptions: typeof prescriptions;
   users: typeof users;
 }>;
 export declare const api: FilterApi<

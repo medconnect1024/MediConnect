@@ -33,12 +33,10 @@ interface SymptomPageProps {
   setSymptoms: React.Dispatch<React.SetStateAction<PrescriptionItem[]>>;
 }
 
-export default function Component(
-  { symptoms, setSymptoms }: SymptomPageProps = {
-    symptoms: [],
-    setSymptoms: () => {},
-  }
-) {
+export default function SymptomsComponent({
+  symptoms,
+  setSymptoms,
+}: SymptomPageProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
@@ -110,21 +108,19 @@ export default function Component(
       <ScrollArea className="h-[150px] mt-4">
         <div className="flex flex-wrap gap-3">
           {symptoms.map((item) => (
-            <Button
-              key={item.id}
-              variant="secondary"
-              size="lg"
-              className="flex items-center gap-2 text-lg hover:bg-primary hover:text-primary-foreground transition-colors"
-            >
-              {item.name}
+            <div key={item.id} className="flex items-center">
+              <Button
+                variant="secondary"
+                size="lg"
+                className="flex items-center gap-2 text-lg hover:bg-primary hover:text-primary-foreground transition-colors"
+              >
+                {item.name}
+              </Button>
               <X
-                className="h-4 w-4 cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRemoveItem(item.id);
-                }}
+                className="h-4 w-4 cursor-pointer text-red-500 ml-2"
+                onClick={() => handleRemoveItem(item.id)} // Call handleRemoveItem directly here
               />
-            </Button>
+            </div>
           ))}
         </div>
       </ScrollArea>

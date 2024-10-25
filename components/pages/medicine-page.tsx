@@ -25,6 +25,20 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 
+// Predefined constant array of medicine names
+const MEDICINE_NAMES = [
+  "Paracetamol",
+  "Ibuprofen",
+  "Amoxicillin",
+  "Metformin",
+  "Aspirin",
+  "Lisinopril",
+  "Atorvastatin",
+  "Simvastatin",
+  "Levothyroxine",
+  "Omeprazole",
+];
+
 type MedicineItem = {
   id: string;
   name: string;
@@ -59,7 +73,11 @@ export default function MedicinePage({
     durationDays: "",
     timing: "",
   });
-  const searchResults = useQuery(api.patientsearch.search, { searchTerm });
+
+  // Filter suggestions based on search term
+  const filteredSuggestions = MEDICINE_NAMES.filter((medicineName) =>
+    medicineName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleAddMedicine = () => {
     if (
@@ -86,6 +104,11 @@ export default function MedicinePage({
     setMedicines((prev) => prev.filter((medicine) => medicine.id !== id));
   };
 
+  const handleSuggestionClick = (medicineName: string) => {
+    setNewMedicine((prev) => ({ ...prev, name: medicineName }));
+    setSearchTerm(medicineName); // Set the search term to the selected suggestion
+  };
+
   return (
     <div className="mb-8">
       <h3 className="text-xl font-semibold mb-4">Medicine</h3>
@@ -101,6 +124,19 @@ export default function MedicinePage({
               setNewMedicine((prev) => ({ ...prev, name: e.target.value }));
             }}
           />
+          {searchTerm && filteredSuggestions.length > 0 && (
+            <ul className="absolute z-10 bg-white border border-gray-300 rounded-md shadow-md mt-1">
+              {filteredSuggestions.map((medicineName) => (
+                <li
+                  key={medicineName}
+                  className="p-2 hover:bg-gray-200 cursor-pointer"
+                  onClick={() => handleSuggestionClick(medicineName)}
+                >
+                  {medicineName}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <Select
           onValueChange={(value) =>
@@ -156,15 +192,7 @@ export default function MedicinePage({
           <Plus className="h-6 w-6" />
         </Button>
       </div>
-      {searchResults && searchResults.length > 0 && (
-        <ul className="mt-4 space-y-2">
-          {searchResults.map((medicine) => (
-            <li key={medicine._id} className="p-2 bg-secondary rounded-md">
-              {medicine.firstName}
-            </li>
-          ))}
-        </ul>
-      )}
+
       <ScrollArea className="h-[300px]">
         <Table>
           <TableHeader>

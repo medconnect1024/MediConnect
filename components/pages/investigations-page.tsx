@@ -21,6 +21,17 @@ interface InvestigationsPageProps {
   setInvestigationNotes: React.Dispatch<React.SetStateAction<string>>;
 }
 
+// Sample medicine names array for suggestions
+const INVESTIGATION_NAMES = [
+  "CBC",
+  "Thyroid Profile",
+  "Liver Function Test",
+  "Kidney Function Test",
+  "Blood Sugar",
+  "Lipid Profile",
+  // Add more investigation names as needed
+];
+
 export default function InvestigationsPage({
   investigations,
   setInvestigations,
@@ -28,11 +39,31 @@ export default function InvestigationsPage({
   setInvestigationNotes,
 }: InvestigationsPageProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
+
+  // Using a query to fetch search results, if needed
   const searchResults = useQuery(api.patientsearch.search, { searchTerm });
+
+  // Update suggestions based on the current search term
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    if (value) {
+      // Filter suggestions
+      const filtered = INVESTIGATION_NAMES.filter((name) =>
+        name.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilteredSuggestions(filtered);
+    } else {
+      setFilteredSuggestions([]);
+    }
+  };
 
   const handleAddItem = (item: string) => {
     const newItem: PrescriptionItem = { id: Date.now().toString(), name: item };
     setInvestigations((prev) => [...prev, newItem]);
+    setSearchTerm(""); // Clear the search term after adding
+    setFilteredSuggestions([]); // Clear suggestions
   };
 
   const handleRemoveItem = (id: string) => {
@@ -49,7 +80,7 @@ export default function InvestigationsPage({
             className="pl-10 py-6 text-lg"
             placeholder="Search investigations (e.g., CBC, Thyroid Profile)"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleInputChange}
           />
         </div>
         <Button
@@ -59,18 +90,21 @@ export default function InvestigationsPage({
           onClick={() => {
             if (searchTerm.trim()) {
               handleAddItem(searchTerm.trim());
-              setSearchTerm("");
             }
           }}
         >
           <Plus className="h-6 w-6" />
         </Button>
       </div>
-      {searchResults && searchResults.length > 0 && (
-        <ul className="mt-4 space-y-2">
-          {searchResults.map((investigation) => (
-            <li key={investigation._id} className="p-2 bg-secondary rounded-md">
-              {investigation.firstName}
+      {filteredSuggestions.length > 0 && (
+        <ul className="mt-4 space-y-2 border border-gray-300 rounded-md">
+          {filteredSuggestions.map((suggestion, index) => (
+            <li
+              key={index}
+              className="p-2 bg-secondary rounded-md cursor-pointer hover:bg-gray-200"
+              onClick={() => handleAddItem(suggestion)} // Add the item when clicked
+            >
+              {suggestion}
             </li>
           ))}
         </ul>
