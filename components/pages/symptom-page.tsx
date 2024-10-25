@@ -1,12 +1,27 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Plus, X } from "lucide-react";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
+
+const SYMPTOMS = [
+  "Cough",
+  "Fever",
+  "Headache",
+  "Fatigue",
+  "Sore throat",
+  "Runny nose",
+  "Shortness of breath",
+  "Muscle ache",
+  "Loss of taste or smell",
+  "Nausea",
+  "Vomiting",
+  "Diarrhea",
+  "Chills",
+  "Weakness",
+];
 
 type PrescriptionItem = {
   id: string;
@@ -18,16 +33,27 @@ interface SymptomPageProps {
   setSymptoms: React.Dispatch<React.SetStateAction<PrescriptionItem[]>>;
 }
 
-export default function SymptomPage({
-  symptoms,
-  setSymptoms,
-}: SymptomPageProps) {
+export default function Component(
+  { symptoms, setSymptoms }: SymptomPageProps = {
+    symptoms: [],
+    setSymptoms: () => {},
+  }
+) {
   const [searchTerm, setSearchTerm] = useState("");
-  const searchResults = useQuery(api.symptoms.fetchsymptoms, { searchTerm });
+  const [isSearching, setIsSearching] = useState(false);
+
+  const filteredSymptoms = useMemo(() => {
+    if (!searchTerm) return [];
+    return SYMPTOMS.filter((symptom) =>
+      symptom.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm]);
 
   const handleAddItem = (item: string) => {
     const newItem: PrescriptionItem = { id: Date.now().toString(), name: item };
     setSymptoms((prev) => [...prev, newItem]);
+    setSearchTerm("");
+    setIsSearching(false);
   };
 
   const handleRemoveItem = (id: string) => {
@@ -44,7 +70,15 @@ export default function SymptomPage({
             className="pl-10 py-6 text-lg"
             placeholder="Search symptoms (e.g., Cough, Weakness)"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setIsSearching(true);
+            }}
+            onFocus={() => setIsSearching(true)}
+            onBlur={() => {
+              // Delay hiding the results to allow for item selection
+              setTimeout(() => setIsSearching(false), 200);
+            }}
           />
         </div>
         <Button
@@ -54,30 +88,33 @@ export default function SymptomPage({
           onClick={() => {
             if (searchTerm.trim()) {
               handleAddItem(searchTerm.trim());
-              setSearchTerm("");
             }
           }}
         >
           <Plus className="h-6 w-6" />
         </Button>
       </div>
-      {searchResults && searchResults.length > 0 && (
-        <ul className="mt-4 space-y-2">
-          {searchResults.map((symptom) => (
-            <li key={symptom._id} className="p-2 bg-secondary rounded-md">
-              {symptom.name}
+      {isSearching && filteredSymptoms.length > 0 && (
+        <ul className="mt-4 space-y-2 absolute z-10 bg-background border rounded-md shadow-lg max-h-60 overflow-auto w-full max-w-[calc(100%-5rem)]">
+          {filteredSymptoms.map((symptom) => (
+            <li
+              key={symptom}
+              className="p-2 hover:bg-primary hover:text-primary-foreground cursor-pointer transition-colors"
+              onClick={() => handleAddItem(symptom)}
+            >
+              {symptom}
             </li>
           ))}
         </ul>
       )}
-      <ScrollArea className="h-[150px]">
+      <ScrollArea className="h-[150px] mt-4">
         <div className="flex flex-wrap gap-3">
           {symptoms.map((item) => (
             <Button
               key={item.id}
               variant="secondary"
               size="lg"
-              className="flex items-center gap-2 text-lg hover:bg-blue-500 hover:text-white transition-colors"
+              className="flex items-center gap-2 text-lg hover:bg-primary hover:text-primary-foreground transition-colors"
             >
               {item.name}
               <X

@@ -6,7 +6,6 @@ import { Menu } from "lucide-react";
 import { AuthLoading, Authenticated, Unauthenticated } from "convex/react";
 import { SignInButton, UserButton } from "@clerk/nextjs";
 import { Loading } from "@/components/shared/Loading";
-import { cn } from "@/lib/utils";
 import Logo from "@/components/common/Logo"; // Assuming you have a logo component
 
 export default function Header() {
@@ -22,30 +21,25 @@ export default function Header() {
 
         {/* Menu for larger screens */}
         <nav className="hidden md:flex items-center space-x-6">
-          <Button
-            variant="ghost"
+          {/* Additional Options */}
+          <a
+            href="#features"
             className="text-lg text-gray-700 dark:text-gray-300 hover:text-blue-500"
           >
-            General
-          </Button>
-          <Button
-            variant="ghost"
+            Features
+          </a>
+          <a
+            href="#benefits"
             className="text-lg text-gray-700 dark:text-gray-300 hover:text-blue-500"
           >
-            Print
-          </Button>
-          <Button
-            variant="ghost"
+            Benefits
+          </a>
+          <a
+            href="#testimonials"
             className="text-lg text-gray-700 dark:text-gray-300 hover:text-blue-500"
           >
-            Registration
-          </Button>
-          <Button
-            variant="ghost"
-            className="text-lg text-gray-700 dark:text-gray-300 hover:text-blue-500"
-          >
-            Consultation
-          </Button>
+            Testimonials
+          </a>
 
           {/* Authentication */}
           <AuthLoading>
@@ -55,15 +49,21 @@ export default function Header() {
             <SignInButton>
               <Button
                 variant="ghost"
-                className="text-lg text-gray-700 dark:text-gray-300 hover:text-blue-500"
+                className="text-base font-bold text-[#023E8A] hover:text-blue-500"
               >
-                Sign In
+                Log in
               </Button>
             </SignInButton>
           </Unauthenticated>
           <Authenticated>
             <UserButton />
           </Authenticated>
+
+          {/* Additional Buttons */}
+
+          <Button className="bg-[#0077B6] text-white hover:bg-[#023E8A]">
+            Get Started
+          </Button>
         </nav>
 
         {/* Mobile Menu Button */}
@@ -81,30 +81,25 @@ export default function Header() {
       {/* Mobile Menu */}
       {menuOpen && (
         <nav className="md:hidden flex-col absolute top-16 left-0 w-full bg-white dark:bg-gray-800 p-4 shadow-lg z-50 space-y-4">
-          <Button
-            variant="ghost"
+          {/* Additional Options */}
+          <a
+            href="#features"
             className="text-lg text-gray-700 dark:text-gray-300 hover:text-blue-500"
           >
-            General
-          </Button>
-          <Button
-            variant="ghost"
+            Features
+          </a>
+          <a
+            href="#benefits"
             className="text-lg text-gray-700 dark:text-gray-300 hover:text-blue-500"
           >
-            Print
-          </Button>
-          <Button
-            variant="ghost"
+            Benefits
+          </a>
+          <a
+            href="#testimonials"
             className="text-lg text-gray-700 dark:text-gray-300 hover:text-blue-500"
           >
-            Registration
-          </Button>
-          <Button
-            variant="ghost"
-            className="text-lg text-gray-700 dark:text-gray-300 hover:text-blue-500"
-          >
-            Consultation
-          </Button>
+            Testimonials
+          </a>
 
           {/* Authentication */}
           <AuthLoading>
@@ -114,15 +109,21 @@ export default function Header() {
             <SignInButton>
               <Button
                 variant="ghost"
-                className="text-lg text-gray-700 dark:text-gray-300 hover:text-blue-500"
+                className="text-base font-bold text-[#023E8A] hover:text-blue-500"
               >
-                Sign In
+                Log in
               </Button>
             </SignInButton>
           </Unauthenticated>
           <Authenticated>
             <UserButton />
           </Authenticated>
+
+          {/* Additional Buttons */}
+
+          <Button className="bg-[#0077B6] text-white hover:bg-[#023E8A]">
+            Get Started
+          </Button>
         </nav>
       )}
     </header>

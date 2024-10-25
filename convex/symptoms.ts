@@ -13,10 +13,13 @@ export const fetchsymptoms = query({
     // Fetch all symptoms and filter based on the search term
     const symptoms = await ctx.db
       .query('symptoms')
-      //.filter((symptom: Symptom) => symptom.name.toLowerCase().includes(searchTerm))
+      //.filter((symptom: name) => symptom.name.toLowerCase().includes(searchTerm))
+      
       .collect();
-
+      const filteredSymptoms = symptoms.filter(symptom => 
+        symptom.name.toLowerCase().startsWith(searchTerm.toLowerCase())
+      );
     console.log('Symptoms Found:', symptoms);
-    return symptoms;
+    return filteredSymptoms;
   },
 });

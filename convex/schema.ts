@@ -12,6 +12,7 @@ export default defineSchema({
   })
     .index("by_clerk_id", ["userId"])
     .index("by_email", ["email"]),
+  
   patients: defineTable({
     patientId: v.number(),
     email: v.string(),
@@ -25,6 +26,7 @@ export default defineSchema({
     .index("by_patient_id", ["patientId"])
     .index("by_email", ["email"])
     .index("by_phoneNumber", ["phoneNumber"]),
+  
   appointments: defineTable({
     appointmentId: v.string(),
     doctorId: v.string(),
@@ -38,6 +40,7 @@ export default defineSchema({
   })
     .index("by_doctor_id", ["doctorId"])
     .index("by_patient_id", ["patientId"]),
+  
   prescriptions: defineTable({
     prescriptionId: v.string(),
     doctorId: v.string(),
@@ -54,11 +57,18 @@ export default defineSchema({
   })
     .index("by_patient_id", ["patientId"])
     .index("by_doctor_id", ["doctorId"]),
-  
-  // New symptoms table
+
+    // New symptoms table
   symptoms: defineTable({
     symptomId: v.string(), // ID for each symptom
     name: v.string(), // Symptom name
   })
     .index("by_name", ["name"]), // Index to search by symptom name
+
+  // New findings table
+  findings: defineTable({
+    findingId: v.string(),
+    name: v.string(),  // Name of the symptom
+  })
+    .index("by_name", ["name"]),  // Optional: You can add an index for easy searching by name
 });

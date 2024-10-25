@@ -59,10 +59,7 @@ type Prescription = {
 export default function PrescriptionPage() {
   const [activeMainTab, setActiveMainTab] = useState("previous");
   const [activeNewTab, setActiveNewTab] = useState("symptoms");
-  const [symptoms, setSymptoms] = useState<PrescriptionItem[]>([
-    { id: "1", name: "Cough" },
-    { id: "2", name: "Fever" },
-  ]);
+  const [symptoms, setSymptoms] = useState<PrescriptionItem[]>([]);
   const [findings, setFindings] = useState<PrescriptionItem[]>([
     { id: "1", name: "Throat Congestion" },
   ]);
@@ -91,29 +88,7 @@ export default function PrescriptionPage() {
 
   const [previousPrescriptions, setPreviousPrescriptions] = useState<
     Prescription[]
-  >([
-    {
-      id: "1",
-      date: "2023-05-15",
-      symptoms: ["Fever", "Cough"],
-      findings: ["Throat Congestion"],
-      diagnosis: ["Common Cold"],
-      medicines: [
-        {
-          id: "1",
-          name: "Paracetamol",
-          timesPerDay: "3",
-          durationDays: "5",
-          timing: "After Food",
-        },
-      ],
-      investigations: ["CBC"],
-      investigationNotes: "Check WBC count",
-      followUpDate: new Date("2023-05-20"),
-      medicineReminder: { message: true, call: false },
-      medicineInstructions: "Take with warm water",
-    },
-  ]);
+  >([]);
 
   const handlePrescriptionClick = (prescription: Prescription) => {
     console.log("Clicked prescription:", prescription);
