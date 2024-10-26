@@ -16,13 +16,18 @@ export const createMessage = internalMutation({
 });
 
 export const getConversationMessages = internalQuery({
-  args: { conversationId: v.string() },
+  args: { 
+    conversationId: v.string(),
+    limit: v.optional(v.number())
+  },
   handler: async (ctx, args) => {
-    return await ctx.db
+    let query = ctx.db
       .query("messages")
       .filter((q) => q.eq(q.field("conversationId"), args.conversationId))
-      .order("asc")
-      .collect();
+      .order("asc");
+
+    
+    return await query.collect();
   },
 });
 
