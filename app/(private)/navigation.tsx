@@ -22,7 +22,7 @@ import router from "next/router";
 const menuItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/docdashboard" },
   { name: "Consultation", icon: Users, path: "/consultation" },
-  { name: "AddPatient", icon: UserPlus, path: "/registerPatient" },
+  { name: "AddPatient", icon: UserPlus, path: "/registerpatient" },
 ];
 
 export default function FixedNavigation() {

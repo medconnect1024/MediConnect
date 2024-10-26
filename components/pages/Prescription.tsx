@@ -78,12 +78,8 @@ export default function MultiStepPrescription() {
       medicineInstructions,
     };
 
-    console.log("Attempting to save prescription:", newPrescription);
-
     try {
-      console.log("Calling savePrescription mutation...");
       const result = await savePrescription(newPrescription);
-      console.log("Prescription saved successfully. Result:", result);
       setSaveSuccess(true);
       // Clear form data and reset to first step
       setSymptoms([]);
@@ -96,11 +92,9 @@ export default function MultiStepPrescription() {
       setMedicineReminder({ message: false, call: false });
       setMedicineInstructions("");
       setActiveStep(0);
-      console.log("Form data cleared and reset to first step");
       setTimeout(() => setSaveSuccess(false), 3000); // Hide message after 3 seconds
     } catch (error) {
       console.error("Error saving prescription:", error);
-      console.log("Error details:", JSON.stringify(error, null, 2));
     }
   };
 
@@ -113,7 +107,6 @@ export default function MultiStepPrescription() {
         previousPrescriptions.map((prescription, index) => (
           <Card key={index}>
             <CardContent>
-              {/* Display prescription details here */}
               <p>Prescription {index + 1}</p>
               {/* Add more details as needed */}
             </CardContent>
@@ -249,93 +242,107 @@ export default function MultiStepPrescription() {
   );
 
   return (
-    <Card className="w-full max-w-6xl mx-auto">
+    <Card className="w-full max-w-6xl mx-auto min-h-96 relative">
       <CardHeader>
         <CardTitle className="text-3xl">Prescription Management</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="min-h-96">
         <div className="mb-8">
           <div className="flex justify-center space-x-4 mb-4">
             <Button
               onClick={() => setActiveTab("previous")}
               variant={activeTab === "previous" ? "default" : "outline"}
-              className="bg-blue-600 text-white hover:bg-blue-700"
+              className={
+                activeTab === "previous"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+              }
             >
               Previous Prescriptions
             </Button>
             <Button
               onClick={() => setActiveTab("new")}
               variant={activeTab === "new" ? "default" : "outline"}
-              className="bg-blue-600 text-white hover:bg-blue-700"
+              className={
+                activeTab === "new"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+              }
             >
               New Prescription
             </Button>
           </div>
           {activeTab === "new" && (
-            <div className="flex justify-between items-center">
+            <div className="flex flex-wrap justify-between items-center gap-2">
+              <Button
+                onClick={() => setActiveStep((prev) => Math.max(0, prev - 1))}
+                disabled={activeStep === 0 || showPreview}
+                className="bg-gray-200 text-gray-800 hover:bg-gray-300 disabled:opacity-50"
+              >
+                <ChevronLeft className="mr-2" />
+              </Button>
               {steps.map((step, index) => (
                 <Button
                   key={step}
                   onClick={() => setActiveStep(index)}
+                  disabled={showPreview}
                   variant={activeStep === index ? "default" : "outline"}
                   className={`${
-                    activeStep === index ? "bg-blue-600 text-white" : ""
-                  } flex-1 mx-1`}
+                    activeStep === index
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                  } disabled:opacity-50`}
                 >
                   {step}
                 </Button>
               ))}
+              <Button
+                onClick={() => {
+                  if (showPreview) {
+                    setShowPreview(false);
+                    setActiveStep(0); // Navigate back to Symptoms page
+                  } else {
+                    setShowPreview(true);
+                  }
+                }}
+                className="bg-gray-200 text-gray-800 hover:bg-gray-300"
+              >
+                <Eye className="mr-2" /> {showPreview ? "Edit" : "Preview"}
+              </Button>
+              {activeStep === steps.length - 1 && !showPreview ? (
+                <Button
+                  onClick={handleSubmit}
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  Submit Prescription
+                </Button>
+              ) : (
+                <Button
+                  onClick={() =>
+                    setActiveStep((prev) =>
+                      Math.min(steps.length - 1, prev + 1)
+                    )
+                  }
+                  disabled={activeStep === steps.length - 1 || showPreview}
+                  className="bg-gray-200 text-gray-800 hover:bg-gray-300 disabled:opacity-50"
+                >
+                  <ChevronRight className="ml-2" />
+                </Button>
+              )}
             </div>
           )}
         </div>
-        <ScrollArea className="h-[500px] pr-4">
+        <ScrollArea className="h-[400px] pr-4">
           {activeTab === "new"
             ? showPreview
               ? renderPreview()
               : renderStepContent(activeStep)
             : renderPreviousPrescriptions()}
         </ScrollArea>
-        {activeTab === "new" && (
-          <div className="mt-8 flex justify-between">
-            <Button
-              onClick={() => setActiveStep((prev) => Math.max(0, prev - 1))}
-              disabled={activeStep === 0}
-              className="flex items-center bg-blue-600 text-white hover:bg-blue-700"
-            >
-              <ChevronLeft className="mr-2" /> Previous
-            </Button>
-            <Button
-              onClick={() => setShowPreview(!showPreview)}
-              className="flex items-center bg-secondary text-secondary-foreground"
-            >
-              <Eye className="mr-2" /> {showPreview ? "Edit" : "Preview"}
-            </Button>
-            {activeStep === steps.length - 1 ? (
-              <Button
-                onClick={handleSubmit}
-                className="relative px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 ease-in-out"
-              >
-                <span className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg opacity-0 hover:opacity-100 transition-opacity duration-300"></span>
-                <span className="relative z-10">Submit Prescription</span>
-              </Button>
-            ) : (
-              <Button
-                onClick={() =>
-                  setActiveStep((prev) => Math.min(steps.length - 1, prev + 1))
-                }
-                className="flex items-center bg-blue-600 text-white hover:bg-blue-700"
-              >
-                Next <ChevronRight className="ml-2" />
-              </Button>
-            )}
-          </div>
-        )}
       </CardContent>
       {saveSuccess && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="bg-green-500 text-white px-6 py-3 rounded-md shadow-lg animate-fade-in-out">
-            Prescription Saved Successfully!
-          </div>
+        <div className="absolute top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-md shadow-lg animate-fade-in-out">
+          Prescription Saved Successfully!
         </div>
       )}
     </Card>
