@@ -3,16 +3,20 @@ import { v } from "convex/values";
 
 export const savePrescription = mutation({
   args: {
+    doctorId: v.string(),
+    patientId: v.string(),
+    medicines: v.array(
+      v.object({
+        id: v.string(),
+        name: v.string(),
+        timesPerDay: v.string(),
+        durationDays: v.string(),
+        timing: v.string(),
+      })
+    ),
     symptoms: v.array(v.object({ id: v.string(), name: v.string() })),
     findings: v.array(v.object({ id: v.string(), description: v.string() })),
     diagnoses: v.array(v.object({ id: v.string(), name: v.string() })),
-    medicines: v.array(v.object({  // Make sure this matches the schema
-      id: v.string(),
-      name: v.string(),
-      timesPerDay: v.string(),
-      durationDays: v.string(),
-      timing: v.string(),
-    })),
     investigations: v.array(v.object({ id: v.string(), name: v.string() })),
     investigationNotes: v.optional(v.string()),
     followUpDate: v.optional(v.string()),
@@ -21,34 +25,41 @@ export const savePrescription = mutation({
       call: v.boolean(),
     }),
     medicineInstructions: v.optional(v.string()),
-    patientId: v.string(),
-    doctorId: v.string(),
   },
-  async handler(ctx, values) {
+  async handler(ctx, args) {
     const {
-      symptoms, findings, diagnoses, medicines, investigations, investigationNotes,
-      followUpDate, medicineReminder, medicineInstructions, patientId, doctorId,
-    } = values;
-
-    // Auto-generate a unique prescription ID as a string
-    const lastPrescription = await ctx.db.query("prescriptions").order("desc").first();
-    const prescriptionId = lastPrescription ? String(parseInt(lastPrescription.prescriptionId) + 1) : "1";
-
-    // Insert the new prescription into the database
-    await ctx.db.insert("prescriptions", {
-      prescriptionId,
+      doctorId,
+      patientId,
+      medicines,
       symptoms,
       findings,
       diagnoses,
-      medications: medicines, // Ensure this line matches the schema
       investigations,
       investigationNotes,
       followUpDate,
       medicineReminder,
       medicineInstructions,
-      patientId,
+    } = args;
+
+    // Auto-generate a unique prescriptionId
+    const prescriptionId = `PRESC-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    // Insert the new prescription into the database
+    const newPrescriptionId = await ctx.db.insert("prescriptions", {
+      prescriptionId,
       doctorId,
-      prescribedAt: new Date().toISOString(),
+      patientId,
+      medicines,
+      symptoms,
+      findings,
+      diagnoses,
+      investigations,
+      investigationNotes,
+      followUpDate,
+      medicineReminder,
+      medicineInstructions,
     });
+
+    return { prescriptionId: newPrescriptionId };
   },
 });

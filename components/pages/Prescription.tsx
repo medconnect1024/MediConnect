@@ -60,16 +60,12 @@ export default function MultiStepPrescription() {
   const handleSubmit = async () => {
     const patientId = "121"; // Replace with actual value or state
     const doctorId = "121"; // Replace with actual value or state
-
     const newPrescription = {
-      prescriptionId: Date.now().toString(), // Generate a unique ID
       doctorId,
       patientId,
-      medications: medicines, // Note: changed from 'medicines' to 'medications'
-      prescribedAt: new Date().toISOString(),
-      instructions: medicineInstructions,
+      medicines, // Changed from 'medications' to 'medicines'
       symptoms,
-      findings: findings.map((f) => ({ id: f.id, description: f.name })), // Adjust to match schema
+      findings: findings.map(f => ({ id: f.id, description: f.name })),
       diagnoses,
       investigations,
       investigationNotes,
@@ -77,7 +73,6 @@ export default function MultiStepPrescription() {
       medicineReminder,
       medicineInstructions,
     };
-
     console.log("Attempting to save prescription:", newPrescription);
 
     try {

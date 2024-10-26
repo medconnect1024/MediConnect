@@ -45,27 +45,25 @@ export default defineSchema({
     prescriptionId: v.string(),
     doctorId: v.string(),
     patientId: v.string(),
-    medications: v.optional(v.array(
+    medicines: v.array(
       v.object({
-        id: v.string(),  // Ensure this is added
+        id: v.string(),
         name: v.string(),
         timesPerDay: v.string(),
         durationDays: v.string(),
         timing: v.string(),
-      }))
-    ),  // Update to 'medications' if this is the intended name
-    prescribedAt: v.string(),
-    instructions: v.optional(v.string()),
-    symptoms: v.optional(v.array(v.object({ id: v.string(), name: v.string() }))),
-    findings: v.optional(v.array(v.object({ id: v.string(), description: v.string() }))),
-    diagnoses: v.optional(v.array(v.object({ id: v.string(), name: v.string() }))),
-    investigations: v.optional(v.array(v.object({ id: v.string(), name: v.string() }))),
+      })
+    ),
+    symptoms: v.array(v.object({ id: v.string(), name: v.string() })),
+    findings: v.array(v.object({ id: v.string(), description: v.string() })),
+    diagnoses: v.array(v.object({ id: v.string(), name: v.string() })),
+    investigations: v.array(v.object({ id: v.string(), name: v.string() })),
     investigationNotes: v.optional(v.string()),
     followUpDate: v.optional(v.string()),
-    medicineReminder: v.optional(v.object({
+    medicineReminder: v.object({
       message: v.boolean(),
       call: v.boolean(),
-    })),
+    }),
     medicineInstructions: v.optional(v.string()),
   })
     .index("by_patient_id", ["patientId"])
