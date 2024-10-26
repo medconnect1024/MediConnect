@@ -1,98 +1,162 @@
 "use client";
 
 import React, { useState } from "react";
+
 import { Button } from "@/components/ui/button";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { ScrollArea } from "@/components/ui/scroll-area";
+
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+
 import { Calendar } from "@/components/ui/calendar";
+
 import { CalendarIcon, ChevronRight, ChevronLeft, Eye } from "lucide-react";
+
 import { format } from "date-fns";
+
 import { useMutation } from "convex/react";
+
 import { api } from "@/convex/_generated/api";
+
 import SymptomPage from "./symptom-page";
+
 import FindingsPage from "./findings-page";
+
 import DiagnosisPage from "./diagnosis-page";
+
 import MedicinePage from "./medicine-page";
+
 import InvestigationsPage from "./investigations-page";
 
 type PrescriptionItem = { id: string; name: string };
+
 type MedicineItem = {
   id: string;
+
   name: string;
+
   timesPerDay: string;
+
   durationDays: string;
+
   timing: string;
 };
 
 const steps = [
   "Symptoms",
+
   "Findings",
+
   "Diagnosis",
+
   "Medicine",
+
   "Investigations",
+
   "Follow-Up",
 ];
 
 export default function MultiStepPrescription() {
   console.log("Rendering MultiStepPrescription component"); // Debug: Log component render
+
   const [activeStep, setActiveStep] = useState(0);
+
   const [symptoms, setSymptoms] = useState<PrescriptionItem[]>([]);
+
   const [findings, setFindings] = useState<PrescriptionItem[]>([]);
+
   const [diagnoses, setDiagnoses] = useState<PrescriptionItem[]>([]);
+
   const [medicines, setMedicines] = useState<MedicineItem[]>([]);
+
   const [investigations, setInvestigations] = useState<PrescriptionItem[]>([]);
+
   const [investigationNotes, setInvestigationNotes] = useState("");
+
   const [followUpDate, setFollowUpDate] = useState<Date | undefined>(undefined);
+
   const [medicineReminder, setMedicineReminder] = useState({
     message: false,
+
     call: false,
   });
+
   const [medicineInstructions, setMedicineInstructions] = useState("");
+
   const [showPreview, setShowPreview] = useState(false);
 
   const savePrescription = useMutation(api.prescriptions.savePrescription);
 
   const handleSubmit = async () => {
     const patientId = "121"; // Replace with actual value or state
+
     const doctorId = "121"; // Replace with actual value or state
+
     const newPrescription = {
       doctorId,
+
       patientId,
+
       medicines, // Changed from 'medications' to 'medicines'
+
       symptoms,
-      findings: findings.map(f => ({ id: f.id, description: f.name })),
+
+      findings: findings.map((f) => ({ id: f.id, description: f.name })),
+
       diagnoses,
+
       investigations,
+
       investigationNotes,
+
       followUpDate: followUpDate ? followUpDate.toISOString() : undefined,
+
       medicineReminder,
+
       medicineInstructions,
     };
+
     console.log("Attempting to save prescription:", newPrescription);
 
     try {
       console.log("Calling savePrescription mutation...");
+
       const result = await savePrescription(newPrescription);
+
       console.log("Prescription saved successfully. Result:", result);
+
       // Clear form data and reset to first step
+
       setSymptoms([]);
+
       setFindings([]);
+
       setDiagnoses([]);
+
       setMedicines([]);
+
       setInvestigations([]);
+
       setInvestigationNotes("");
+
       setFollowUpDate(undefined);
+
       setMedicineReminder({ message: false, call: false });
+
       setMedicineInstructions("");
+
       setActiveStep(0);
+
       console.log("Form data cleared and reset to first step");
     } catch (error) {
       console.error("Error saving prescription:", error);
+
       console.log("Error details:", JSON.stringify(error, null, 2));
     }
   };
@@ -101,12 +165,15 @@ export default function MultiStepPrescription() {
     switch (step) {
       case 0:
         return <SymptomPage symptoms={symptoms} setSymptoms={setSymptoms} />;
+
       case 1:
         return <FindingsPage findings={findings} setFindings={setFindings} />;
+
       case 2:
         return (
           <DiagnosisPage diagnoses={diagnoses} setDiagnoses={setDiagnoses} />
         );
+
       case 3:
         return (
           <MedicinePage
@@ -118,6 +185,7 @@ export default function MultiStepPrescription() {
             setMedicineReminder={setMedicineReminder}
           />
         );
+
       case 4:
         return (
           <InvestigationsPage
@@ -127,10 +195,12 @@ export default function MultiStepPrescription() {
             setInvestigationNotes={setInvestigationNotes}
           />
         );
+
       case 5:
         return (
           <div className="mb-8">
             <h3 className="text-xl font-semibold mb-4">Follow-Up</h3>
+
             <div className="flex items-center space-x-4">
               <Popover>
                 <PopoverTrigger asChild>
@@ -141,6 +211,7 @@ export default function MultiStepPrescription() {
                     }`}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
+
                     {followUpDate ? (
                       format(followUpDate, "PPP")
                     ) : (
@@ -148,6 +219,7 @@ export default function MultiStepPrescription() {
                     )}
                   </Button>
                 </PopoverTrigger>
+
                 <PopoverContent className="w-auto p-0">
                   <Calendar
                     mode="single"
@@ -161,6 +233,7 @@ export default function MultiStepPrescription() {
             </div>
           </div>
         );
+
       default:
         return null;
     }
@@ -169,32 +242,40 @@ export default function MultiStepPrescription() {
   const renderPreview = () => (
     <div className="space-y-4">
       <h3 className="text-2xl font-semibold">Prescription Preview</h3>
+
       <div>
         <h4 className="text-lg font-semibold">Symptoms</h4>
+
         <ul>
           {symptoms.map((s) => (
             <li key={s.id}>{s.name}</li>
           ))}
         </ul>
       </div>
+
       <div>
         <h4 className="text-lg font-semibold">Findings</h4>
+
         <ul>
           {findings.map((f) => (
             <li key={f.id}>{f.name}</li>
           ))}
         </ul>
       </div>
+
       <div>
         <h4 className="text-lg font-semibold">Diagnosis</h4>
+
         <ul>
           {diagnoses.map((d) => (
             <li key={d.id}>{d.name}</li>
           ))}
         </ul>
       </div>
+
       <div>
         <h4 className="text-lg font-semibold">Medicines</h4>
+
         <ul>
           {medicines.map((m) => (
             <li key={m.id}>
@@ -204,17 +285,22 @@ export default function MultiStepPrescription() {
           ))}
         </ul>
       </div>
+
       <div>
         <h4 className="text-lg font-semibold">Investigations</h4>
+
         <ul>
           {investigations.map((i) => (
             <li key={i.id}>{i.name}</li>
           ))}
         </ul>
+
         <p>Notes: {investigationNotes}</p>
       </div>
+
       <div>
         <h4 className="text-lg font-semibold">Follow-Up</h4>
+
         <p>
           {followUpDate ? format(followUpDate, "PPP") : "No follow-up date set"}
         </p>
@@ -227,6 +313,7 @@ export default function MultiStepPrescription() {
       <CardHeader>
         <CardTitle className="text-3xl">New Prescription</CardTitle>
       </CardHeader>
+
       <CardContent>
         <div className="mb-8">
           <div className="flex justify-between items-center">
@@ -246,9 +333,11 @@ export default function MultiStepPrescription() {
             ))}
           </div>
         </div>
+
         <ScrollArea className="h-[500px] pr-4">
           {showPreview ? renderPreview() : renderStepContent(activeStep)}
         </ScrollArea>
+
         <div className="mt-8 flex justify-between">
           <Button
             onClick={() => setActiveStep((prev) => Math.max(0, prev - 1))}
@@ -257,18 +346,21 @@ export default function MultiStepPrescription() {
           >
             <ChevronLeft className="mr-2" /> Previous
           </Button>
+
           <Button
             onClick={() => setShowPreview(!showPreview)}
             className="flex items-center bg-secondary text-secondary-foreground"
           >
             <Eye className="mr-2" /> {showPreview ? "Edit" : "Preview"}
           </Button>
+
           {activeStep === steps.length - 1 ? (
             <Button
               onClick={handleSubmit}
               className="relative px-6 py-3 bg-gradient-to-r from-primary to-primary-foreground text-primary-foreground font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 ease-in-out"
             >
               <span className="absolute inset-0 bg-gradient-to-r from-primary to-primary-foreground rounded-lg opacity-0 hover:opacity-100 transition-opacity duration-300"></span>
+
               <span className="relative z-10">Submit Prescription</span>
             </Button>
           ) : (

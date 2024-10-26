@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Plus, X } from "lucide-react";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import {
   Select,
   SelectContent,
@@ -86,10 +84,15 @@ export default function MedicinePage({
       newMedicine.durationDays &&
       newMedicine.timing
     ) {
-      // setMedicines((prev) => [
-      //   ...prev,
-      //   { id: Date.now().toString(), ...(newMedicine as MedicineItem) },
-      // ]);
+      const newMedicineItem: MedicineItem = {
+        ...(newMedicine as MedicineItem),
+        id: Date.now().toString(),
+      };
+
+      // Update the prescription page's state
+      setMedicines((prev) => [...prev, newMedicineItem]);
+
+      // Clear input fields after adding
       setNewMedicine({
         name: "",
         timesPerDay: "",

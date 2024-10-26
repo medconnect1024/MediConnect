@@ -41,31 +41,34 @@ export default defineSchema({
     .index("by_doctor_id", ["doctorId"])
     .index("by_patient_id", ["patientId"]),
   
-  prescriptions: defineTable({
-    prescriptionId: v.string(),
-    doctorId: v.string(),
-    patientId: v.string(),
-    medicines: v.array(
-      v.object({
-        id: v.string(),
-        name: v.string(),
-        timesPerDay: v.string(),
-        durationDays: v.string(),
-        timing: v.string(),
-      })
-    ),
-    symptoms: v.array(v.object({ id: v.string(), name: v.string() })),
-    findings: v.array(v.object({ id: v.string(), description: v.string() })),
-    diagnoses: v.array(v.object({ id: v.string(), name: v.string() })),
-    investigations: v.array(v.object({ id: v.string(), name: v.string() })),
-    investigationNotes: v.optional(v.string()),
-    followUpDate: v.optional(v.string()),
-    medicineReminder: v.object({
-      message: v.boolean(),
-      call: v.boolean(),
-    }),
-    medicineInstructions: v.optional(v.string()),
-  })
-    .index("by_patient_id", ["patientId"])
-    .index("by_doctor_id", ["doctorId"]),
+    prescriptions: defineTable({
+      prescriptionId: v.string(),
+      doctorId: v.string(),
+      patientId: v.string(),
+      medicines: v.array(
+        v.object({
+          id: v.string(),
+          name: v.string(),
+          timesPerDay: v.string(),
+          durationDays: v.string(),
+          timing: v.string(),
+        })
+      ),
+      symptoms: v.array(v.object({ id: v.string(), name: v.string() })),
+      findings: v.array(v.object({ id: v.string(), description: v.string() })),
+      diagnoses: v.array(v.object({ id: v.string(), name: v.string() })),
+      investigations: v.array(v.object({ id: v.string(), name: v.string() })),
+      investigationNotes: v.optional(v.string()),
+      followUpDate: v.optional(v.string()),
+      medicineReminder: v.object({
+        message: v.boolean(),
+        call: v.boolean(),
+      }),
+      medicineInstructions: v.optional(v.string()),
+    })
+      .index("by_patient_id", ["patientId"])
+      .index("by_doctor_id", ["doctorId"]),
+  
+  
+  
 });

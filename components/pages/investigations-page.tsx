@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,7 +21,6 @@ interface InvestigationsPageProps {
   setInvestigationNotes: React.Dispatch<React.SetStateAction<string>>;
 }
 
-// Sample medicine names array for suggestions
 const INVESTIGATION_NAMES = [
   "CBC",
   "Thyroid Profile",
@@ -29,7 +28,6 @@ const INVESTIGATION_NAMES = [
   "Kidney Function Test",
   "Blood Sugar",
   "Lipid Profile",
-  // Add more investigation names as needed
 ];
 
 export default function InvestigationsPage({
@@ -41,15 +39,13 @@ export default function InvestigationsPage({
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
 
-  // Using a query to fetch search results, if needed
   const searchResults = useQuery(api.patientsearch.search, { searchTerm });
 
-  // Update suggestions based on the current search term
+  // Update suggestions based on search term
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
     if (value) {
-      // Filter suggestions
       const filtered = INVESTIGATION_NAMES.filter((name) =>
         name.toLowerCase().includes(value.toLowerCase())
       );
@@ -62,13 +58,18 @@ export default function InvestigationsPage({
   const handleAddItem = (item: string) => {
     const newItem: PrescriptionItem = { id: Date.now().toString(), name: item };
     setInvestigations((prev) => [...prev, newItem]);
-    setSearchTerm(""); // Clear the search term after adding
-    setFilteredSuggestions([]); // Clear suggestions
+    setSearchTerm("");
+    setFilteredSuggestions([]);
   };
 
   const handleRemoveItem = (id: string) => {
     setInvestigations((prev) => prev.filter((item) => item.id !== id));
   };
+
+  useEffect(() => {
+    // Here you can handle data passing to the Prescription page dynamically
+    // Add any necessary data handling or state syncing here if needed.
+  }, [investigations]);
 
   return (
     <div className="mb-8">
@@ -102,32 +103,37 @@ export default function InvestigationsPage({
             <li
               key={index}
               className="p-2 bg-secondary rounded-md cursor-pointer hover:bg-gray-200"
-              onClick={() => handleAddItem(suggestion)} // Add the item when clicked
+              onClick={() => handleAddItem(suggestion)}
             >
               {suggestion}
             </li>
           ))}
         </ul>
       )}
-      <ScrollArea className="h-[150px]">
-        <div className="flex flex-wrap gap-3">
-          {investigations.map((item) => (
-            <Button
-              key={item.id}
-              variant="secondary"
-              size="lg"
-              className="flex items-center gap-2 text-lg hover:bg-blue-500 hover:text-white transition-colors"
-            >
-              {item.name}
-              <X
-                className="h-4 w-4 cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRemoveItem(item.id);
-                }}
-              />
-            </Button>
-          ))}
+      <ScrollArea className="h-[150px] mt-4 border rounded-md">
+        <div className="p-3">
+          <h4 className="text-lg font-semibold mb-2">
+            Selected Investigations
+          </h4>
+          <div className="flex flex-wrap gap-3">
+            {investigations.map((item) => (
+              <Button
+                key={item.id}
+                variant="secondary"
+                size="lg"
+                className="flex items-center gap-2 text-lg hover:bg-blue-500 hover:text-white transition-colors"
+              >
+                {item.name}
+                <X
+                  className="h-4 w-4 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveItem(item.id);
+                  }}
+                />
+              </Button>
+            ))}
+          </div>
         </div>
       </ScrollArea>
       <Textarea
