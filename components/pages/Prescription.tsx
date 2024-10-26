@@ -1,37 +1,22 @@
 "use client";
-
 import React, { useState } from "react";
-
 import { Button } from "@/components/ui/button";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 import { ScrollArea } from "@/components/ui/scroll-area";
-
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
 import { Calendar } from "@/components/ui/calendar";
-
 import { CalendarIcon, ChevronRight, ChevronLeft, Eye } from "lucide-react";
-
 import { format } from "date-fns";
-
 import { useMutation } from "convex/react";
-
 import { api } from "@/convex/_generated/api";
-
 import SymptomPage from "./symptom-page";
-
 import FindingsPage from "./findings-page";
-
 import DiagnosisPage from "./diagnosis-page";
-
 import MedicinePage from "./medicine-page";
-
 import InvestigationsPage from "./investigations-page";
 
 type PrescriptionItem = { id: string; name: string };
@@ -92,6 +77,9 @@ export default function MultiStepPrescription() {
   const [showPreview, setShowPreview] = useState(false);
 
   const savePrescription = useMutation(api.prescriptions.savePrescription);
+  const [previousPrescriptions, setPreviousPrescriptions] = useState([]);
+
+  const [activeTab, setActiveTab] = useState("new");
 
   const handleSubmit = async () => {
     const patientId = "121"; // Replace with actual value or state
@@ -160,6 +148,25 @@ export default function MultiStepPrescription() {
       console.log("Error details:", JSON.stringify(error, null, 2));
     }
   };
+
+  const renderPreviousPrescriptions = () => (
+    <div className="space-y-4">
+      <h3 className="text-2xl font-semibold">Previous Prescriptions</h3>
+      {previousPrescriptions.length === 0 ? (
+        <p>No previous prescriptions found.</p>
+      ) : (
+        previousPrescriptions.map((prescription, index) => (
+          <Card key={index}>
+            <CardContent>
+              {/* Display prescription details here */}
+              <p>Prescription {index + 1}</p>
+              {/* Add more details as needed */}
+            </CardContent>
+          </Card>
+        ))
+      )}
+    </div>
+  );
 
   const renderStepContent = (step: number) => {
     switch (step) {
@@ -311,69 +318,91 @@ export default function MultiStepPrescription() {
   return (
     <Card className="w-full max-w-6xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-3xl">New Prescription</CardTitle>
+        <CardTitle className="text-3xl">Prescription Management</CardTitle>
       </CardHeader>
 
       <CardContent>
         <div className="mb-8">
-          <div className="flex justify-between items-center">
-            {steps.map((step, index) => (
-              <Button
-                key={step}
-                onClick={() => setActiveStep(index)}
-                variant={activeStep === index ? "default" : "outline"}
-                className={`${
-                  activeStep === index
-                    ? "bg-primary text-primary-foreground"
-                    : ""
-                } flex-1 mx-1`}
-              >
-                {step}
-              </Button>
-            ))}
+          <div className="flex justify-center space-x-4 mb-4">
+            <Button
+              onClick={() => setActiveTab("previous")}
+              variant={activeTab === "previous" ? "default" : "outline"}
+              className="bg-blue-600 text-white hover:bg-blue-700"
+            >
+              Previous Prescriptions
+            </Button>
+            <Button
+              onClick={() => setActiveTab("new")}
+              variant={activeTab === "new" ? "default" : "outline"}
+              className="bg-blue-600 text-white hover:bg-blue-700"
+            >
+              New Prescription
+            </Button>
           </div>
+
+          {activeTab === "new" && (
+            <div className="flex justify-between items-center">
+              {steps.map((step, index) => (
+                <Button
+                  key={step}
+                  onClick={() => setActiveStep(index)}
+                  variant={activeStep === index ? "default" : "outline"}
+                  className={`${
+                    activeStep === index ? "bg-blue-600 text-white" : ""
+                  } flex-1 mx-1`}
+                >
+                  {step}
+                </Button>
+              ))}
+            </div>
+          )}
         </div>
 
         <ScrollArea className="h-[500px] pr-4">
-          {showPreview ? renderPreview() : renderStepContent(activeStep)}
+          {activeTab === "new"
+            ? showPreview
+              ? renderPreview()
+              : renderStepContent(activeStep)
+            : renderPreviousPrescriptions()}
         </ScrollArea>
 
-        <div className="mt-8 flex justify-between">
-          <Button
-            onClick={() => setActiveStep((prev) => Math.max(0, prev - 1))}
-            disabled={activeStep === 0}
-            className="flex items-center"
-          >
-            <ChevronLeft className="mr-2" /> Previous
-          </Button>
-
-          <Button
-            onClick={() => setShowPreview(!showPreview)}
-            className="flex items-center bg-secondary text-secondary-foreground"
-          >
-            <Eye className="mr-2" /> {showPreview ? "Edit" : "Preview"}
-          </Button>
-
-          {activeStep === steps.length - 1 ? (
+        {activeTab === "new" && (
+          <div className="mt-8 flex justify-between">
             <Button
-              onClick={handleSubmit}
-              className="relative px-6 py-3 bg-gradient-to-r from-primary to-primary-foreground text-primary-foreground font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 ease-in-out"
+              onClick={() => setActiveStep((prev) => Math.max(0, prev - 1))}
+              disabled={activeStep === 0}
+              className="flex items-center bg-blue-600 text-white hover:bg-blue-700"
             >
-              <span className="absolute inset-0 bg-gradient-to-r from-primary to-primary-foreground rounded-lg opacity-0 hover:opacity-100 transition-opacity duration-300"></span>
+              <ChevronLeft className="mr-2" /> Previous
+            </Button>
 
-              <span className="relative z-10">Submit Prescription</span>
-            </Button>
-          ) : (
             <Button
-              onClick={() =>
-                setActiveStep((prev) => Math.min(steps.length - 1, prev + 1))
-              }
-              className="flex items-center"
+              onClick={() => setShowPreview(!showPreview)}
+              className="flex items-center bg-secondary text-secondary-foreground"
             >
-              Next <ChevronRight className="ml-2" />
+              <Eye className="mr-2" /> {showPreview ? "Edit" : "Preview"}
             </Button>
-          )}
-        </div>
+
+            {activeStep === steps.length - 1 ? (
+              <Button
+                onClick={handleSubmit}
+                className="relative px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 ease-in-out"
+              >
+                <span className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg opacity-0 hover:opacity-100 transition-opacity duration-300"></span>
+                <span className="relative z-10">Submit Prescription</span>
+              </Button>
+            ) : (
+              <Button
+                onClick={() =>
+                  setActiveStep((prev) => Math.min(steps.length - 1, prev + 1))
+                }
+                className="flex items-center bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Next <ChevronRight className="ml-2" />
+              </Button>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
