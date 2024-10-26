@@ -3,6 +3,20 @@ import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { WebhookEvent } from "@clerk/backend";
 import { Webhook } from "svix";
+import { v } from "convex/values";
+import { ConvexError } from "convex/values";
+import { handleWatiWebhook } from "./watiWebhook";
+
+// Ensure all environment variables are set
+const WATI_API_URL = process.env.WATI_API_URL!;
+const WATI_API_TOKEN = process.env.WATI_API_TOKEN!;
+const WATI_MEDIA_URL = process.env.WATI_MEDIA_URL!;
+const WEBSITE_LINK = process.env.WEBSITE_LINK!;
+const CLERK_WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET!;
+
+if (!WATI_API_URL || !WATI_API_TOKEN || !WATI_MEDIA_URL || !WEBSITE_LINK || !CLERK_WEBHOOK_SECRET) {
+  throw new Error("Missing required environment variables");
+}
 
 export const ensureEnvironmentVariable = (name: string): string => {
   const value = process.env[name];
@@ -12,10 +26,13 @@ export const ensureEnvironmentVariable = (name: string): string => {
   return value;
 }
 
+
+
+// Clerk webhook handler
 const handleClerkWebhook = httpAction(async (ctx, request) => {
-  const event = await validateRequest(request);
+  const event = await validateClerkRequest(request);
   if (!event) {
-    return new Response("Error occured", {
+    return new Response("Error occurred", {
       status: 400,
     });
   }
@@ -40,14 +57,24 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
   });
 });
 
+
+
 const http = httpRouter();
+
 http.route({
   path: "/clerk-users-webhook",
   method: "POST",
   handler: handleClerkWebhook,
 });
 
-async function validateRequest(
+http.route({
+  path: "/wati-webhook",
+  method: "POST",
+  handler: handleWatiWebhook
+});
+
+
+async function validateClerkRequest(
   req: Request
 ): Promise<WebhookEvent | undefined> {
   const payloadString = await req.text();
@@ -70,6 +97,4 @@ async function validateRequest(
 
   return evt as unknown as WebhookEvent;
 }
-
-
 export default http;
