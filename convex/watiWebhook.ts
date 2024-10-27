@@ -38,6 +38,11 @@ interface WatiWebhookPayload {
   replyContextId?: any;
 }
 
+const OFFICE_HOURS = {
+  open: 10,
+  close: 17
+};
+
 async function sendMessage(phoneNumber: string, message: string) {
   console.log(`Attempting to send message to ${phoneNumber}: ${message}`);
   const url = `${WATI_API_URL}/api/v1/sendSessionMessage/${phoneNumber}?messageText=${encodeURIComponent(message)}`;
@@ -64,27 +69,17 @@ async function sendMessage(phoneNumber: string, message: string) {
   }
 }
 
-async function sendInteractiveButtonMessage(phoneNumber: string, body: string, buttons: Array<{ text: string }>) {
+async function sendInteractiveButtonMessage(phoneNumber: string, body: string) {
   console.log(`Attempting to send interactive message to ${phoneNumber}: ${body}`);
   
   const url = `${WATI_API_URL}/api/v1/sendInteractiveButtonsMessage?whatsappNumber=${phoneNumber}`;
-  const payload = {
-    header: {
-      type: "Text",
-      text: "sdsds"  // This can be customized as needed
-    },
-    body: body,
-    footer: "sds",  // Optional footer text, can be customized
-    buttons: buttons.map(button => ({
-      text: button.text  // Assuming you need to use `text` instead of `title`
-    }))
-  };
+  const payload = JSON.parse(body)
 
   try {
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        "Authorization": WATI_API_TOKEN,  // Ensure the token is correctly prefixed with "Bearer "
+        "Authorization": WATI_API_TOKEN,
         "Content-Type": "application/json-patch+json",
         "Accept": "*/*"
       },
@@ -120,10 +115,10 @@ async function getConversationContext(ctx: any, conversationId: string): Promise
 
 async function isAppointmentRequest(response: string): Promise<boolean> {
   try {
-    const prompt = `Does this message indicate that the user wants to book an appointment? Respond with "Yes" or "No". Message: "${response}"`;
+    const prompt = `Does this message indicate that the user wants to book, reschedule, or cancel an appointment? Respond with "Yes" or "No". Message: "${response}"`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo", // Choose model
+      model: "gpt-3.5-turbo",
       messages: [{ role: "user", content: prompt }],
       max_tokens: 5,
     });
@@ -136,19 +131,103 @@ async function isAppointmentRequest(response: string): Promise<boolean> {
   }
 }
 
+function isWithinOfficeHours(time: string): boolean {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours >= OFFICE_HOURS.open && hours < OFFICE_HOURS.close;
+}
+
+function getNextAvailableSlot(date: string, time: string): string {
+  const [hours, minutes] = time.split(':').map(Number);
+  let nextHour = hours + 1;
+  if (nextHour >= OFFICE_HOURS.close) {
+    return `The next available slot is tomorrow at ${OFFICE_HOURS.open}:00 AM.`;
+  }
+  return `The next available slot is today at ${nextHour}:00.`;
+}
+
+function extractAppointmentDetails(message: string): { date?: string; time?: string } {
+  const dateMatch = message.match(/\d{4}-\d{2}-\d{2}/);
+  const timeMatch = message.match(/\d{1,2}:\d{2}/);
+  return {
+    date: dateMatch ? dateMatch[0] : undefined,
+    time: timeMatch ? timeMatch[0] : undefined
+  };
+}
 
 async function processChatGPT(context: string, message: string): Promise<string> {
   try {
     console.log(`Processing message with ChatGPT: ${message}`);
+    const systemPrompt = `
+    
+Hello! I’m your dedicated assistant at Dr. Jagadeesh's Liver Surgery Office, here to make booking and preparing for your appointment as seamless as possible. I’ll guide you through the scheduling process and gather any necessary details.
+
+Welcome to Dr. Jagadeesh's Liver Surgery Office!
+Let’s start with your preferred date and time for the appointment.
+
+What date would you like to schedule your consultation?
+(Please enter a specific date or indicate if you’d like the earliest available.)
+
+When would you prefer to come in on this date?
+
+1. Morning (8 AM - 12 PM)
+2. Afternoon (12 PM - 4 PM)
+3. Evening (4 PM - 8 PM)
+What type of consultation are you scheduling today?
+
+1. New patient
+2. Follow-up
+3. Routine check-up
+What’s the primary reason for your visit?
+
+1. Acute liver issue
+2. Chronic liver issue
+Are you experiencing any specific symptoms?
+
+1. Abdominal pain
+2. Jaundice
+3. Fatigue
+How long have you had these symptoms?
+
+1. Less than 1 week
+2. 1–3 weeks
+3. Over 3 weeks
+Do you have any existing liver conditions?
+
+1. No liver condition
+2. Chronic liver condition
+3. Recent liver condition
+Final Confirmation
+Thank you for providing your information. Here’s a summary of your appointment preferences:
+
+Appointment Date: [Chosen Date]
+Preferred Time: [Chosen Time]
+Consultation Type: [Chosen Type]
+Reason for Visit: [Primary Reason]
+Symptoms: [Selected Symptoms]
+Symptom Duration: [Duration]
+Existing Conditions: [Conditions]
+Please confirm that these details are correct by replying "Yes" to proceed or "No" to make any changes. We're here to make sure everything is arranged to your satisfaction!
+
+    `;
+
     const completion = await openai.chat.completions.create({
       messages: [
-        { role: "system", content: "You are Dr. Jagadeesh's personal assistant. Help patients with appointment scheduling and general inquiries. Provide concise and accurate information." },
+        { role: "system", content: systemPrompt },
         { role: "user", content: `Context:\n${context}\n\nUser's latest message: ${message}` }
       ],
       model: "gpt-3.5-turbo",
     });
 
-    const response = completion.choices[0].message.content || "I'm sorry, I couldn't process that message.";
+    let response = completion.choices[0].message.content || "I'm sorry, I couldn't process that message.";
+    
+    // Check if it's an appointment request and handle accordingly
+    if (await isAppointmentRequest(message)) {
+      const appointmentDetails = extractAppointmentDetails(message);
+      if (appointmentDetails.time && !isWithinOfficeHours(appointmentDetails.time)) {
+        response += ` I'm sorry, but the requested time is outside our office hours. ${getNextAvailableSlot(appointmentDetails.date || '', appointmentDetails.time)}`;
+      }
+    }
+
     console.log(`ChatGPT response: ${response}`);
     return response;
   } catch (error) {
@@ -198,25 +277,26 @@ export const handleWatiWebhook = httpAction(async (ctx, request) => {
 
     // Get conversation context
     const context = await getConversationContext(ctx, payload.conversationId);
-    let chatGPTResponse = ''
+    
     // Process the message with ChatGPT
+    let chatGPTResponse = await processChatGPT(context, userMessage);
+
     // Check if we need to send an interactive message for appointment confirmation
-    if (await isAppointmentRequest(userMessage)) {
-      console.log("Sending interactive button message");
-      await sendInteractiveButtonMessage(phoneNumber, "chatGPTResponse", [
-  { text: "sds" },
-  { text: "sds1" },
-  { text: "sds2" }
-]);
-chatGPTResponse = 'interactive'
-    } else {
-       chatGPTResponse = await processChatGPT(context, userMessage);
-
-      console.log("Sending regular message");
-      // Send the response back to the user
-      await sendMessage(phoneNumber, chatGPTResponse);
-    }
-
+    // if (await isAppointmentRequest(userMessage)) {
+    //   console.log("Sending interactive button message for appointment confirmation");
+    //   await sendInteractiveButtonMessage(phoneNumber, chatGPTResponse, [
+    //     { text: "Confirm Appointment" },
+    //     { text: "Reschedule" },
+    //     { text: "Cancel" }
+    //   ]);
+    //   chatGPTResponse = 'Interactive message sent for appointment confirmation';
+    // } else {
+    //   console.log("Sending regular message");
+    //   // Send the response back to the user
+    //   await sendMessage(phoneNumber, chatGPTResponse);
+    // }
+   // await sendInteractiveButtonMessage(phoneNumber, chatGPTResponse)
+   await sendMessage(phoneNumber, chatGPTResponse)
     console.log("Response sent successfully");
 
     // Persist the outgoing message
