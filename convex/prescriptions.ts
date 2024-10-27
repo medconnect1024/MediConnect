@@ -25,7 +25,6 @@ export const savePrescription = mutation({
       call: v.boolean(),
     }),
     medicineInstructions: v.optional(v.string()),
-    
     // New fields
     chronicCondition: v.boolean(),
     vitals: v.object({

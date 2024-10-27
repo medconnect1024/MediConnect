@@ -69,11 +69,11 @@ export default function MultiStepPrescription() {
   const [previousPrescriptions, setPreviousPrescriptions] = useState([]);
   const [activeTab, setActiveTab] = useState("new");
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [chronicCondition, setChronicCondition] = useState("");
+  const [chronicCondition, setChronicCondition] = useState(false)
   const [vitals, setVitals] = useState({
-    height: "",
-    weight: "",
-    bloodPressure: "",
+    temperature: '',
+    bloodPressure: '',
+    pulse: '',
   });
 
   const savePrescription = useMutation(api.prescriptions.savePrescription);
@@ -111,8 +111,8 @@ export default function MultiStepPrescription() {
       setFollowUpDate(undefined);
       setMedicineReminder({ message: false, call: false });
       setMedicineInstructions("");
-      setChronicCondition("");
-      setVitals({ height: "", weight: "", bloodPressure: "" });
+      setChronicCondition(false);
+      setVitals({ temperature: '', bloodPressure: '', pulse: '' });
       setActiveStep(0);
       setShowPreview(false);
       setTimeout(() => setSaveSuccess(false), 3000); // Hide message after 3 seconds
@@ -146,12 +146,12 @@ export default function MultiStepPrescription() {
       case 1:
         return (
           <FindingsPage
-            findings={findings}
-            setFindings={setFindings}
-            chronicCondition={chronicCondition}
-            chronicCondition={setChronicCondition}
-            vitals={vitals}
-            setVitals={setVitals}
+          findings={findings}
+          setFindings={setFindings}
+          chronicCondition={chronicCondition}
+          setChronicCondition={setChronicCondition}
+          vitals={vitals}
+          setVitals={setVitals}
           />
         );
       case 2:
@@ -246,8 +246,8 @@ export default function MultiStepPrescription() {
         </ul>
         <p>Chronic Condition: {chronicCondition || "None"}</p>
         <p>
-          Vitals: Height: {vitals.height}, Weight: {vitals.weight}, Blood
-          Pressure: {vitals.bloodPressure}
+          Vitals: Temperature: {vitals.temperature}, Blood Pressure: {vitals.bloodPressure}, Pulse
+          : {vitals.pulse}
         </p>
       </div>
       <div>

@@ -78,8 +78,14 @@ export default defineSchema({
     })
       .index("by_patient_id", ["patientId"])
       .index("by_doctor_id", ["doctorId"]),
-    
-  
+      messages: defineTable({
+        phoneNumber: v.string(),
+        content: v.string(),
+        direction: v.string(),
+        timestamp: v.string(),
+        messageId: v.string(),
+        conversationId: v.string()
+      }),
   
   
 });

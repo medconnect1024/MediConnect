@@ -1,9 +1,11 @@
-"use client";
+'use client'
 
-import React, { useState, useEffect, useMemo } from "react";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Plus, X } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react"
+import { Input } from "@/components/ui/input"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Search, Plus, X } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 
 // Predefined findings list
 const FINDINGS = [
@@ -21,30 +23,30 @@ const FINDINGS = [
   "Runny Nose",
   "Loss of Appetite",
   "Vomiting",
-];
+]
 
 type FindingItem = {
-  id: string;
-  name: string;
-};
+  id: string
+  name: string
+}
 
 interface FindingsComponentProps {
-  findings: FindingItem[];
-  setFindings: React.Dispatch<React.SetStateAction<FindingItem[]>>;
-  chronicCondition: boolean;
-  setChronicCondition: React.Dispatch<React.SetStateAction<boolean>>;
+  findings: FindingItem[]
+  setFindings: React.Dispatch<React.SetStateAction<FindingItem[]>>
+  chronicCondition: boolean
+  setChronicCondition: React.Dispatch<React.SetStateAction<boolean>>
   vitals: {
-    temperature: string;
-    bloodPressure: string;
-    pulse: string;
-  };
+    temperature: string
+    bloodPressure: string
+    pulse: string
+  }
   setVitals: React.Dispatch<
     React.SetStateAction<{
-      temperature: string;
-      bloodPressure: string;
-      pulse: string;
+      temperature: string
+      bloodPressure: string
+      pulse: string
     }>
-  >;
+  >
 }
 
 export default function FindingsComponent({
@@ -55,31 +57,31 @@ export default function FindingsComponent({
   vitals,
   setVitals,
 }: FindingsComponentProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("")
+  const [isSearching, setIsSearching] = useState(false)
 
   // Filter findings based on search term
   const filteredFindings = useMemo(() => {
-    if (!searchTerm) return [];
+    if (!searchTerm) return []
     return FINDINGS.filter((finding) =>
       finding.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [searchTerm]);
+    )
+  }, [searchTerm])
 
   // Adds a finding to the list immediately
   const handleAddItem = (item: string) => {
     if (!findings.some((f) => f.name === item)) {
-      const newItem: FindingItem = { id: Date.now().toString(), name: item };
-      setFindings((prev) => [...prev, newItem]);
+      const newItem: FindingItem = { id: Date.now().toString(), name: item }
+      setFindings((prev) => [...prev, newItem])
     }
-    setSearchTerm("");
-    setIsSearching(false);
-  };
+    setSearchTerm("")
+    setIsSearching(false)
+  }
 
   // Removes a finding by its ID
   const handleRemoveItem = (id: string) => {
-    setFindings((prev) => prev.filter((item) => item.id !== id));
-  };
+    setFindings((prev) => prev.filter((item) => item.id !== id))
+  }
 
   return (
     <div className="mb-8">
@@ -92,8 +94,8 @@ export default function FindingsComponent({
             placeholder="Search findings (e.g., Throat Congestion, Fever)"
             value={searchTerm}
             onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setIsSearching(true);
+              setSearchTerm(e.target.value)
+              setIsSearching(true)
             }}
             onFocus={() => setIsSearching(true)}
             onBlur={() => setTimeout(() => setIsSearching(false), 200)}
@@ -102,7 +104,7 @@ export default function FindingsComponent({
         <button
           onClick={() => {
             if (searchTerm.trim()) {
-              handleAddItem(searchTerm.trim());
+              handleAddItem(searchTerm.trim())
             }
           }}
         >
@@ -164,16 +166,14 @@ export default function FindingsComponent({
       </div>
 
       {/* Chronic Condition Checkbox */}
-      <div className="mt-4">
-        <label className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            checked={chronicCondition}
-            onChange={(e) => setChronicCondition(e.target.checked)}
-          />
-          <span>Chronic Condition</span>
-        </label>
+      <div className="flex items-center space-x-2 mt-4">
+        <Checkbox
+          id="chronicCondition"
+          checked={chronicCondition}
+          onCheckedChange={(checked) => setChronicCondition(checked as boolean)}
+        />
+        <Label htmlFor="chronicCondition">Chronic Condition</Label>
       </div>
     </div>
-  );
+  )
 }
