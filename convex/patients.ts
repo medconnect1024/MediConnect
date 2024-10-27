@@ -6,6 +6,7 @@ export const registerPatient = mutation({
   args: {
     email: v.string(),
     firstName: v.string(),
+    middleName: v.optional(v.string()),
     lastName: v.string(),
     dateOfBirth: v.string(),
     gender: v.union(v.literal("Male"), v.literal("Female"), v.literal("Other")),
@@ -13,7 +14,7 @@ export const registerPatient = mutation({
     address: v.optional(v.string()),
   },
   async handler(ctx, values) {
-    const {email, firstName, lastName, dateOfBirth, gender, phoneNumber, address} = values;
+    const {email, firstName, middleName,lastName, dateOfBirth, gender, phoneNumber, address} = values;
     const userRecord = await ctx.db
       .query("patients")
       .withIndex("by_phoneNumber", (q) => q.eq("phoneNumber", phoneNumber))
@@ -27,6 +28,7 @@ export const registerPatient = mutation({
         patientId,
         email,
         firstName,
+        middleName,
         lastName,
         dateOfBirth,
         gender,

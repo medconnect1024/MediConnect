@@ -25,6 +25,14 @@ export const savePrescription = mutation({
       call: v.boolean(),
     }),
     medicineInstructions: v.optional(v.string()),
+    
+    // New fields
+    chronicCondition: v.boolean(),
+    vitals: v.object({
+      temperature: v.string(),
+      bloodPressure: v.string(),
+      pulse: v.string(),
+    }),
   },
   async handler(ctx, args) {
     const {
@@ -39,6 +47,8 @@ export const savePrescription = mutation({
       followUpDate,
       medicineReminder,
       medicineInstructions,
+      chronicCondition,  // Added field
+      vitals,  // Added field
     } = args;
 
     // Auto-generate a unique prescriptionId
@@ -58,6 +68,8 @@ export const savePrescription = mutation({
       followUpDate,
       medicineReminder,
       medicineInstructions,
+      chronicCondition,  // Storing chronic condition
+      vitals,  // Storing vitals information
     });
 
     return { prescriptionId: newPrescriptionId };

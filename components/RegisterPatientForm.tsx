@@ -1,18 +1,18 @@
 "use client";
 
-import {zodResolver} from "@hookform/resolvers/zod";
-import {useForm} from "react-hook-form";
-import {z} from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
-import {CalendarIcon, Save} from "lucide-react";
-import {useMutation} from "convex/react";
-import {api} from "@/convex/_generated/api";
-import {useRouter} from "next/navigation";
-import {Input} from "@/components/ui/input";
-import {cn} from "@/lib/utils";
-import {toast} from "sonner";
-import {Button} from "@/components/ui/button";
-import {Calendar} from "@/components/ui/calendar";
+import { CalendarIcon, Save } from "lucide-react";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Form,
   FormControl,
@@ -22,8 +22,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
-import {format} from "date-fns";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -31,20 +35,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {GENDERS} from "@/lib/constants";
-import {Textarea} from "@/components/ui/textarea";
+import { GENDERS } from "@/lib/constants";
+import { Textarea } from "@/components/ui/textarea";
 
+// Update the schema to make middleName optional
 const formSchema = z.object({
-  email: z.string().email({message: "Invalid email address"}), // Email validation
-  firstName: z.string().min(1, {message: "First name is required"}), // Ensure non-empty string
-  lastName: z.string().min(1, {message: "Last name is required"}), // Ensure non-empty string
+  email: z.string().email({ message: "Invalid email address" }), // Email validation
+  firstName: z.string().min(1, { message: "First name is required" }), // Ensure non-empty string
+  middleName: z.string().optional(), // Make middle name optional
+  lastName: z.string().min(1, { message: "Last name is required" }), // Ensure non-empty string
   dateOfBirth: z.date({
     required_error: "A date of birth is required.",
   }),
   gender: z.enum(["Male", "Female", "Other"], {
     message: "Gender must be 'Male', 'Female', or 'Other'",
   }), // Enum for gender
-  phoneNumber: z.string().regex(/^\+?\d{10,15}$/, {message: "Invalid phone number"}), // Optional phone number, allowing international format
+  phoneNumber: z
+    .string()
+    .regex(/^\+?\d{10,15}$/, { message: "Invalid phone number" }), // Optional phone number, allowing international format
   address: z.string().optional(), // Optional address field
 });
 
@@ -57,11 +65,22 @@ export default function RegisterPatientForm() {
   const registerPatient = useMutation(api.patients.registerPatient);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const {email, firstName, lastName, dateOfBirth, gender, phoneNumber, address} = values;
+    const {
+      email,
+      firstName,
+      middleName, // Optional middle name
+      lastName,
+      dateOfBirth,
+      gender,
+      phoneNumber,
+      address,
+    } = values;
+
     await registerPatient({
       dateOfBirth: dateOfBirth.getTime().toString(),
       email,
       firstName,
+      middleName, 
       lastName,
       gender,
       phoneNumber,
@@ -77,12 +96,11 @@ export default function RegisterPatientForm() {
         <FormField
           control={form.control}
           name="email"
-          render={({field}) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
                 <Input
-                  //   disabled={sendingInvite}
                   type="email"
                   placeholder="youremail@example.com"
                   {...field}
@@ -97,12 +115,11 @@ export default function RegisterPatientForm() {
         <FormField
           control={form.control}
           name="firstName"
-          render={({field}) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>First Name</FormLabel>
               <FormControl>
                 <Input
-                  //   disabled={sendingInvite}
                   placeholder="Patient's first name"
                   {...field}
                   onChange={field.onChange}
@@ -115,13 +132,31 @@ export default function RegisterPatientForm() {
         />
         <FormField
           control={form.control}
+          name="middleName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Middle Name (optional)</FormLabel>{" "}
+              {/* Indicate optional */}
+              <FormControl>
+                <Input
+                  placeholder="Patient's Middle name"
+                  {...field}
+                  onChange={field.onChange}
+                  value={field.value}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name="lastName"
-          render={({field}) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Last Name</FormLabel>
               <FormControl>
                 <Input
-                  //   disabled={sendingInvite}
                   placeholder="Patient's Last Name"
                   {...field}
                   onChange={field.onChange}
@@ -135,7 +170,7 @@ export default function RegisterPatientForm() {
         <FormField
           control={form.control}
           name="dateOfBirth"
-          render={({field}) => (
+          render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel>Date of birth</FormLabel>
               <Popover>
@@ -144,11 +179,15 @@ export default function RegisterPatientForm() {
                     <Button
                       variant={"outline"}
                       className={cn(
-                        " pl-3 text-left font-normal",
+                        "pl-3 text-left font-normal",
                         !field.value && "text-muted-foreground"
                       )}
                     >
-                      {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                      {field.value ? (
+                        format(field.value, "PPP")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Button>
                   </FormControl>
@@ -158,12 +197,16 @@ export default function RegisterPatientForm() {
                     mode="single"
                     selected={field.value}
                     onSelect={field.onChange}
-                    disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                    disabled={(date) =>
+                      date > new Date() || date < new Date("1900-01-01")
+                    }
                     initialFocus
                   />
                 </PopoverContent>
               </Popover>
-              <FormDescription>Your date of birth is used to calculate your age.</FormDescription>
+              <FormDescription>
+                Your date of birth is used to calculate your age.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -171,7 +214,7 @@ export default function RegisterPatientForm() {
         <FormField
           control={form.control}
           name="gender"
-          render={({field}) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Gender</FormLabel>
               <FormControl>
@@ -195,12 +238,11 @@ export default function RegisterPatientForm() {
         <FormField
           control={form.control}
           name="phoneNumber"
-          render={({field}) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Phone Number</FormLabel>
               <FormControl>
                 <Input
-                  //   disabled={sendingInvite}
                   placeholder="e.g: 7550147999"
                   {...field}
                   onChange={field.onChange}
@@ -214,7 +256,7 @@ export default function RegisterPatientForm() {
         <FormField
           control={form.control}
           name="address"
-          render={({field}) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Address (optional)</FormLabel>
               <FormControl>

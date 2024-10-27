@@ -17,11 +17,13 @@ export default defineSchema({
     patientId: v.number(),
     email: v.string(),
     firstName: v.string(),
+    middleName: v.optional(v.string()),
     lastName: v.string(),
     dateOfBirth: v.string(),
     gender: v.union(v.literal("Male"), v.literal("Female"), v.literal("Other")),
     phoneNumber: v.optional(v.string()),
     address: v.optional(v.string()),
+
   })
     .index("by_patient_id", ["patientId"])
     .index("by_email", ["email"])
@@ -65,22 +67,19 @@ export default defineSchema({
         call: v.boolean(),
       }),
       medicineInstructions: v.optional(v.string()),
+    
+      // New fields
+      chronicCondition: v.boolean(),
+      vitals: v.object({
+        temperature: v.string(),
+        bloodPressure: v.string(),
+        pulse: v.string(),
+      }),
     })
       .index("by_patient_id", ["patientId"])
       .index("by_doctor_id", ["doctorId"]),
+    
   
-      messages: defineTable({
-        phoneNumber: v.string(),
-        content: v.string(),
-        direction: v.string(),
-        timestamp: v.string(),
-        messageId: v.string(),
-        conversationId: v.string()
-      }),
-      medicalReports: defineTable({
-        data: v.object({}),
-        createdAt: v.string(),
-      })
-      .index("by_createdAt", ["createdAt"]),
+  
   
 });

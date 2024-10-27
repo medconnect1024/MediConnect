@@ -29,6 +29,11 @@ import InvestigationsPage from "./investigations-page";
 
 type PrescriptionItem = { id: string; name: string };
 
+type FindingItem = {
+  id: string;
+  name: string;
+};
+
 type MedicineItem = {
   id: string;
   name: string;
@@ -49,7 +54,7 @@ const steps = [
 export default function MultiStepPrescription() {
   const [activeStep, setActiveStep] = useState(0);
   const [symptoms, setSymptoms] = useState<PrescriptionItem[]>([]);
-  const [findings, setFindings] = useState<PrescriptionItem[]>([]);
+  const [findings, setFindings] = useState<FindingItem[]>([]);
   const [diagnoses, setDiagnoses] = useState<PrescriptionItem[]>([]);
   const [medicines, setMedicines] = useState<MedicineItem[]>([]);
   const [investigations, setInvestigations] = useState<PrescriptionItem[]>([]);
@@ -64,6 +69,12 @@ export default function MultiStepPrescription() {
   const [previousPrescriptions, setPreviousPrescriptions] = useState([]);
   const [activeTab, setActiveTab] = useState("new");
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [chronicCondition, setChronicCondition] = useState("");
+  const [vitals, setVitals] = useState({
+    height: "",
+    weight: "",
+    bloodPressure: "",
+  });
 
   const savePrescription = useMutation(api.prescriptions.savePrescription);
 
@@ -83,6 +94,8 @@ export default function MultiStepPrescription() {
       followUpDate: followUpDate ? followUpDate.toISOString() : undefined,
       medicineReminder,
       medicineInstructions,
+      chronicCondition,
+      vitals,
     };
 
     try {
@@ -98,6 +111,8 @@ export default function MultiStepPrescription() {
       setFollowUpDate(undefined);
       setMedicineReminder({ message: false, call: false });
       setMedicineInstructions("");
+      setChronicCondition("");
+      setVitals({ height: "", weight: "", bloodPressure: "" });
       setActiveStep(0);
       setShowPreview(false);
       setTimeout(() => setSaveSuccess(false), 3000); // Hide message after 3 seconds
@@ -129,7 +144,16 @@ export default function MultiStepPrescription() {
       case 0:
         return <SymptomPage symptoms={symptoms} setSymptoms={setSymptoms} />;
       case 1:
-        return <FindingsPage findings={findings} setFindings={setFindings} />;
+        return (
+          <FindingsPage
+            findings={findings}
+            setFindings={setFindings}
+            chronicCondition={chronicCondition}
+            chronicCondition={setChronicCondition}
+            vitals={vitals}
+            setVitals={setVitals}
+          />
+        );
       case 2:
         return (
           <DiagnosisPage diagnoses={diagnoses} setDiagnoses={setDiagnoses} />
@@ -220,6 +244,11 @@ export default function MultiStepPrescription() {
             <li key={f.id}>{f.name}</li>
           ))}
         </ul>
+        <p>Chronic Condition: {chronicCondition || "None"}</p>
+        <p>
+          Vitals: Height: {vitals.height}, Weight: {vitals.weight}, Blood
+          Pressure: {vitals.bloodPressure}
+        </p>
       </div>
       <div>
         <h4 className="text-lg font-semibold">Diagnosis</h4>
@@ -283,21 +312,28 @@ export default function MultiStepPrescription() {
             <Button
               onClick={() => setActiveTab("previous")}
               variant={activeTab === "previous" ? "default" : "outline"}
-              className={`w-full sm:w-auto ${activeTab === "previous" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"}`}
+              className={`w-full sm:w-auto ${
+                activeTab === "previous"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+              }`}
             >
               Previous Prescriptions
             </Button>
             <Button
               onClick={() => setActiveTab("new")}
               variant={activeTab === "new" ? "default" : "outline"}
-              className={`w-full sm:w-auto ${activeTab === "new" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-800 hover:bg-gray-300"}`}
+              className={`w-full sm:w-auto ${
+                activeTab === "new"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+              }`}
             >
               New Prescription
             </Button>
           </div>
           {activeTab === "new" && (
             <div className="flex items-center justify-between w-full">
-              {/* Previous Button */}
               <Button
                 onClick={() => setActiveStep((prev) => Math.max(0, prev - 1))}
                 disabled={activeStep === 0}
@@ -306,7 +342,6 @@ export default function MultiStepPrescription() {
                 <ChevronLeft className="mr-2" />
               </Button>
 
-              {/* Steps Container */}
               <div className="flex-grow flex justify-center space-x-1 mx-5">
                 {steps.map((step, index) => (
                   <Button
@@ -324,7 +359,6 @@ export default function MultiStepPrescription() {
                 ))}
               </div>
 
-              {/* Next Button */}
               <Button
                 onClick={() =>
                   setActiveStep((prev) => Math.min(steps.length - 1, prev + 1))
@@ -349,7 +383,7 @@ export default function MultiStepPrescription() {
         </div>
       )}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-4xl w-[90vw] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl w-[90vw] ">
           <DialogHeader>
             <DialogTitle>Prescription Preview</DialogTitle>
           </DialogHeader>

@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Plus, X } from "lucide-react";
@@ -32,16 +31,34 @@ type FindingItem = {
 interface FindingsComponentProps {
   findings: FindingItem[];
   setFindings: React.Dispatch<React.SetStateAction<FindingItem[]>>;
+  chronicCondition: boolean;
+  setChronicCondition: React.Dispatch<React.SetStateAction<boolean>>;
+  vitals: {
+    temperature: string;
+    bloodPressure: string;
+    pulse: string;
+  };
+  setVitals: React.Dispatch<
+    React.SetStateAction<{
+      temperature: string;
+      bloodPressure: string;
+      pulse: string;
+    }>
+  >;
 }
 
 export default function FindingsComponent({
   findings,
   setFindings,
+  chronicCondition,
+  setChronicCondition,
+  vitals,
+  setVitals,
 }: FindingsComponentProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
-  // Filtered findings list based on search term
+  // Filter findings based on search term
   const filteredFindings = useMemo(() => {
     if (!searchTerm) return [];
     return FINDINGS.filter((finding) =>
@@ -49,7 +66,7 @@ export default function FindingsComponent({
     );
   }, [searchTerm]);
 
-  // Adds a finding to the list
+  // Adds a finding to the list immediately
   const handleAddItem = (item: string) => {
     if (!findings.some((f) => f.name === item)) {
       const newItem: FindingItem = { id: Date.now().toString(), name: item };
@@ -82,10 +99,7 @@ export default function FindingsComponent({
             onBlur={() => setTimeout(() => setIsSearching(false), 200)}
           />
         </div>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-12 w-12"
+        <button
           onClick={() => {
             if (searchTerm.trim()) {
               handleAddItem(searchTerm.trim());
@@ -93,8 +107,9 @@ export default function FindingsComponent({
           }}
         >
           <Plus className="h-6 w-6" />
-        </Button>
+        </button>
       </div>
+
       {isSearching && filteredFindings.length > 0 && (
         <ul className="mt-4 space-y-2 absolute z-10 bg-background border rounded-md shadow-lg max-h-60 overflow-auto w-full max-w-[calc(100%-5rem)]">
           {filteredFindings.map((finding) => (
@@ -112,13 +127,9 @@ export default function FindingsComponent({
         <div className="flex flex-wrap gap-3">
           {findings.map((item) => (
             <div key={item.id} className="flex items-center space-x-2">
-              <Button
-                variant="secondary"
-                size="lg"
-                className="flex items-center gap-2 text-lg hover:bg-primary hover:text-primary-foreground transition-colors"
-              >
+              <button className="flex items-center gap-2 text-lg hover:bg-primary hover:text-primary-foreground transition-colors">
                 {item.name}
-              </Button>
+              </button>
               <X
                 className="h-4 w-4 text-red-500 cursor-pointer"
                 onClick={() => handleRemoveItem(item.id)}
@@ -127,6 +138,42 @@ export default function FindingsComponent({
           ))}
         </div>
       </ScrollArea>
+
+      {/* Vitals Input Section */}
+      <h4 className="text-lg font-semibold mt-6">Vitals</h4>
+      <div className="flex space-x-4 mb-4">
+        <Input
+          placeholder="Temperature"
+          value={vitals.temperature}
+          onChange={(e) =>
+            setVitals({ ...vitals, temperature: e.target.value })
+          }
+        />
+        <Input
+          placeholder="Blood Pressure"
+          value={vitals.bloodPressure}
+          onChange={(e) =>
+            setVitals({ ...vitals, bloodPressure: e.target.value })
+          }
+        />
+        <Input
+          placeholder="Pulse"
+          value={vitals.pulse}
+          onChange={(e) => setVitals({ ...vitals, pulse: e.target.value })}
+        />
+      </div>
+
+      {/* Chronic Condition Checkbox */}
+      <div className="mt-4">
+        <label className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={chronicCondition}
+            onChange={(e) => setChronicCondition(e.target.checked)}
+          />
+          <span>Chronic Condition</span>
+        </label>
+      </div>
     </div>
   );
 }
