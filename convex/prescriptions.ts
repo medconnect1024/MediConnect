@@ -12,11 +12,14 @@ export const savePrescription = mutation({
         timesPerDay: v.string(),
         durationDays: v.string(),
         timing: v.string(),
+        dosage: v.string(),  // Add dosage
+        route: v.string(),   // Add route
       })
     ),
     symptoms: v.array(v.object({ id: v.string(), name: v.string() })),
     findings: v.array(v.object({ id: v.string(), description: v.string() })),
     diagnoses: v.array(v.object({ id: v.string(), name: v.string() })),
+    severity:  v.optional(v.string()),
     investigations: v.array(v.object({ id: v.string(), name: v.string() })),
     investigationNotes: v.optional(v.string()),
     followUpDate: v.optional(v.string()),
@@ -24,9 +27,12 @@ export const savePrescription = mutation({
       message: v.boolean(),
       call: v.boolean(),
     }),
+    dosage: v.optional(v.string()),
+    route: v.optional(v.string()),
     medicineInstructions: v.optional(v.string()),
     // New fields
     chronicCondition: v.boolean(),
+   
     vitals: v.object({
       temperature: v.string(),
       bloodPressure: v.string(),
@@ -41,11 +47,14 @@ export const savePrescription = mutation({
       symptoms,
       findings,
       diagnoses,
+      severity,
       investigations,
       investigationNotes,
       followUpDate,
       medicineReminder,
       medicineInstructions,
+      dosage,
+      route,
       chronicCondition,  // Added field
       vitals,  // Added field
     } = args;
@@ -61,12 +70,15 @@ export const savePrescription = mutation({
       medicines,
       symptoms,
       findings,
+      severity,
       diagnoses,
       investigations,
       investigationNotes,
       followUpDate,
       medicineReminder,
       medicineInstructions,
+      dosage,
+      route,
       chronicCondition,  // Storing chronic condition
       vitals,  // Storing vitals information
     });

@@ -40,6 +40,8 @@ const MEDICINE_NAMES = [
 type MedicineItem = {
   id: string;
   name: string;
+  dosage: string;
+  route: string;
   timesPerDay: string;
   durationDays: string;
   timing: string;
@@ -67,6 +69,8 @@ export default function MedicinePage({
   const [searchTerm, setSearchTerm] = useState("");
   const [newMedicine, setNewMedicine] = useState<Partial<MedicineItem>>({
     name: "",
+    dosage: "",
+    route: "",
     timesPerDay: "",
     durationDays: "",
     timing: "",
@@ -80,6 +84,8 @@ export default function MedicinePage({
   const handleAddMedicine = () => {
     if (
       newMedicine.name &&
+      newMedicine.dosage &&
+      newMedicine.route &&
       newMedicine.timesPerDay &&
       newMedicine.durationDays &&
       newMedicine.timing
@@ -95,6 +101,8 @@ export default function MedicinePage({
       // Clear input fields after adding
       setNewMedicine({
         name: "",
+        dosage: "",
+        route: "",
         timesPerDay: "",
         durationDays: "",
         timing: "",
@@ -141,6 +149,28 @@ export default function MedicinePage({
             </ul>
           )}
         </div>
+        <Input
+          placeholder="Dosage"
+          value={newMedicine.dosage}
+          onChange={(e) =>
+            setNewMedicine((prev) => ({ ...prev, dosage: e.target.value }))
+          }
+          className="w-32"
+        />
+        <Select
+          onValueChange={(value) =>
+            setNewMedicine((prev) => ({ ...prev, route: value }))
+          }
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Route" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Oral">Oral</SelectItem>
+            <SelectItem value="Intravenous">Intravenous</SelectItem>
+            <SelectItem value="Intramuscular">Intramuscular</SelectItem>
+          </SelectContent>
+        </Select>
         <Select
           onValueChange={(value) =>
             setNewMedicine((prev) => ({ ...prev, timesPerDay: value }))
@@ -201,6 +231,8 @@ export default function MedicinePage({
           <TableHeader>
             <TableRow>
               <TableHead>Medicine Name</TableHead>
+              <TableHead>Dosage</TableHead>
+              <TableHead>Route</TableHead>
               <TableHead>Times per Day</TableHead>
               <TableHead>Duration (Days)</TableHead>
               <TableHead>Timing</TableHead>
@@ -211,6 +243,8 @@ export default function MedicinePage({
             {medicines.map((medicine) => (
               <TableRow key={medicine.id}>
                 <TableCell>{medicine.name}</TableCell>
+                <TableCell>{medicine.dosage}</TableCell>
+                <TableCell>{medicine.route}</TableCell>
                 <TableCell>{medicine.timesPerDay}</TableCell>
                 <TableCell>{medicine.durationDays}</TableCell>
                 <TableCell>{medicine.timing}</TableCell>

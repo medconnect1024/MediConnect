@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -84,6 +84,7 @@ export default function RegisterPatientForm() {
   });
 
   const registerPatient = useMutation(api.patients.registerPatient);
+  const [activeTab, setActiveTab] = useState("personal");
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
@@ -97,22 +98,44 @@ export default function RegisterPatientForm() {
   };
 
   return (
-    <div className="container mx-auto p-4 bg-gradient-to-b min-h-screen mt-5 w-full">
-      <div className="container mx-auto w-full lg:max-w-screen-xl">
+    <div className="min-h-screen bg-blue-50 p-4">
+      <div className="container mx-auto">
         <Card className="w-full shadow-lg">
-          <CardHeader className="bg-primary text-primary-foreground">
+          <CardHeader className="bg-blue-600 text-white">
             <CardTitle className="text-2xl font-bold">
               New Patient Registration
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <Tabs defaultValue="personal" className="w-full">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
+                <Tabs
+                  defaultValue="personal"
+                  className="w-full"
+                  onValueChange={setActiveTab}
+                >
                   <TabsList className="grid w-full grid-cols-3 mb-6">
-                    <TabsTrigger value="personal">Personal Information</TabsTrigger>
-                    <TabsTrigger value="address">Address Information</TabsTrigger>
-                    <TabsTrigger value="vitals">Vitals</TabsTrigger>
+                    <TabsTrigger
+                      value="personal"
+                      className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                    >
+                      Personal Information
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="address"
+                      className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                    >
+                      Address Information
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="vitals"
+                      className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                    >
+                      Vitals
+                    </TabsTrigger>
                   </TabsList>
                   <TabsContent value="personal">
                     <div className="grid gap-6">
@@ -164,7 +187,10 @@ export default function RegisterPatientForm() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Gender</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Select Gender" />
@@ -206,13 +232,23 @@ export default function RegisterPatientForm() {
                                     </Button>
                                   </FormControl>
                                 </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
+                                <PopoverContent
+                                  className="w-auto p-0"
+                                  align="start"
+                                >
                                   <Calendar
                                     mode="single"
-                                    selected={field.value ? new Date(field.value) : undefined}
-                                    onSelect={(date) => field.onChange(date?.toISOString())}
+                                    selected={
+                                      field.value
+                                        ? new Date(field.value)
+                                        : undefined
+                                    }
+                                    onSelect={(date) =>
+                                      field.onChange(date?.toISOString())
+                                    }
                                     disabled={(date) =>
-                                      date > new Date() || date < new Date("1900-01-01")
+                                      date > new Date() ||
+                                      date < new Date("1900-01-01")
                                     }
                                     initialFocus
                                   />
@@ -230,7 +266,11 @@ export default function RegisterPatientForm() {
                           <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="Email" {...field} />
+                              <Input
+                                type="email"
+                                placeholder="Email"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -259,9 +299,14 @@ export default function RegisterPatientForm() {
                           name="houseNo"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>House No., Street (Optional)</FormLabel>
+                              <FormLabel>
+                                House No., Street (Optional)
+                              </FormLabel>
                               <FormControl>
-                                <Input placeholder="House No., Street" {...field} />
+                                <Input
+                                  placeholder="House No., Street"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -274,7 +319,10 @@ export default function RegisterPatientForm() {
                             <FormItem>
                               <FormLabel>Gram Panchayat (Optional)</FormLabel>
                               <FormControl>
-                                <Input placeholder="Gram Panchayat" {...field} />
+                                <Input
+                                  placeholder="Gram Panchayat"
+                                  {...field}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -403,9 +451,14 @@ export default function RegisterPatientForm() {
                         name="oxygenSaturation"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Oxygen Saturation (%) (Optional)</FormLabel>
+                            <FormLabel>
+                              Oxygen Saturation (%) (Optional)
+                            </FormLabel>
                             <FormControl>
-                              <Input placeholder="Oxygen Saturation" {...field} />
+                              <Input
+                                placeholder="Oxygen Saturation"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -414,13 +467,17 @@ export default function RegisterPatientForm() {
                     </div>
                   </TabsContent>
                 </Tabs>
-                <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                  <Save className="mr-2 h-4 w-4" />
-                  Save
-                </Button>
+                {activeTab === "vitals" && (
+                  <Button
+                    type="submit"
+                    className="w-full bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    <Save className="mr-2 h-4 w-4" />
+                    Save
+                  </Button>
+                )}
               </form>
             </Form>
-          
           </CardContent>
         </Card>
       </div>

@@ -37,6 +37,8 @@ type FindingItem = {
 type MedicineItem = {
   id: string;
   name: string;
+  dosage: string;
+  route: string;
   timesPerDay: string;
   durationDays: string;
   timing: string;
@@ -69,13 +71,15 @@ export default function MultiStepPrescription() {
   const [previousPrescriptions, setPreviousPrescriptions] = useState([]);
   const [activeTab, setActiveTab] = useState("new");
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [chronicCondition, setChronicCondition] = useState(false)
+  const [chronicCondition, setChronicCondition] = useState(false);
   const [vitals, setVitals] = useState({
-    temperature: '',
-    bloodPressure: '',
-    pulse: '',
+    temperature: "",
+    bloodPressure: "",
+    pulse: "",
   });
-
+  const [severity, setSeverity] = useState<"Mild" | "Moderate" | "Severe">(
+    "Mild"
+  );
   const savePrescription = useMutation(api.prescriptions.savePrescription);
 
   const handleSubmit = async () => {
@@ -85,17 +89,26 @@ export default function MultiStepPrescription() {
     const newPrescription = {
       doctorId,
       patientId,
-      medicines,
-      symptoms,
+      medicines: medicines.map((m) => ({
+        id: m.id,
+        name: m.name,
+        dosage: m.dosage,
+        route: m.route,
+        timesPerDay: m.timesPerDay,
+        durationDays: m.durationDays,
+        timing: m.timing,
+      })),
+      symptoms: symptoms.map((s) => ({ id: s.id, name: s.name })),
       findings: findings.map((f) => ({ id: f.id, description: f.name })),
-      diagnoses,
-      investigations,
+      diagnoses: diagnoses.map((d) => ({ id: d.id, name: d.name })),
+      investigations: investigations.map((i) => ({ id: i.id, name: i.name })),
       investigationNotes,
       followUpDate: followUpDate ? followUpDate.toISOString() : undefined,
       medicineReminder,
       medicineInstructions,
       chronicCondition,
       vitals,
+      severity,
     };
 
     try {
@@ -112,7 +125,8 @@ export default function MultiStepPrescription() {
       setMedicineReminder({ message: false, call: false });
       setMedicineInstructions("");
       setChronicCondition(false);
-      setVitals({ temperature: '', bloodPressure: '', pulse: '' });
+      setVitals({ temperature: "", bloodPressure: "", pulse: "" });
+      setSeverity("Mild");
       setActiveStep(0);
       setShowPreview(false);
       setTimeout(() => setSaveSuccess(false), 3000); // Hide message after 3 seconds
@@ -146,17 +160,22 @@ export default function MultiStepPrescription() {
       case 1:
         return (
           <FindingsPage
-          findings={findings}
-          setFindings={setFindings}
-          chronicCondition={chronicCondition}
-          setChronicCondition={setChronicCondition}
-          vitals={vitals}
-          setVitals={setVitals}
+            findings={findings}
+            setFindings={setFindings}
+            chronicCondition={chronicCondition}
+            setChronicCondition={setChronicCondition}
+            vitals={vitals}
+            setVitals={setVitals}
           />
         );
       case 2:
         return (
-          <DiagnosisPage diagnoses={diagnoses} setDiagnoses={setDiagnoses} />
+          <DiagnosisPage
+            diagnoses={diagnoses}
+            setDiagnoses={setDiagnoses}
+            severity={severity}
+            setSeverity={setSeverity}
+          />
         );
       case 3:
         return (
@@ -244,17 +263,20 @@ export default function MultiStepPrescription() {
             <li key={f.id}>{f.name}</li>
           ))}
         </ul>
-        <p>Chronic Condition: {chronicCondition || "None"}</p>
+        <p>Chronic Condition: {chronicCondition ? "Yes" : "No"}</p>
         <p>
-          Vitals: Temperature: {vitals.temperature}, Blood Pressure: {vitals.bloodPressure}, Pulse
-          : {vitals.pulse}
+          Vitals: Temperature: {vitals.temperature}, Blood Pressure:{" "}
+          {vitals.bloodPressure}, Pulse: {vitals.pulse}
         </p>
       </div>
       <div>
         <h4 className="text-lg font-semibold">Diagnosis</h4>
         <ul className="list-disc pl-5">
           {diagnoses.map((d) => (
-            <li key={d.id}>{d.name}</li>
+            <li key={d.id}>
+              {d.name} -{" "}
+              <span className="font-medium text-gray-600">{severity}</span>
+            </li>
           ))}
         </ul>
       </div>
@@ -263,11 +285,16 @@ export default function MultiStepPrescription() {
         <ul className="list-disc pl-5">
           {medicines.map((m) => (
             <li key={m.id}>
-              {m.name} - {m.timesPerDay} times per day for {m.durationDays} days
-              ({m.timing})
+              {m.name} - {m.dosage} {m.route}, {m.timesPerDay} times per day for{" "}
+              {m.durationDays} days ({m.timing})
             </li>
           ))}
         </ul>
+        <p>Instructions: {medicineInstructions}</p>
+        <p>
+          Reminders: {medicineReminder.message ? "Message, " : ""}
+          {medicineReminder.call ? "Call" : ""}
+        </p>
       </div>
       <div>
         <h4 className="text-lg font-semibold">Investigations</h4>
@@ -282,20 +309,6 @@ export default function MultiStepPrescription() {
         <h4 className="text-lg font-semibold">Follow-Up</h4>
         <p>
           {followUpDate ? format(followUpDate, "PPP") : "No follow-up date set"}
-        </p>
-      </div>
-      <div>
-        <h4 className="text-lg font-semibold">Medicine Instructions</h4>
-        <p>{medicineInstructions || "No specific instructions provided."}</p>
-      </div>
-      <div>
-        <h4 className="text-lg font-semibold">Medicine Reminders</h4>
-        <p>
-          {medicineReminder.message
-            ? "Send message reminders"
-            : "No message reminders"}
-          <br />
-          {medicineReminder.call ? "Send call reminders" : "No call reminders"}
         </p>
       </div>
     </div>

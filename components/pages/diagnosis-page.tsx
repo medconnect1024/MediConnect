@@ -4,6 +4,8 @@ import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { Search, Plus, X } from "lucide-react";
 
 const DIAGNOSES = [
@@ -29,11 +31,17 @@ type PrescriptionItem = {
 interface DiagnosisPageProps {
   diagnoses: PrescriptionItem[];
   setDiagnoses: React.Dispatch<React.SetStateAction<PrescriptionItem[]>>;
+  severity: string;
+  setSeverity: React.Dispatch<
+    React.SetStateAction<"Mild" | "Moderate" | "Severe">
+  >;
 }
 
 export default function DiagnosisPage({
   diagnoses,
   setDiagnoses,
+  severity,
+  setSeverity,
 }: DiagnosisPageProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -123,6 +131,30 @@ export default function DiagnosisPage({
           ))}
         </div>
       </ScrollArea>
+
+      {/* Severity Radio Group */}
+      <div className="mt-4">
+        <h4 className="text-lg font-semibold mb-2">Severity</h4>
+        <RadioGroup
+          defaultValue="Mild"
+          onValueChange={(value) =>
+            setSeverity(value as "Mild" | "Moderate" | "Severe")
+          }
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="Mild" id="r1" />
+            <Label htmlFor="r1">Mild</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="Moderate" id="r2" />
+            <Label htmlFor="r2">Moderate</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="Severe" id="r3" />
+            <Label htmlFor="r3">Severe</Label>
+          </div>
+        </RadioGroup>
+      </div>
     </div>
   );
 }

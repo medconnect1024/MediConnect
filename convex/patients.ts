@@ -23,21 +23,25 @@ export const registerPatient = mutation({
     oxygenSaturation: v.optional(v.string()),
   },
   async handler(ctx, args) {
-    const patientId = Date.now(); // Generate a unique ID
+    // Generate a unique ID for the patient
+    const patientId = Date.now();
 
-    const userRecord = await ctx.db
+    // Check if a patient with the given phone number already exists
+    const existingPatient = await ctx.db
       .query("patients")
       .withIndex("by_phoneNumber", (q) => q.eq("phoneNumber", args.phoneNumber))
       .unique();
 
-    if (userRecord === null) {
-      await ctx.db.insert("patients", {
-        patientId,
-        ...args,
-      });
-      return { success: true, patientId };
-    } else {
-      throw new Error("Patient with this phone number already exists");
+    if (existingPatient) {
+      throw new Error("A patient with this phone number already exists.");
     }
+
+    // Insert new patient record into the database
+    await ctx.db.insert("patients", {
+      patientId,
+      ...args,
+    });
+
+    return { success: true, patientId };
   },
 });

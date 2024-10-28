@@ -63,6 +63,8 @@ export default defineSchema({
           timesPerDay: v.string(),
           durationDays: v.string(),
           timing: v.string(),
+          dosage: v.string(),  // Add dosage
+          route: v.string(),   // Add route
         })
       ),
       symptoms: v.array(v.object({ id: v.string(), name: v.string() })),
@@ -71,10 +73,13 @@ export default defineSchema({
       investigations: v.array(v.object({ id: v.string(), name: v.string() })),
       investigationNotes: v.optional(v.string()),
       followUpDate: v.optional(v.string()),
+      severity: v.optional(v.string()), 
       medicineReminder: v.object({
         message: v.boolean(),
         call: v.boolean(),
       }),
+      dosage: v.optional(v.string()),
+      route: v.optional(v.string()),
       medicineInstructions: v.optional(v.string()),
       // New fields
       chronicCondition: v.boolean(),
