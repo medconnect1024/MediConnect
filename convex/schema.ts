@@ -12,23 +12,34 @@ export default defineSchema({
   })
     .index("by_clerk_id", ["userId"])
     .index("by_email", ["email"]),
-  
-  patients: defineTable({
-    patientId: v.number(),
-    email: v.string(),
-    firstName: v.string(),
-    middleName: v.optional(v.string()),
-    lastName: v.string(),
-    dateOfBirth: v.string(),
-    gender: v.union(v.literal("Male"), v.literal("Female"), v.literal("Other")),
-    phoneNumber: v.optional(v.string()),
-    address: v.optional(v.string()),
 
-  })
-    .index("by_patient_id", ["patientId"])
-    .index("by_email", ["email"])
-    .index("by_phoneNumber", ["phoneNumber"]),
-  
+      patients: defineTable({
+        patientId: v.number(),
+        email: v.string(),
+        firstName: v.string(),
+        middleName: v.optional(v.string()),
+        lastName: v.string(),
+        dateOfBirth: v.string(),
+        gender: v.union(v.literal("Male"), v.literal("Female"), v.literal("Other")),
+        phoneNumber: v.string(),
+        // Address fields
+        houseNo: v.optional(v.string()),
+        gramPanchayat: v.optional(v.string()),
+        village: v.optional(v.string()),
+        tehsil: v.optional(v.string()),
+        district:v.optional(v.string()),
+        state: v.optional(v.string()),
+        // Vital signs
+        systolic:v.optional(v.string()),
+        diastolic: v.optional(v.string()),
+        heartRate: v.optional(v.string()),
+        temperature:v.optional(v.string()),
+        oxygenSaturation:v.optional(v.string()),
+      })
+        .index("by_patient_id", ["patientId"])
+        .index("by_email", ["email"])
+        .index("by_phoneNumber", ["phoneNumber"]),
+    
   appointments: defineTable({
     appointmentId: v.string(),
     doctorId: v.string(),

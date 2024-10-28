@@ -1,9 +1,9 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-
 import { CalendarIcon, Save } from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
 import {
   Form,
   FormControl,
@@ -35,253 +36,415 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { GENDERS } from "@/lib/constants";
-import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-// Update the schema to make middleName optional
 const formSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }), // Email validation
-  firstName: z.string().min(1, { message: "First name is required" }), // Ensure non-empty string
-  middleName: z.string().optional(), // Make middle name optional
-  lastName: z.string().min(1, { message: "Last name is required" }), // Ensure non-empty string
-  dateOfBirth: z.date({
-    required_error: "A date of birth is required.",
-  }),
+  patientId: z.number(),
+  email: z.string().email({ message: "Invalid email address" }),
+  firstName: z.string().min(1, { message: "First name is required" }),
+  middleName: z.string().optional(),
+  lastName: z.string().min(1, { message: "Last name is required" }),
+  dateOfBirth: z.string().min(1, { message: "Date of birth is required" }),
   gender: z.enum(["Male", "Female", "Other"], {
     message: "Gender must be 'Male', 'Female', or 'Other'",
-  }), // Enum for gender
-  phoneNumber: z
-    .string()
-    .regex(/^\+?\d{10,15}$/, { message: "Invalid phone number" }), // Optional phone number, allowing international format
-  address: z.string().optional(), // Optional address field
+  }),
+  phoneNumber: z.string().min(1, { message: "Phone number is required" }),
+  houseNo: z.string().optional(),
+  gramPanchayat: z.string().optional(),
+  village: z.string().optional(),
+  tehsil: z.string().optional(),
+  district: z.string().optional(),
+  state: z.string().optional(),
+  systolic: z.string().optional(),
+  diastolic: z.string().optional(),
+  heartRate: z.string().optional(),
+  temperature: z.string().optional(),
+  oxygenSaturation: z.string().optional(),
 });
 
 export default function RegisterPatientForm() {
   const router = useRouter();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      patientId: Date.now(), // Generate a unique ID
+    },
   });
 
   const registerPatient = useMutation(api.patients.registerPatient);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    const {
-      email,
-      firstName,
-      middleName, // Optional middle name
-      lastName,
-      dateOfBirth,
-      gender,
-      phoneNumber,
-      address,
-    } = values;
-
-    await registerPatient({
-      dateOfBirth: dateOfBirth.getTime().toString(),
-      email,
-      firstName,
-      middleName, 
-      lastName,
-      gender,
-      phoneNumber,
-      address,
-    });
+    await registerPatient(values);
     toast.success("Patient has been registered successfully");
     form.reset();
   };
 
   return (
-    <Form {...form}>
-      <form className="space-y-4 w-full" onSubmit={form.handleSubmit(onSubmit)}>
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input
-                  type="email"
-                  placeholder="youremail@example.com"
-                  {...field}
-                  onChange={field.onChange}
-                  value={field.value}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="firstName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>First Name</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Patient's first name"
-                  {...field}
-                  onChange={field.onChange}
-                  value={field.value}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="middleName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Middle Name (optional)</FormLabel>{" "}
-              {/* Indicate optional */}
-              <FormControl>
-                <Input
-                  placeholder="Patient's Middle name"
-                  {...field}
-                  onChange={field.onChange}
-                  value={field.value}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="lastName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Last Name</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Patient's Last Name"
-                  {...field}
-                  onChange={field.onChange}
-                  value={field.value}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="dateOfBirth"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Date of birth</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("1900-01-01")
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormDescription>
-                Your date of birth is used to calculate your age.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="gender"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Gender</FormLabel>
-              <FormControl>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a Gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GENDERS.map((gender) => (
-                      <SelectItem value={gender.value} key={gender.id}>
-                        {gender.value}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="phoneNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Phone Number</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="e.g: 7550147999"
-                  {...field}
-                  onChange={field.onChange}
-                  value={field.value}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="address"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Address (optional)</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Enter Patient's Address"
-                  className="resize-none"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="w-full flex justify-between gap-1">
-          <Button
-            aria-label="generate plan"
-            type="submit"
-            disabled={!form.formState.isValid}
-            className="w-full"
-          >
-            <Save />
-            Register
-          </Button>
-        </div>
-      </form>
-    </Form>
+    <div className="container mx-auto p-4 bg-gradient-to-b min-h-screen mt-5 w-full">
+      <div className="container mx-auto w-full lg:max-w-screen-xl">
+        <Card className="w-full shadow-lg">
+          <CardHeader className="bg-blue-500 text-white">
+            <CardTitle className="text-2xl font-bold">
+              New Patient Registration
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                <Tabs defaultValue="personal" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 mb-6">
+                    <TabsTrigger value="personal">
+                      Personal Information
+                    </TabsTrigger>
+                    <TabsTrigger value="address">
+                      Address Information
+                    </TabsTrigger>
+                    <TabsTrigger value="vitals">Vitals</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="personal">
+                    <div className="grid gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="firstName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>First Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="First Name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="middleName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Middle Name (Optional)</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Middle Name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="lastName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Last Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Last Name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="gender"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Gender</FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select Gender" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {["Male", "Female", "Other"].map((gender) => (
+                                    <SelectItem value={gender} key={gender}>
+                                      {gender}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="dateOfBirth"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                              <FormLabel>Date of birth</FormLabel>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <FormControl>
+                                    <Button
+                                      variant={"outline"}
+                                      className={cn(
+                                        "w-full pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                      )}
+                                    >
+                                      {field.value ? (
+                                        format(new Date(field.value), "PPP")
+                                      ) : (
+                                        <span>Pick a date</span>
+                                      )}
+                                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                  </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent
+                                  className="w-auto p-0"
+                                  align="start"
+                                >
+                                  <Calendar
+                                    mode="single"
+                                    selected={
+                                      field.value
+                                        ? new Date(field.value)
+                                        : undefined
+                                    }
+                                    onSelect={(date) =>
+                                      field.onChange(date?.toISOString())
+                                    }
+                                    disabled={(date) =>
+                                      date > new Date() ||
+                                      date < new Date("1900-01-01")
+                                    }
+                                    initialFocus
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="email"
+                                placeholder="Email"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="phoneNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone Number</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g: 7550147999" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="address">
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="houseNo"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                House No., Street (Optional)
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="House No., Street"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="gramPanchayat"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Gram Panchayat (Optional)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Gram Panchayat"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="village"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Village (Optional)</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Village" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="tehsil"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Tehsil (Optional)</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Tehsil" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="district"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>District (Optional)</FormLabel>
+                              <FormControl>
+                                <Input placeholder="District" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="state"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>State (Optional)</FormLabel>
+                              <FormControl>
+                                <Input placeholder="State" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="vitals">
+                    <div className="space-y-6">
+                      <div className="space-y-4">
+                        <Label>Blood Pressure (mmHg)</Label>
+                        <div className="flex space-x-4">
+                          <FormField
+                            control={form.control}
+                            name="systolic"
+                            render={({ field }) => (
+                              <FormItem className="w-1/2">
+                                <FormLabel>Systolic (Optional)</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Systolic" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="diastolic"
+                            render={({ field }) => (
+                              <FormItem className="w-1/2">
+                                <FormLabel>Diastolic (Optional)</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Diastolic" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+                      <FormField
+                        control={form.control}
+                        name="heartRate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Heart Rate (bpm) (Optional)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Heart Rate" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="temperature"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Temperature (°C) (Optional)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Temperature" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="oxygenSaturation"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              Oxygen Saturation (%) (Optional)
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Oxygen Saturation"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        type="submit"
+                        className="w-full bg-blue-500 text-white hover:bg-blue-600"
+                      >
+                        <Save className="mr-2 h-4 w-4" />
+                        Save
+                      </Button>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }

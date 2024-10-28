@@ -1,6 +1,5 @@
-import {mutation} from "./_generated/server";
-
-import {v} from "convex/values";
+import { mutation } from "./_generated/server";
+import { v } from "convex/values";
 
 export const registerPatient = mutation({
   args: {
@@ -10,11 +9,41 @@ export const registerPatient = mutation({
     lastName: v.string(),
     dateOfBirth: v.string(),
     gender: v.union(v.literal("Male"), v.literal("Female"), v.literal("Other")),
-    phoneNumber: v.optional(v.string()),
-    address: v.optional(v.string()),
+    phoneNumber: v.string(),
+    houseNo:v.optional(v.string()),
+    gramPanchayat:v.optional(v.string()),
+    village: v.optional(v.string()),
+    tehsil: v.optional(v.string()),
+    district:v.optional(v.string()),
+    state:v.optional(v.string()),
+    systolic:v.optional(v.string()),
+    diastolic: v.optional(v.string()),
+    heartRate: v.optional(v.string()),
+    temperature:v.optional(v.string()),
+    oxygenSaturation: v.optional(v.string()),
   },
   async handler(ctx, values) {
-    const {email, firstName, middleName,lastName, dateOfBirth, gender, phoneNumber, address} = values;
+    const {
+      email,
+      firstName,
+      middleName,
+      lastName,
+      dateOfBirth,
+      gender,
+      phoneNumber,
+      houseNo,
+      gramPanchayat,
+      village,
+      tehsil,
+      district,
+      state,
+      systolic,
+      diastolic,
+      heartRate,
+      temperature,
+      oxygenSaturation
+    } = values;
+
     const userRecord = await ctx.db
       .query("patients")
       .withIndex("by_phoneNumber", (q) => q.eq("phoneNumber", phoneNumber))
@@ -33,7 +62,17 @@ export const registerPatient = mutation({
         dateOfBirth,
         gender,
         phoneNumber,
-        address,
+        houseNo,
+        gramPanchayat,
+        village,
+        tehsil,
+        district,
+        state,
+        systolic,
+        diastolic,
+        heartRate,
+        temperature,
+        oxygenSaturation
       });
     }
   },
