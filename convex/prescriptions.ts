@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { mutation,query } from "./_generated/server";
 import { v } from "convex/values";
 
 export const savePrescription = mutation({
@@ -84,5 +84,22 @@ export const savePrescription = mutation({
     });
 
     return { prescriptionId: newPrescriptionId };
+  },
+});
+// export const getLastPrescription = query(async (ctx) => {
+//   const prescriptions = await ctx.db
+//     .query("prescriptions")
+//     .order("desc")
+//     .take(1); // Use `take` instead of `limit` to get the latest prescription
+
+//   return prescriptions.length > 0 ? prescriptions[0] : null;
+// });
+export const getLastPrescription = query({
+  async handler(ctx) {
+    const lastPrescription = await ctx.db
+      .query("prescriptions")
+      .order("desc")
+      .first();
+    return lastPrescription;
   },
 });

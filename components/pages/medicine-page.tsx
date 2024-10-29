@@ -124,7 +124,7 @@ export default function MedicinePage({
     <div className="mb-8">
       <h3 className="text-xl font-semibold mb-4">Medicine</h3>
       <div className="flex items-center space-x-4 mb-4">
-        <div className="relative flex-grow">
+        <div className="relative flex-grow w-60">
           <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
           <Input
             className="pl-10 py-6 text-lg"

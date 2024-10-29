@@ -16,6 +16,7 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as http from "../http.js";
+import type * as labReports from "../labReports.js";
 import type * as messages from "../messages.js";
 import type * as patients from "../patients.js";
 import type * as patientsearch from "../patientsearch.js";
@@ -33,6 +34,7 @@ import type * as watiWebhook from "../watiWebhook.js";
  */
 declare const fullApi: ApiFromModules<{
   http: typeof http;
+  labReports: typeof labReports;
   messages: typeof messages;
   patients: typeof patients;
   patientsearch: typeof patientsearch;

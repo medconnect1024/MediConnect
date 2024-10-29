@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { CalendarIcon, ChevronRight, ChevronLeft, Eye, X } from "lucide-react";
 import { format } from "date-fns";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import SymptomPage from "./symptom-page";
 import FindingsPage from "./findings-page";
@@ -42,6 +42,29 @@ type MedicineItem = {
   timesPerDay: string;
   durationDays: string;
   timing: string;
+};
+
+type Prescription = {
+  prescriptionId: string;
+  symptoms: PrescriptionItem[];
+  findings: FindingItem[];
+  diagnoses: PrescriptionItem[];
+  medicines: MedicineItem[];
+  investigations: PrescriptionItem[];
+  investigationNotes: string;
+  followUpDate: string | undefined;
+  medicineReminder: {
+    message: boolean;
+    call: boolean;
+  };
+  medicineInstructions: string;
+  chronicCondition: boolean;
+  vitals: {
+    temperature: string;
+    bloodPressure: string;
+    pulse: string;
+  };
+  severity: "Mild" | "Moderate" | "Severe";
 };
 
 const steps = [
@@ -68,7 +91,9 @@ export default function MultiStepPrescription() {
   });
   const [medicineInstructions, setMedicineInstructions] = useState("");
   const [showPreview, setShowPreview] = useState(false);
-  const [previousPrescriptions, setPreviousPrescriptions] = useState([]);
+  const [previousPrescriptions, setPreviousPrescriptions] = useState<
+    Prescription[]
+  >([]);
   const [activeTab, setActiveTab] = useState("new");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [chronicCondition, setChronicCondition] = useState(false);
@@ -80,7 +105,15 @@ export default function MultiStepPrescription() {
   const [severity, setSeverity] = useState<"Mild" | "Moderate" | "Severe">(
     "Mild"
   );
+
   const savePrescription = useMutation(api.prescriptions.savePrescription);
+  const getLastPrescription = useQuery(api.prescriptions.getLastPrescription);
+
+  useEffect(() => {
+    if (getLastPrescription) {
+      setPreviousPrescriptions([getLastPrescription]);
+    }
+  }, [getLastPrescription]);
 
   const handleSubmit = async () => {
     const patientId = "121"; // Replace with actual value or state
@@ -142,10 +175,41 @@ export default function MultiStepPrescription() {
         <p>No previous prescriptions found.</p>
       ) : (
         previousPrescriptions.map((prescription, index) => (
-          <Card key={index}>
-            <CardContent>
-              <p>Prescription {index + 1}</p>
-              {/* Add more details as needed */}
+          <Card key={index} className="mb-4">
+            <CardContent className="p-4">
+              <h4 className="text-lg font-semibold mb-2">
+                Prescription {prescription.prescriptionId}
+              </h4>
+              <div className="space-y-2">
+                <p>
+                  <strong>Symptoms:</strong>{" "}
+                  {prescription.symptoms.map((s) => s.name).join(", ")}
+                </p>
+                <p>
+                  <strong>Diagnoses:</strong>{" "}
+                  {prescription.diagnoses.map((d) => d.name).join(", ")}
+                </p>
+                <p>
+                  <strong>Severity:</strong> {prescription.severity}
+                </p>
+                <p>
+                  <strong>Medicines:</strong>
+                </p>
+                <ul className="list-disc pl-5">
+                  {prescription.medicines.map((m, idx) => (
+                    <li key={idx}>
+                      {m.name} - {m.dosage} {m.route}, {m.timesPerDay} times per
+                      day for {m.durationDays} days ({m.timing})
+                    </li>
+                  ))}
+                </ul>
+                <p>
+                  <strong>Follow-up Date:</strong>{" "}
+                  {prescription.followUpDate
+                    ? format(new Date(prescription.followUpDate), "PPP")
+                    : "Not set"}
+                </p>
+              </div>
             </CardContent>
           </Card>
         ))
