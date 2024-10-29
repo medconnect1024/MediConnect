@@ -69,9 +69,9 @@ export default function DiagnosisPage({
       <h3 className="text-xl font-semibold mb-4">Diagnosis</h3>
       <div className="flex items-center space-x-4 mb-4">
         <div className="relative flex-grow">
-          <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+          <Search className="absolute left-3 top-2 h-5 w-5 text-muted-foreground" />
           <Input
-            className="pl-10 py-6 text-lg"
+            className="pl-10 py-3 text-lg"
             placeholder="Search diagnosis (e.g., Viral Fever, URTI)"
             value={searchTerm}
             onChange={(e) => {
@@ -87,7 +87,7 @@ export default function DiagnosisPage({
         <Button
           variant="outline"
           size="icon"
-          className="h-12 w-12"
+          className="h-8 w-10"
           onClick={() => {
             if (searchTerm.trim()) {
               handleAddItem(searchTerm.trim());
@@ -113,21 +113,19 @@ export default function DiagnosisPage({
       <ScrollArea className="h-[150px] mt-4">
         <div className="flex flex-wrap gap-3">
           {diagnoses.map((item) => (
-            <Button
-              key={item.id}
-              variant="secondary"
-              size="lg"
-              className="flex items-center gap-2 text-lg hover:bg-blue-500 hover:text-white transition-colors"
-            >
-              {item.name}
+            <div key={item.id} className="flex items-center">
+              <Button
+                variant="secondary"
+                size="lg"
+                className="flex items-center gap-2 text-lg hover:bg-primary hover:text-primary-foreground transition-colors"
+              >
+                {item.name}
+              </Button>
               <X
-                className="h-4 w-4 cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRemoveItem(item.id);
-                }}
+                className="h-4 w-4 cursor-pointer text-red-500 ml-2"
+                onClick={() => handleRemoveItem(item.id)} // Call handleRemoveItem directly here
               />
-            </Button>
+            </div>
           ))}
         </div>
       </ScrollArea>

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Plus, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -497,9 +498,9 @@ export default function FindingsComponent({
       <h3 className="text-xl font-semibold mb-4">Findings</h3>
       <div className="flex items-center space-x-4 mb-4">
         <div className="relative flex-grow">
-          <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+          <Search className="absolute left-3 top-2 h-5 w-5 text-muted-foreground" />
           <Input
-            className="pl-10 py-6 text-lg"
+            className="pl-10 py-3 text-lg"
             placeholder="Search findings (e.g., Throat Congestion, Fever)"
             value={searchTerm}
             onChange={(e) => {
@@ -510,7 +511,10 @@ export default function FindingsComponent({
             onBlur={() => setTimeout(() => setIsSearching(false), 200)}
           />
         </div>
-        <button
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-10"
           onClick={() => {
             if (searchTerm.trim()) {
               handleAddItem(searchTerm.trim());
@@ -518,7 +522,7 @@ export default function FindingsComponent({
           }}
         >
           <Plus className="h-6 w-6" />
-        </button>
+        </Button>
       </div>
 
       {isSearching && filteredFindings.length > 0 && (
