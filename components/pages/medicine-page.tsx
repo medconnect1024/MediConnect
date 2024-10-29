@@ -214,6 +214,11 @@ export default function MedicinePage({
           <SelectContent>
             <SelectItem value="Before Food">Before Food</SelectItem>
             <SelectItem value="After Food">After Food</SelectItem>
+            <SelectItem value="Bedtime">Bedtime</SelectItem>
+            <SelectItem value="1 hour before food">
+              1 hour before food{" "}
+            </SelectItem>
+            <SelectItem value="Evening 5 pm">Evening 5 pm</SelectItem>
           </SelectContent>
         </Select>
         <Button

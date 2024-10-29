@@ -98,9 +98,9 @@ export default function RegisterPatientForm() {
   };
 
   return (
-    <div className="min-h-screen bg-blue-50 p-4 sm:p-6 md:p-8 lg:p-10">
-      <Card className="w-full shadow-lg max-w-7xl mx-auto">
-        <CardHeader className="bg-blue-600 text-white w-full">
+    <div>
+      <Card className="shadow-lg max-w-7xl mx-auto">
+        <CardHeader className="bg-blue-600 text-white mt-10">
           <CardTitle className="text-2xl font-bold">
             New Patient Registration
           </CardTitle>
