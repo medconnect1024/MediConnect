@@ -99,13 +99,11 @@ export default function RegisterPatientForm() {
 
   return (
     <div>
-      <Card className="shadow-lg max-w-7xl mx-auto">
-        <CardHeader className="bg-blue-600 text-white mt-10">
-          <CardTitle className="text-2xl font-bold">
-            New Patient Registration
-          </CardTitle>
+      <div className="shadow-lg max-w-7xl mx-auto w-screen h-screen py-9">
+        <CardHeader className="bg-blue-600 text-white ">
+          <div className="text-2xl font-bold">New Patient Registration</div>
         </CardHeader>
-        <CardContent className="p-4 sm:p-6 md:p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <Tabs
@@ -467,8 +465,8 @@ export default function RegisterPatientForm() {
               )}
             </form>
           </Form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

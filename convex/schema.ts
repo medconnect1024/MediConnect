@@ -100,10 +100,12 @@ export default defineSchema({
         conversationId: v.string()
       }),
   
-        labReports: defineTable({
-          date: v.string(),
-          notes: v.string(),
-          fileUrl: v.string(),
-          fileType: v.union(v.literal("pdf"), v.literal("image")),
-        }).index("by_date", ["date"]),
+      labReports: defineTable({
+        date: v.string(),
+        notes: v.string(),
+        storageId: v.string(),
+        fileType: v.union(v.literal("pdf"), v.literal("image")),
+        fileName: v.string(),
+        createdAt: v.number(),
+      }).index("by_date", ["date"]),
 });
