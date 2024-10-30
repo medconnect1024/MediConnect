@@ -15,12 +15,15 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as contacts from "../contacts.js";
+import type * as crons from "../crons.js";
 import type * as http from "../http.js";
 import type * as labReports from "../labReports.js";
 import type * as messages from "../messages.js";
 import type * as patients from "../patients.js";
 import type * as patientsearch from "../patientsearch.js";
 import type * as prescriptions from "../prescriptions.js";
+import type * as scheduledCalls from "../scheduledCalls.js";
 import type * as users from "../users.js";
 import type * as watiWebhook from "../watiWebhook.js";
 
@@ -33,12 +36,15 @@ import type * as watiWebhook from "../watiWebhook.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  contacts: typeof contacts;
+  crons: typeof crons;
   http: typeof http;
   labReports: typeof labReports;
   messages: typeof messages;
   patients: typeof patients;
   patientsearch: typeof patientsearch;
   prescriptions: typeof prescriptions;
+  scheduledCalls: typeof scheduledCalls;
   users: typeof users;
   watiWebhook: typeof watiWebhook;
 }>;

@@ -108,4 +108,21 @@ export default defineSchema({
         fileName: v.string(),
         createdAt: v.number(),
       }).index("by_date", ["date"]),
+
+      contacts: defineTable({
+        phoneNumber: v.string(),
+        name: v.string(),
+        scheduledTime: v.string(), // Format: "HH:MM"
+        timezone: v.string(),
+        // Add any additional fields you might need for contacts
+      }),
+    
+      scheduledCalls: defineTable({
+        contactId: v.id("contacts"),
+        status: v.string(), // e.g., "scheduled", "completed", "failed"
+        scheduledAt: v.string(), // ISO 8601 date string
+        callId: v.optional(v.string()), // Bolna API call ID
+        result: v.optional(v.string()), // To store any result or error message
+        // Add any additional fields you might need for scheduled calls
+      }),
 });
