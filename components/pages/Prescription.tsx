@@ -111,7 +111,7 @@ export default function MultiStepPrescription() {
 
   useEffect(() => {
     if (getLastPrescription) {
-      setPreviousPrescriptions([getLastPrescription]);
+      //setPreviousPrescriptions([getLastPrescription]);
     }
   }, [getLastPrescription]);
 

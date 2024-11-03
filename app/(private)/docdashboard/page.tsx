@@ -492,9 +492,9 @@ export default function EnhancedDoctorDashboard() {
                       <Badge
                         variant={
                           patient.followUpStatus === "Completed"
-                            ? "success"
+                            ? "default"
                             : patient.followUpStatus === "Scheduled"
-                            ? "warning"
+                            ? "secondary"
                             : "destructive"
                         }
                       >

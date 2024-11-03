@@ -1,7 +1,4 @@
-"use client";
-
 import React from "react";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,10 +17,18 @@ import {
   Headphones,
   MessageSquare,
   Clock,
+  LucideIcon,
 } from "lucide-react";
+import { ClientMotionDiv } from "@/components/ClientMotionDiv";
 
-const FeatureCard = ({ icon: Icon, title, description }) => (
-  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+interface FeatureCardProps {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+}
+
+const FeatureCard: React.FC<FeatureCardProps> = ({ icon: Icon, title, description }) => (
+  <ClientMotionDiv whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
     <Card className="h-full border-2 border-[#E6F3FF] bg-white">
       <CardHeader>
         <Icon className="w-10 h-10 text-[#0077B6] mb-2" />
@@ -33,10 +38,10 @@ const FeatureCard = ({ icon: Icon, title, description }) => (
         <p className="text-[#03045E]">{description}</p>
       </CardContent>
     </Card>
-  </motion.div>
+  </ClientMotionDiv>
 );
 
-const StatCard = ({ value, label }) => (
+const StatCard = ({ value, label }: { value: string; label: string }) => (
   <Card className="border-2 border-[#E6F3FF] bg-white">
     <CardContent className="p-6">
       <div className="text-4xl font-bold mb-2 text-[#023E8A]">{value}</div>
