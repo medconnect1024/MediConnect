@@ -100,7 +100,7 @@ export default function RegisterPatientForm() {
   return (
     <div>
       <div className="shadow-lg max-w-7xl mx-auto w-screen h-screen py-9">
-        <CardHeader className="bg-blue-600 text-white ">
+        <CardHeader className="bg-blue-500 text-white ">
           <div className="text-2xl font-bold">New Patient Registration</div>
         </CardHeader>
         <div className="p-4 sm:p-6 md:p-8">
@@ -114,19 +114,19 @@ export default function RegisterPatientForm() {
                 <TabsList className="grid w-full grid-cols-3 mb-6">
                   <TabsTrigger
                     value="personal"
-                    className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                    className="data-[state=active]:bg-blue-500 data-[state=active]:text-white"
                   >
                     Personal Information
                   </TabsTrigger>
                   <TabsTrigger
                     value="address"
-                    className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                    className="data-[state=active]:bg-blue-500 data-[state=active]:text-white"
                   >
                     Address Information
                   </TabsTrigger>
                   <TabsTrigger
                     value="vitals"
-                    className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                    className="data-[state=active]:bg-blue-500 data-[state=active]:text-white"
                   >
                     Vitals
                   </TabsTrigger>
@@ -457,7 +457,7 @@ export default function RegisterPatientForm() {
               {activeTab === "vitals" && (
                 <Button
                   type="submit"
-                  className="w-full bg-blue-600 text-white hover:bg-blue-700"
+                  className="w-full bg-blue-500 text-white hover:bg-blue-600"
                 >
                   <Save className="mr-2 h-4 w-4" />
                   Save

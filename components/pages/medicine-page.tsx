@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -67,6 +67,8 @@ export default function MedicinePage({
   setMedicineReminder,
 }: MedicinePageProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
   const [newMedicine, setNewMedicine] = useState<Partial<MedicineItem>>({
     name: "",
     dosage: "",
@@ -80,6 +82,22 @@ export default function MedicinePage({
   const filteredSuggestions = MEDICINE_NAMES.filter((medicineName) =>
     medicineName.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleAddMedicine = () => {
     if (
@@ -117,30 +135,33 @@ export default function MedicinePage({
 
   const handleSuggestionClick = (medicineName: string) => {
     setNewMedicine((prev) => ({ ...prev, name: medicineName }));
-    setSearchTerm(medicineName); // Set the search term to the selected suggestion
+    setSearchTerm(medicineName);
+    setShowSuggestions(false);
   };
 
   return (
     <div className="mb-8">
       <h3 className="text-xl font-semibold mb-4">Medicine</h3>
       <div className="flex items-center space-x-4 mb-4">
-        <div className="relative flex-grow w-48 ">
+        <div ref={searchRef} className="relative flex-grow w-48">
           <Search className="absolute left-3 top-2 h-5 w-5 text-muted-foreground" />
           <Input
             className="pl-10 py-3 text-lg"
-            placeholder="Search and add medicine"
+            placeholder="Search"
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
               setNewMedicine((prev) => ({ ...prev, name: e.target.value }));
+              setShowSuggestions(true);
             }}
+            onFocus={() => setShowSuggestions(true)}
           />
-          {searchTerm && filteredSuggestions.length > 0 && (
-            <ul className="absolute z-10 bg-white border border-gray-300 rounded-md shadow-md mt-1">
+          {showSuggestions && filteredSuggestions.length > 0 && (
+            <ul className="absolute z-10 bg-white border border-gray-300 rounded-md shadow-md mt-1 w-full">
               {filteredSuggestions.map((medicineName) => (
                 <li
                   key={medicineName}
-                  className="p-2 hover:bg-gray-200 cursor-pointer"
+                  className="p-2 hover:bg-gray-200 cursor-pointer transition-colors"
                   onClick={() => handleSuggestionClick(medicineName)}
                 >
                   {medicineName}
@@ -216,7 +237,7 @@ export default function MedicinePage({
             <SelectItem value="After Food">After Food</SelectItem>
             <SelectItem value="Bedtime">Bedtime</SelectItem>
             <SelectItem value="1 hour before food">
-              1 hour before food{" "}
+              1 hour before food
             </SelectItem>
             <SelectItem value="Evening 5 pm">Evening 5 pm</SelectItem>
           </SelectContent>

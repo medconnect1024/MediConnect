@@ -102,7 +102,7 @@ export default function InvestigationsPage({
           {filteredSuggestions.map((suggestion, index) => (
             <li
               key={index}
-              className="p-2 bg-secondary rounded-md cursor-pointer hover:bg-gray-200"
+              className="p-2 hover:bg-gray-200 cursor-pointer transition-colors"
               onClick={() => handleAddItem(suggestion)}
             >
               {suggestion}
@@ -121,7 +121,7 @@ export default function InvestigationsPage({
                 <Button
                   variant="secondary"
                   size="lg"
-                  className="flex items-center gap-2 text-lg hover:bg-primary hover:text-primary-foreground transition-colors"
+                  className="flex items-center gap-2 text-lg "
                 >
                   {item.name}
                 </Button>

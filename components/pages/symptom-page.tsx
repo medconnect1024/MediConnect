@@ -179,7 +179,7 @@ export default function SymptomsComponent({
           {filteredSymptoms.map((symptom) => (
             <li
               key={symptom}
-              className="p-2 hover:bg-primary hover:text-primary-foreground cursor-pointer transition-colors"
+              className="p-2 hover:bg-gray-200 cursor-pointer transition-colors"
               onClick={() => handleAddItem(symptom)}
             >
               {symptom}
@@ -194,7 +194,7 @@ export default function SymptomsComponent({
               <Button
                 variant="secondary"
                 size="lg"
-                className="flex items-center gap-2 text-lg hover:bg-primary hover:text-primary-foreground transition-colors"
+                className="flex items-center gap-2 text-lg "
               >
                 {item.name}
               </Button>

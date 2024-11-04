@@ -26,10 +26,11 @@ import FindingsPage from "./findings-page";
 import DiagnosisPage from "./diagnosis-page";
 import MedicinePage from "./medicine-page";
 import InvestigationsPage from "./investigations-page";
+import { Id } from "@/convex/_generated/dataModel";
 
 type PrescriptionItem = { id: string; name: string };
 
-type FindingItem = {
+export type FindingItem = {
   id: string;
   name: string;
 };
@@ -51,21 +52,45 @@ type Prescription = {
   diagnoses: PrescriptionItem[];
   medicines: MedicineItem[];
   investigations: PrescriptionItem[];
-  investigationNotes: string;
-  followUpDate: string | undefined;
+  investigationNotes?: string;
+  followUpDate?: string;
   medicineReminder: {
     message: boolean;
     call: boolean;
   };
-  medicineInstructions: string;
+  medicineInstructions?: string;
   chronicCondition: boolean;
   vitals: {
     temperature: string;
     bloodPressure: string;
     pulse: string;
   };
-  severity: "Mild" | "Moderate" | "Severe";
+  severity?: "Mild" | "Moderate" | "Severe";
 };
+
+interface ApiPrescription {
+  _id: Id<"prescriptions">;
+  _creationTime: number;
+  investigationNotes?: string;
+  followUpDate?: string;
+  medicineInstructions?: string;
+  severity?: string;
+  findings: { id: string; description: string }[];
+  symptoms: PrescriptionItem[];
+  diagnoses: PrescriptionItem[];
+  medicines: MedicineItem[];
+  investigations: PrescriptionItem[];
+  medicineReminder: {
+    message: boolean;
+    call: boolean;
+  };
+  chronicCondition: boolean;
+  vitals: {
+    temperature: string;
+    bloodPressure: string;
+    pulse: string;
+  };
+}
 
 const steps = [
   "Symptoms",
@@ -111,7 +136,28 @@ export default function MultiStepPrescription() {
 
   useEffect(() => {
     if (getLastPrescription) {
-      //setPreviousPrescriptions([getLastPrescription]);
+      const apiPrescription = getLastPrescription as ApiPrescription;
+      setPreviousPrescriptions([
+        {
+          prescriptionId: apiPrescription._id,
+          symptoms: apiPrescription.symptoms,
+          findings: apiPrescription.findings.map((f) => ({
+            id: f.id,
+            name: f.description,
+          })),
+          diagnoses: apiPrescription.diagnoses,
+          medicines: apiPrescription.medicines,
+          investigations: apiPrescription.investigations,
+          investigationNotes: apiPrescription.investigationNotes,
+          followUpDate: apiPrescription.followUpDate,
+          medicineReminder: apiPrescription.medicineReminder,
+          medicineInstructions: apiPrescription.medicineInstructions,
+          chronicCondition: apiPrescription.chronicCondition,
+          vitals: apiPrescription.vitals,
+          severity:
+            (apiPrescription.severity as Prescription["severity"]) || undefined,
+        },
+      ]);
     }
   }, [getLastPrescription]);
 
@@ -186,11 +232,19 @@ export default function MultiStepPrescription() {
                   {prescription.symptoms.map((s) => s.name).join(", ")}
                 </p>
                 <p>
+                  <strong>Findings:</strong>{" "}
+                  {prescription.findings.map((f) => f.name).join(", ")}
+                </p>
+                <p>
                   <strong>Diagnoses:</strong>{" "}
                   {prescription.diagnoses.map((d) => d.name).join(", ")}
                 </p>
                 <p>
-                  <strong>Severity:</strong> {prescription.severity}
+                  <strong>Severity:</strong>{" "}
+                  {prescription.severity &&
+                  ["Mild", "Moderate", "Severe"].includes(prescription.severity)
+                    ? prescription.severity
+                    : "Not specified"}
                 </p>
                 <p>
                   <strong>Medicines:</strong>
@@ -313,7 +367,7 @@ export default function MultiStepPrescription() {
     <div className="space-y-4">
       <h3 className="text-2xl font-semibold">Prescription Preview</h3>
       <div>
-        <h4 className="text-lg font-semibold">Symptoms</h4>
+        <h4 className="text-lg font-semibold ">Symptoms</h4>
         <ul className="list-disc pl-5">
           {symptoms.map((s) => (
             <li key={s.id}>{s.name}</li>
@@ -339,7 +393,7 @@ export default function MultiStepPrescription() {
           {diagnoses.map((d) => (
             <li key={d.id}>
               {d.name} -{" "}
-              <span className="font-medium text-gray-600">{severity}</span>
+              <span className="font-medium  text-gray-600">{severity}</span>
             </li>
           ))}
         </ul>
@@ -391,7 +445,7 @@ export default function MultiStepPrescription() {
               variant={activeTab === "previous" ? "default" : "outline"}
               className={`w-full sm:w-auto ${
                 activeTab === "previous"
-                  ? "bg-blue-600 text-white"
+                  ? "bg-blue-500 text-white hover:bg-blue-600"
                   : "bg-gray-200 text-gray-800 hover:bg-gray-300"
               }`}
             >
@@ -402,7 +456,7 @@ export default function MultiStepPrescription() {
               variant={activeTab === "new" ? "default" : "outline"}
               className={`w-full sm:w-auto ${
                 activeTab === "new"
-                  ? "bg-blue-600 text-white"
+                  ? "bg-blue-500 text-white hover:bg-blue-600"
                   : "bg-gray-200 text-gray-800 hover:bg-gray-300"
               }`}
             >
@@ -418,24 +472,22 @@ export default function MultiStepPrescription() {
               >
                 <ChevronLeft className="mr-2" />
               </Button>
-
               <div className="flex-grow flex justify-center space-x-1 mx-5">
                 {steps.map((step, index) => (
                   <Button
                     key={step}
                     onClick={() => setActiveStep(index)}
                     variant={activeStep === index ? "default" : "outline"}
-                    className={`${
+                    className={`w-full text-center text-sm py-2 ${
                       activeStep === index
-                        ? "bg-blue-600 text-white"
+                        ? "bg-blue-500 text-white hover:bg-blue-600"
                         : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                    } w-full text-center text-sm py-2`}
+                    }`}
                   >
                     {step}
                   </Button>
                 ))}
               </div>
-
               <Button
                 onClick={() =>
                   setActiveStep((prev) => Math.min(steps.length - 1, prev + 1))
@@ -460,7 +512,7 @@ export default function MultiStepPrescription() {
         </div>
       )}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-4xl w-[90vw] ">
+        <DialogContent className="max-w-4xl w-[90vw]">
           <DialogHeader>
             <DialogTitle>Prescription Preview</DialogTitle>
           </DialogHeader>
@@ -477,7 +529,7 @@ export default function MultiStepPrescription() {
             </Button>
             <Button
               onClick={handleSubmit}
-              className="w-full sm:w-auto mt-2 sm:mt-0 bg-blue-600 text-white hover:bg-blue-700"
+              className="w-full sm:w-auto mt-2 sm:mt-0 bg-blue-500 text-white hover:bg-blue-600"
             >
               Submit Prescription
             </Button>
