@@ -12,6 +12,8 @@ import Logo from "@/components/common/Logo";
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const closeMenu = () => setMenuOpen(false);
+
   return (
     <header className="bg-white dark:bg-blue-500 shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
@@ -52,9 +54,11 @@ export default function Header() {
                 Log in
               </Button>
             </SignInButton>
-            <Button className="bg-[#2178e9] text-white hover:bg-[#0067ee]">
-              Get Started
-            </Button>
+            <SignInButton>
+              <Button className="bg-[#2178e9] text-white hover:bg-[#0067ee]">
+                Get Started
+              </Button>
+            </SignInButton>
           </Unauthenticated>
           <Authenticated>
             <UserButton />
@@ -66,9 +70,8 @@ export default function Header() {
           </Authenticated>
         </nav>
 
-        {/* Mobile Menu Button */}
-        <div className="md:hidden flex items-center">
-          <Logo />
+        {/* Mobile Menu Button (Only visible on mobile) */}
+        <div className="flex items-center md:hidden">
           <Button
             variant="ghost"
             size="icon"
@@ -86,18 +89,21 @@ export default function Header() {
           <a
             href="#features"
             className="text-lg text-gray-700 dark:text-gray-300 hover:text-blue-500"
+            onClick={closeMenu}
           >
             Features
           </a>
           <a
             href="#benefits"
             className="text-lg text-gray-700 dark:text-gray-300 hover:text-blue-500"
+            onClick={closeMenu}
           >
             Benefits
           </a>
           <a
             href="#testimonials"
             className="text-lg text-gray-700 dark:text-gray-300 hover:text-blue-500"
+            onClick={closeMenu}
           >
             Testimonials
           </a>
@@ -108,19 +114,28 @@ export default function Header() {
             <SignInButton>
               <Button
                 variant="ghost"
-                className="text-base font-bold text-[#023E8A] hover:text-blue-500"
+                className="text-base font-bold text-[#3292f7] hover:text-blue-500"
+                onClick={closeMenu}
               >
                 Log in
               </Button>
             </SignInButton>
-            <Button className="bg-[#0077B6] text-white hover:bg-[#023E8A]">
-              Get Started
-            </Button>
+            <SignInButton>
+              <Button
+                className="bg-[#3292f7] text-white hover:bg-[#1e7df8]"
+                onClick={closeMenu}
+              >
+                Get Started
+              </Button>
+            </SignInButton>
           </Unauthenticated>
           <Authenticated>
             <UserButton />
             <Link href="/docdashboard" passHref>
-              <Button className="bg-[#0077B6] text-white hover:bg-[#023E8A] w-full mt-4">
+              <Button
+                className="bg-[#3292f7] text-white hover:bg-[#2a83f7] w-full mt-4"
+                onClick={closeMenu}
+              >
                 Dashboard
               </Button>
             </Link>

@@ -7,11 +7,9 @@ export default function Logo() {
   const { isAuthenticated } = useConvexAuth();
 
   return (
-    <div className="hidden md:flex gap-10 items-center justify-start flex-1">
+    <div className="flex items-center justify-start">
       <Link href={isAuthenticated ? "/docdashboard" : "/"}>
-        <div className="flex gap-1 justify-center items-center transform scale-125">
-          {" "}
-          {/* Adjust scale as needed */}
+        <div className="flex justify-center items-center transform md:scale-125 scale-100">
           <Image
             src={LogoImage}
             alt="My Medi Records Logo"
