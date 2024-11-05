@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link"; // Import Link for client-side navigation
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { AuthLoading, Authenticated, Unauthenticated } from "convex/react";
 import { SignInButton, UserButton } from "@clerk/nextjs";
 import { Loading } from "@/components/shared/Loading";
-import Logo from "@/components/common/Logo"; // Assuming you have a logo component
+import Logo from "@/components/common/Logo";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -15,14 +15,13 @@ export default function Header() {
   return (
     <header className="bg-white dark:bg-blue-500 shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        {/* Logo Section */}
+        {/* Logo */}
         <div className="flex items-center">
           <Logo />
         </div>
 
-        {/* Menu for larger screens */}
+        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
-          {/* Additional Options */}
           <a
             href="#features"
             className="text-lg text-blue-500 dark:text-gray-300 hover:text-blue-500"
@@ -41,8 +40,6 @@ export default function Header() {
           >
             Testimonials
           </a>
-
-          {/* Authentication */}
           <AuthLoading>
             <Loading />
           </AuthLoading>
@@ -55,6 +52,9 @@ export default function Header() {
                 Log in
               </Button>
             </SignInButton>
+            <Button className="bg-[#2178e9] text-white hover:bg-[#0067ee]">
+              Get Started
+            </Button>
           </Unauthenticated>
           <Authenticated>
             <UserButton />
@@ -64,21 +64,16 @@ export default function Header() {
               </Button>
             </Link>
           </Authenticated>
-
-          {/* Additional Buttons */}
-          <Unauthenticated>
-            <Button className="bg-[#2178e9] text-white hover:bg-[#0067ee]">
-              Get Started
-            </Button>
-          </Unauthenticated>
         </nav>
 
         {/* Mobile Menu Button */}
-        <div className="md:hidden">
+        <div className="md:hidden flex items-center">
+          <Logo />
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setMenuOpen(!menuOpen)}
+            className="ml-auto"
           >
             <Menu className="h-6 w-6 text-gray-700 dark:text-gray-300" />
           </Button>
@@ -87,8 +82,7 @@ export default function Header() {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <nav className="md:hidden flex-col absolute top-16 left-0 w-full bg-white dark:bg-gray-800 p-4 shadow-lg z-50 space-y-4">
-          {/* Additional Options */}
+        <nav className="md:hidden flex flex-col absolute top-16 left-0 w-full bg-white dark:bg-gray-800 p-4 shadow-lg z-50 space-y-4">
           <a
             href="#features"
             className="text-lg text-gray-700 dark:text-gray-300 hover:text-blue-500"
@@ -107,8 +101,6 @@ export default function Header() {
           >
             Testimonials
           </a>
-
-          {/* Authentication */}
           <AuthLoading>
             <Loading />
           </AuthLoading>
@@ -128,7 +120,7 @@ export default function Header() {
           <Authenticated>
             <UserButton />
             <Link href="/docdashboard" passHref>
-              <Button className="bg-[#0077B6] text-white hover:bg-[#023E8A]">
+              <Button className="bg-[#0077B6] text-white hover:bg-[#023E8A] w-full mt-4">
                 Dashboard
               </Button>
             </Link>

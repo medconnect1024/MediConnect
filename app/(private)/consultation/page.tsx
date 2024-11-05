@@ -1,14 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, UserPlus } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { UserCircle } from "lucide-react";
 import PrescriptionPage from "@/components/pages/Prescription";
 import LabReportPage from "@/components/pages/lab-report-page";
 import BillingPage from "@/components/pages/billing-page";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import VaccinationPage from "@/components/pages/VaccinationPage";
+import MedicalHistoryPage from "@/components/pages/MedicalHistoryPage";
 
-// PatientCard Component
 interface PatientCardProps {
   name: string;
   gender: string;
@@ -49,34 +57,70 @@ const PatientCard: React.FC<PatientCardProps> = ({
   </Card>
 );
 
-// Sidebar Component
-interface Patient {
-  name: string;
-  gender: string;
-  age: string;
-}
+const PatientProfile: React.FC<{ patientId: number | null }> = ({
+  patientId,
+}) => {
+  const patientInfo = patientId
+    ? useQuery(api.patients.getPatientById, { patientId })
+    : null;
 
-const Sidebar: React.FC = () => {
-  const [selectedPatient, setSelectedPatient] = useState<string>("Harshil");
+  if (!patientId) return <div className="p-4">No patient selected</div>;
+  if (patientInfo === undefined) return <div className="p-4">Loading...</div>;
+  if (patientInfo === null)
+    return <div className="p-4 text-red-500">Error: Patient not found</div>;
 
-  const handlePatientClick = (patient: Patient) => {
-    console.log(`Clicked on patient: ${patient.name}`);
-    setSelectedPatient(patient.name); // Highlight the selected patient
+  const calculateAge = (dateOfBirth: string) => {
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+    return age;
   };
 
-  const onQueuePatients: Patient[] = [
-    { name: "Harshil", gender: "M", age: "35y 0m" },
-    { name: "Priya", gender: "F", age: "28y 6m" },
-    { name: "Rahul", gender: "M", age: "42y 3m" },
-  ];
+  const age = calculateAge(patientInfo.dateOfBirth);
 
-  const completedAppointments: Patient[] = [
-    { name: "Vaibhav", gender: "M", age: "1y 10m" },
-    { name: "Anita", gender: "F", age: "55y 2m" },
-    { name: "Rajesh", gender: "M", age: "39y 8m" },
-  ];
+  return (
+    <div className="p-4">
+      <h2 className="font-bold text-lg">{`${patientInfo.firstName} ${patientInfo.lastName}`}</h2>
+      <p>
+        <strong>Gender:</strong> {patientInfo.gender}
+      </p>
+      <p>
+        <strong>Age:</strong> {age} years
+      </p>
+      <p>
+        <strong>Phone:</strong> {patientInfo.phoneNumber}
+      </p>
+    </div>
+  );
+};
+
+const Sidebar: React.FC<{
+  onPatientSelect: (patientId: number) => void;
+  selectedPatientId: number | null;
+}> = ({ onPatientSelect, selectedPatientId }) => {
+  const appointments = useQuery(api.patients.getAppointments);
+
+  const onQueuePatients =
+    appointments?.filter((appointment) => appointment.status === "Scheduled") ||
+    [];
+  const completedAppointments =
+    appointments?.filter((appointment) => appointment.status === "Completed") ||
+    [];
 
   const totalPatients = onQueuePatients.length + completedAppointments.length;
+
+  useEffect(() => {
+    if (onQueuePatients.length > 0 && !selectedPatientId) {
+      onPatientSelect(Number(onQueuePatients[0].patientId));
+    }
+  }, [onQueuePatients, selectedPatientId, onPatientSelect]);
 
   return (
     <aside className="w-64 overflow-y-auto border-r p-4 flex flex-col h-full">
@@ -87,14 +131,16 @@ const Sidebar: React.FC = () => {
           On Queue ({onQueuePatients.length})
         </h3>
         <div>
-          {onQueuePatients.map((patient, index) => (
+          {onQueuePatients.map((appointment) => (
             <PatientCard
-              key={index}
-              name={patient.name}
-              gender={patient.gender}
-              age={patient.age}
-              isHighlighted={selectedPatient === patient.name}
-              onClick={() => handlePatientClick(patient)}
+              key={appointment.id}
+              name={appointment.patientId}
+              gender=""
+              age=""
+              isHighlighted={
+                selectedPatientId === Number(appointment.patientId)
+              }
+              onClick={() => onPatientSelect(Number(appointment.patientId))}
             />
           ))}
         </div>
@@ -105,14 +151,16 @@ const Sidebar: React.FC = () => {
           Appointment Completed ({completedAppointments.length})
         </h3>
         <div>
-          {completedAppointments.map((patient, index) => (
+          {completedAppointments.map((appointment) => (
             <PatientCard
-              key={index}
-              name={patient.name}
-              gender={patient.gender}
-              age={patient.age}
-              isHighlighted={selectedPatient === patient.name}
-              onClick={() => handlePatientClick(patient)}
+              key={appointment.id}
+              name={appointment.patientId}
+              gender=""
+              age=""
+              isHighlighted={
+                selectedPatientId === Number(appointment.patientId)
+              }
+              onClick={() => onPatientSelect(Number(appointment.patientId))}
             />
           ))}
         </div>
@@ -121,157 +169,134 @@ const Sidebar: React.FC = () => {
   );
 };
 
-// ActionButtons Component
-// ActionButtons Component
 const ActionButtons: React.FC<{
   setSelectedSection: (section: string) => void;
-  selectedSection: string; // Add selectedSection as a prop
-}> = ({ setSelectedSection, selectedSection }) => (
-  <div className="mb-4">
-    <div className="flex flex-wrap gap-2">
-      <Button
-        variant={selectedSection === "overview" ? "default" : "outline"} // Highlight if selected
-        className={`${
-          selectedSection === "overview"
-            ? "bg-blue-500 text-white hover:bg-white hover:text-blue-500"
-            : ""
-        }`}
-        onClick={() => setSelectedSection("overview")}
-      >
-        Overview
-      </Button>
+  selectedSection: string;
+  selectedPatientId: number | null;
+}> = ({ setSelectedSection, selectedSection, selectedPatientId }) => {
+  const patientInfo = selectedPatientId
+    ? useQuery(api.patients.getPatientById, { patientId: selectedPatientId })
+    : null;
 
-      <Button
-        variant={selectedSection === "prescription" ? "default" : "outline"} // Highlight if selected
-        className={`${
-          selectedSection === "prescription"
-            ? "bg-blue-500 text-white hover:bg-white hover:text-blue-500"
-            : ""
-        }`}
-        onClick={() => setSelectedSection("prescription")}
-      >
-        Prescription
-      </Button>
-      <Button
-        variant={selectedSection === "vaccination" ? "default" : "outline"} // Highlight if selected
-        className={`${
-          selectedSection === "vaccination"
-            ? "bg-blue-500 text-white hover:bg-white hover:text-blue-500"
-            : ""
-        }`}
-        onClick={() => setSelectedSection("vaccination")}
-      >
-        Vaccination
-      </Button>
-      <Button
-        variant={selectedSection === "labReports" ? "default" : "outline"} // Highlight if selected
-        className={`${
-          selectedSection === "labReports"
-            ? "bg-blue-500 text-white hover:bg-white hover:text-blue-500"
-            : ""
-        }`}
-        onClick={() => setSelectedSection("labReports")}
-      >
-        Lab Reports
-      </Button>
-      <Button
-        variant={selectedSection === "billing" ? "default" : "outline"} // Highlight if selected
-        className={`${
-          selectedSection === "billing"
-            ? "bg-blue-500 text-white hover:bg-white hover:text-blue-500"
-            : ""
-        }`}
-        onClick={() => setSelectedSection("billing")}
-      >
-        Billing
-      </Button>
-
-      <div className="flex items-center space-x-4 justify-end ml-auto">
-        <div className="flex items-center space-x-2">
-          <div
-            className="h-8 w-8 rounded-full bg-blue-500"
-            aria-hidden="true"
-          />
-          <div>
-            <p className="font-medium">Harshil</p>
-            <p className="text-sm text-muted-foreground">Male, 35y AS1136</p>
-          </div>
-        </div>
+  return (
+    <div className="mb-4 flex justify-between items-center">
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant={selectedSection === "overview" ? "default" : "outline"}
+          className={
+            selectedSection === "overview"
+              ? "bg-blue-500 text-white hover:bg-blue-600"
+              : ""
+          }
+          onClick={() => setSelectedSection("overview")}
+        >
+          Overview
+        </Button>
+        <Button
+          variant={selectedSection === "prescription" ? "default" : "outline"}
+          className={
+            selectedSection === "prescription"
+              ? "bg-blue-500 text-white hover:bg-blue-600"
+              : ""
+          }
+          onClick={() => setSelectedSection("prescription")}
+        >
+          Prescription
+        </Button>
+        <Button
+          variant={selectedSection === "vaccination" ? "default" : "outline"}
+          className={
+            selectedSection === "vaccination"
+              ? "bg-blue-500 text-white hover:bg-blue-600"
+              : ""
+          }
+          onClick={() => setSelectedSection("vaccination")}
+        >
+          Vaccination
+        </Button>
+        <Button
+          variant={selectedSection === "labReports" ? "default" : "outline"}
+          className={
+            selectedSection === "labReports"
+              ? "bg-blue-500 text-white hover:bg-blue-600"
+              : ""
+          }
+          onClick={() => setSelectedSection("labReports")}
+        >
+          Lab Reports
+        </Button>
+        <Button
+          variant={selectedSection === "billing" ? "default" : "outline"}
+          className={
+            selectedSection === "billing"
+              ? "bg-blue-500 text-white hover:bg-blue-600"
+              : ""
+          }
+          onClick={() => setSelectedSection("billing")}
+        >
+          Billing
+        </Button>
       </div>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="ghost" className="p-0 flex flex-col items-center">
+            <UserCircle
+              className="h-12 w-12 text-blue-500"
+              aria-hidden="true"
+            />
+            <span className="text-sm font-medium mt-1">
+              {selectedPatientId
+                ? patientInfo === undefined
+                  ? "Loading..."
+                  : patientInfo === null
+                    ? "Not Found"
+                    : patientInfo.firstName
+                : "Select Patient"}
+            </span>
+            <span className="sr-only">View patient profile</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80">
+          {selectedPatientId ? (
+            <PatientProfile patientId={selectedPatientId} />
+          ) : (
+            <div className="p-4">Please select a patient</div>
+          )}
+        </PopoverContent>
+      </Popover>
     </div>
-  </div>
-);
+  );
+};
 
-// MedicalHistoryCard Component
-const MedicalHistoryCard: React.FC = () => (
-  <Card className="mb-4">
-    <CardHeader>
-      <CardTitle className="text-base font-medium">Medical History</CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="space-y-2">
-        {[
-          { label: "Medical problems", value: "Diabetes" },
-          { label: "Diabetes since", value: "1-2 years" },
-          { label: "Diabetes medication", value: "Yes" },
-          { label: "Medication", value: "Insulin (80 iu) - 7 daily" },
-        ].map(({ label, value }) => (
-          <div key={label}>
-            <p className="text-sm text-muted-foreground">{label}</p>
-            <p>{value}</p>
-          </div>
-        ))}
-      </div>
-    </CardContent>
-  </Card>
-);
-
-// VaccinationCard Component
-const VaccinationCard: React.FC = () => (
-  <Card>
-    <CardContent className="flex flex-col items-center justify-center p-6">
-      <svg
-        className="h-12 w-12 text-muted-foreground"
-        fill="none"
-        height="24"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        viewBox="0 0 24 24"
-        width="24"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path d="M19.875 6.27A2.225 2.225 0 0 1 21 8.218v7.284c0 .809-.443 1.555-1.158 1.948l-6.75 4.27a2.269 2.269 0 0 1-2.184 0l-6.75-4.27A2.225 2.225 0 0 1 3 15.502V8.217c0-.809.443-1.554 1.158-1.947l6.75-3.98a2.33 2.33 0 0 1 2.25 0l6.75 3.98h-.033z" />
-        <path d="m10 16 2 2 4-4" />
-      </svg>
-      <p className="mt-2 text-sm text-muted-foreground">
-        No vaccination records found.
-      </p>
-    </CardContent>
-  </Card>
-);
-
-// Main Component
 export default function Component() {
   const [selectedSection, setSelectedSection] = useState("overview");
+  const [selectedPatientId, setSelectedPatientId] = useState<number | null>(
+    null
+  );
+
+  const handlePatientSelect = (patientId: number) => {
+    setSelectedPatientId(patientId);
+    setSelectedSection("overview");
+  };
 
   return (
     <div className="w-full h-full flex flex-col">
       <div className="flex flex-1 overflow-hidden w-full mt-10">
-        <Sidebar />
+        <Sidebar
+          onPatientSelect={handlePatientSelect}
+          selectedPatientId={selectedPatientId}
+        />
         <main className="flex-1 overflow-y-auto p-4">
           <ActionButtons
             setSelectedSection={setSelectedSection}
-            selectedSection={selectedSection} // Pass selectedSection here
+            selectedSection={selectedSection}
+            selectedPatientId={selectedPatientId}
           />
-          {/* Conditionally render sections based on the selected section */}
-          {selectedSection === "overview" && <MedicalHistoryCard />}
-          {selectedSection === "prescription" && <PrescriptionPage />}{" "}
-          {selectedSection === "vaccination" && <VaccinationCard />}
+          {selectedSection === "overview" && <MedicalHistoryPage />}
+          {selectedSection === "prescription" && <PrescriptionPage />}
+          {selectedSection === "vaccination" && <VaccinationPage />}
           {selectedSection === "labReports" && <LabReportPage />}
           {selectedSection === "billing" && <BillingPage />}
-          {/* Add more sections as needed */}
         </main>
       </div>
     </div>

@@ -27,7 +27,11 @@ interface FeatureCardProps {
   description: string;
 }
 
-const FeatureCard: React.FC<FeatureCardProps> = ({ icon: Icon, title, description }) => (
+const FeatureCard: React.FC<FeatureCardProps> = ({
+  icon: Icon,
+  title,
+  description,
+}) => (
   <ClientMotionDiv whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
     <Card className="h-full border-2 border-[#E6F3FF] bg-white">
       <CardHeader>

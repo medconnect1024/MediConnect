@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { mutation,query} from "./_generated/server";
 import { v } from "convex/values";
 
 export const registerPatient = mutation({
@@ -43,5 +43,57 @@ export const registerPatient = mutation({
     });
 
     return { success: true, patientId };
+  },
+});
+
+
+
+export const getAppointments = query({
+  handler: async (ctx) => {
+    const appointments = await ctx.db.query("appointments").collect();
+    return appointments.map((appointment) => ({
+      id: appointment._id,
+      patientId: appointment.patientId,
+      date: appointment.appointmentDate,
+      status: appointment.status,
+    }));
+  },
+});
+
+export const getPatientById = query({
+  args: {
+    patientId: v.number(),
+  },
+  handler: async (ctx, { patientId }) => {
+    const patient = await ctx.db
+      .query("patients")
+      .withIndex("by_patient_id", (q) => q.eq("patientId", patientId))
+      .unique();
+
+    if (!patient) {
+      throw new Error("Patient not found.");
+    }
+
+    return {
+      id: patient._id,
+      email: patient.email,
+      firstName: patient.firstName,
+      middleName: patient.middleName,
+      lastName: patient.lastName,
+      dateOfBirth: patient.dateOfBirth,
+      gender: patient.gender,
+      phoneNumber: patient.phoneNumber,
+      houseNo: patient.houseNo,
+      gramPanchayat: patient.gramPanchayat,
+      village: patient.village,
+      tehsil: patient.tehsil,
+      district: patient.district,
+      state: patient.state,
+      systolic: patient.systolic,
+      diastolic: patient.diastolic,
+      heartRate: patient.heartRate,
+      temperature: patient.temperature,
+      oxygenSaturation: patient.oxygenSaturation,
+    };
   },
 });
