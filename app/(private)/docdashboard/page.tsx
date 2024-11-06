@@ -1,7 +1,8 @@
-'use client'
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
+import { useState } from "react";
+import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 import {
   Bell,
   Calendar,
@@ -38,19 +39,19 @@ import {
   Clock4,
   AlertTriangle,
   AlertOctagon,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useRouter } from "next/navigation"
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useRouter } from "next/navigation";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -58,8 +59,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   LineChart,
   Line,
@@ -79,13 +80,14 @@ import {
   Legend,
   BarChart,
   Bar,
-} from "recharts"
-import { Badge } from "@/components/ui/badge"
+} from "recharts";
+import { Badge } from "@/components/ui/badge";
 
 export default function EnhancedDoctorDashboard() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState("dashboard")
-  const router = useRouter()
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const router = useRouter();
+  const { user, isSignedIn } = useUser();
 
   // Mock data (kept from original and extended)
   const patientData = [
@@ -98,7 +100,8 @@ export default function EnhancedDoctorDashboard() {
       condition: "Hypertension",
       lastFollowUpCall: "2023-10-20",
       followUpStatus: "Completed",
-      followUpNotes: "Patient reported improved blood pressure. Continuing current medication.",
+      followUpNotes:
+        "Patient reported improved blood pressure. Continuing current medication.",
       appointmentType: "Regular Check-up",
       criticality: "Low",
     },
@@ -111,7 +114,8 @@ export default function EnhancedDoctorDashboard() {
       condition: "Pregnancy",
       lastFollowUpCall: "2023-10-25",
       followUpStatus: "Scheduled",
-      followUpNotes: "Follow-up call scheduled for 2023-11-01 to discuss recent test results.",
+      followUpNotes:
+        "Follow-up call scheduled for 2023-11-01 to discuss recent test results.",
       appointmentType: "Prenatal Check-up",
       criticality: "Medium",
     },
@@ -124,7 +128,8 @@ export default function EnhancedDoctorDashboard() {
       condition: "Diabetes",
       lastFollowUpCall: "2023-10-17",
       followUpStatus: "Completed",
-      followUpNotes: "Blood sugar levels stabilizing. Discussed importance of diet adherence.",
+      followUpNotes:
+        "Blood sugar levels stabilizing. Discussed importance of diet adherence.",
       appointmentType: "Urgent Care",
       criticality: "High",
     },
@@ -137,11 +142,12 @@ export default function EnhancedDoctorDashboard() {
       condition: "Asthma",
       lastFollowUpCall: null,
       followUpStatus: "Pending",
-      followUpNotes: "Initial follow-up call needed to assess new inhaler effectiveness.",
+      followUpNotes:
+        "Initial follow-up call needed to assess new inhaler effectiveness.",
       appointmentType: "Follow-up",
       criticality: "Medium",
     },
-  ]
+  ];
 
   const patientFlowData = [
     { name: "Mon", patients: 20 },
@@ -151,91 +157,93 @@ export default function EnhancedDoctorDashboard() {
     { name: "Fri", patients: 28 },
     { name: "Sat", patients: 15 },
     { name: "Sun", patients: 10 },
-  ]
+  ];
 
   const patientSatisfactionData = [
-    { subject: 'Communication', A: 120, B: 110, fullMark: 150 },
-    { subject: 'Treatment Effectiveness', A: 98, B: 130, fullMark: 150 },
-    { subject: 'Wait Time', A: 86, B: 130, fullMark: 150 },
-    { subject: 'Facility Cleanliness', A: 99, B: 100, fullMark: 150 },
-    { subject: 'Staff Friendliness', A: 85, B: 90, fullMark: 150 },
-    { subject: 'Follow-up Care', A: 65, B: 85, fullMark: 150 },
-  ]
+    { subject: "Communication", A: 120, B: 110, fullMark: 150 },
+    { subject: "Treatment Effectiveness", A: 98, B: 130, fullMark: 150 },
+    { subject: "Wait Time", A: 86, B: 130, fullMark: 150 },
+    { subject: "Facility Cleanliness", A: 99, B: 100, fullMark: 150 },
+    { subject: "Staff Friendliness", A: 85, B: 90, fullMark: 150 },
+    { subject: "Follow-up Care", A: 65, B: 85, fullMark: 150 },
+  ];
 
   const patientRetentionData = [
-    { name: 'New', value: 30 },
-    { name: 'Returning', value: 70 },
-  ]
+    { name: "New", value: 30 },
+    { name: "Returning", value: 70 },
+  ];
 
   const postConsultationData = [
-    { name: 'Felt Better', value: 65 },
-    { name: 'No Change', value: 20 },
-    { name: 'Worsened', value: 15 },
-  ]
+    { name: "Felt Better", value: 65 },
+    { name: "No Change", value: 20 },
+    { name: "Worsened", value: 15 },
+  ];
 
   const followUpData = [
-    { name: 'No Follow-up', value: 40 },
-    { name: 'Follow-up Required', value: 60 },
-  ]
+    { name: "No Follow-up", value: 40 },
+    { name: "Follow-up Required", value: 60 },
+  ];
 
   const referralData = [
-    { name: 'Jan', referrals: 5 },
-    { name: 'Feb', referrals: 8 },
-    { name: 'Mar', referrals: 12 },
-    { name: 'Apr', referrals: 10 },
-    { name: 'May', referrals: 15 },
-    { name: 'Jun', referrals: 18 },
-  ]
+    { name: "Jan", referrals: 5 },
+    { name: "Feb", referrals: 8 },
+    { name: "Mar", referrals: 12 },
+    { name: "Apr", referrals: 10 },
+    { name: "May", referrals: 15 },
+    { name: "Jun", referrals: 18 },
+  ];
 
   const medicinePatternData = [
-    { name: 'Antibiotics', prescriptions: 120, effectiveness: 85 },
-    { name: 'Antihypertensives', prescriptions: 200, effectiveness: 92 },
-    { name: 'Antidiabetics', prescriptions: 150, effectiveness: 88 },
-    { name: 'Analgesics', prescriptions: 180, effectiveness: 78 },
-    { name: 'Antidepressants', prescriptions: 90, effectiveness: 75 },
-  ]
+    { name: "Antibiotics", prescriptions: 120, effectiveness: 85 },
+    { name: "Antihypertensives", prescriptions: 200, effectiveness: 92 },
+    { name: "Antidiabetics", prescriptions: 150, effectiveness: 88 },
+    { name: "Analgesics", prescriptions: 180, effectiveness: 78 },
+    { name: "Antidepressants", prescriptions: 90, effectiveness: 75 },
+  ];
 
   const whatsappBotData = [
-    { name: 'Appointment Reminders', value: 150 },
-    { name: 'Medication Reminders', value: 120 },
-    { name: 'Health Tips', value: 80 },
-    { name: 'Quick Queries', value: 50 },
-  ]
+    { name: "Appointment Reminders", value: 150 },
+    { name: "Medication Reminders", value: 120 },
+    { name: "Health Tips", value: 80 },
+    { name: "Quick Queries", value: 50 },
+  ];
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8']
+  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
   const handleNavigation = (path: string) => {
-    router.push(path)
-  }
+    router.push(path);
+  };
 
   const getCriticalityIcon = (criticality: string) => {
     switch (criticality) {
-      case 'High':
-        return <AlertOctagon className="h-5 w-5 text-red-500" />
-      case 'Medium':
-        return <AlertTriangle className="h-5 w-5 text-yellow-500" />
-      case 'Low':
-        return <AlertCircle className="h-5 w-5 text-green-500" />
+      case "High":
+        return <AlertOctagon className="h-5 w-5 text-red-500" />;
+      case "Medium":
+        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
+      case "Low":
+        return <AlertCircle className="h-5 w-5 text-green-500" />;
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex pt-16 justify-center items-center w-full">
         <div className="w-full max-w-7xl px-4">
+          <h1></h1>
           <h2 className="text-3xl font-bold text-gray-800 mb-6">
-            Welcome, Dr. Smith
+            Welcome, Dr {user?.username || user?.firstName || "User"}!
           </h2>
-
           <Card className="mb-8">
             <CardContent className="p-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="flex items-center space-x-4">
                   <CalendarDays className="h-10 w-10 text-blue-500" />
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Appointments Today</p>
+                    <p className="text-sm font-medium text-gray-500">
+                      Appointments Today
+                    </p>
                     <h3 className="text-2xl font-bold text-gray-900">12</h3>
                     <p className="text-xs text-gray-500">3 urgent</p>
                   </div>
@@ -243,15 +251,21 @@ export default function EnhancedDoctorDashboard() {
                 <div className="flex items-center space-x-4">
                   <Users className="h-10 w-10 text-green-500" />
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Patients This Week</p>
+                    <p className="text-sm font-medium text-gray-500">
+                      Patients This Week
+                    </p>
                     <h3 className="text-2xl font-bold text-gray-900">78</h3>
-                    <p className="text-xs text-gray-500">↑ 12% from last week</p>
+                    <p className="text-xs text-gray-500">
+                      ↑ 12% from last week
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
                   <Clipboard className="h-10 w-10 text-yellow-500" />
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Lab Results Pending</p>
+                    <p className="text-sm font-medium text-gray-500">
+                      Lab Results Pending
+                    </p>
                     <h3 className="text-2xl font-bold text-gray-900">7</h3>
                     <p className="text-xs text-gray-500">2 critical</p>
                   </div>
@@ -259,9 +273,13 @@ export default function EnhancedDoctorDashboard() {
                 <div className="flex items-center space-x-4">
                   <UserCheck className="h-10 w-10 text-purple-500" />
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Patient Retention Rate</p>
+                    <p className="text-sm font-medium text-gray-500">
+                      Patient Retention Rate
+                    </p>
                     <h3 className="text-2xl font-bold text-gray-900">85%</h3>
-                    <p className="text-xs text-gray-500">↑ 2% from last month</p>
+                    <p className="text-xs text-gray-500">
+                      ↑ 2% from last month
+                    </p>
                   </div>
                 </div>
               </div>
@@ -271,7 +289,9 @@ export default function EnhancedDoctorDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <Card>
               <CardHeader>
-                <CardTitle className="text-gray-800">Patient Flow This Week</CardTitle>
+                <CardTitle className="text-gray-800">
+                  Patient Flow This Week
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -292,7 +312,9 @@ export default function EnhancedDoctorDashboard() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-gray-800">Patient Satisfaction Radar</CardTitle>
+                <CardTitle className="text-gray-800">
+                  Patient Satisfaction Radar
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -300,8 +322,20 @@ export default function EnhancedDoctorDashboard() {
                     <PolarGrid />
                     <PolarAngleAxis dataKey="subject" />
                     <PolarRadiusAxis angle={30} domain={[0, 150]} />
-                    <Radar name="You" dataKey="A" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-                    <Radar name="Industry Avg" dataKey="B" stroke="#82ca9d" fill="#82ca9d" fillOpacity={0.6} />
+                    <Radar
+                      name="You"
+                      dataKey="A"
+                      stroke="#8884d8"
+                      fill="#8884d8"
+                      fillOpacity={0.6}
+                    />
+                    <Radar
+                      name="Industry Avg"
+                      dataKey="B"
+                      stroke="#82ca9d"
+                      fill="#82ca9d"
+                      fillOpacity={0.6}
+                    />
                     <Legend />
                   </RadarChart>
                 </ResponsiveContainer>
@@ -323,7 +357,9 @@ export default function EnhancedDoctorDashboard() {
                       <TableHead className="text-gray-600">Patient</TableHead>
                       <TableHead className="text-gray-600">Date</TableHead>
                       <TableHead className="text-gray-600">Type</TableHead>
-                      <TableHead className="text-gray-600">Criticality</TableHead>
+                      <TableHead className="text-gray-600">
+                        Criticality
+                      </TableHead>
                       <TableHead className="text-gray-600">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -350,7 +386,9 @@ export default function EnhancedDoctorDashboard() {
                             variant="outline"
                             size="sm"
                             className="mr-2 text-blue-600 border-blue-300 hover:bg-blue-50"
-                            onClick={() => handleNavigation(`/patient/${patient.id}`)}
+                            onClick={() =>
+                              handleNavigation(`/patient/${patient.id}`)
+                            }
                           >
                             View
                           </Button>
@@ -361,7 +399,6 @@ export default function EnhancedDoctorDashboard() {
                           >
                             Reschedule
                           </Button>
-                        
                         </TableCell>
                       </TableRow>
                     ))}
@@ -371,7 +408,9 @@ export default function EnhancedDoctorDashboard() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-gray-800">Patient Retention</CardTitle>
+                <CardTitle className="text-gray-800">
+                  Patient Retention
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={200}>
@@ -384,21 +423,37 @@ export default function EnhancedDoctorDashboard() {
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) =>
+                        `${name} ${(percent * 100).toFixed(0)}%`
+                      }
                     >
                       {patientRetentionData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
                       ))}
                     </Pie>
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="mt-4">
-                  <h4 className="font-semibold text-gray-700 mb-2">Key Insights</h4>
+                  <h4 className="font-semibold text-gray-700 mb-2">
+                    Key Insights
+                  </h4>
                   <ul className="space-y-2 text-sm text-gray-600">
-                    <li>• 70% of your patients are returning, indicating high satisfaction</li>
-                    <li>• New patient acquisition rate is 30%, suggesting room for growth</li>
-                    <li>• Consider implementing a referral program to boost new patient numbers</li>
+                    <li>
+                      • 70% of your patients are returning, indicating high
+                      satisfaction
+                    </li>
+                    <li>
+                      • New patient acquisition rate is 30%, suggesting room for
+                      growth
+                    </li>
+                    <li>
+                      • Consider implementing a referral program to boost new
+                      patient numbers
+                    </li>
                   </ul>
                 </div>
               </CardContent>
@@ -415,29 +470,47 @@ export default function EnhancedDoctorDashboard() {
                   <div className="flex items-center space-x-4">
                     <AlertCircle className="h-6 w-6 text-yellow-500" />
                     <div>
-                      <p className="text-sm font-medium text-gray-800">Potential Drug Interaction</p>
-                      <p className="text-xs text-gray-600">Check prescriptions for patients on multiple medications</p>
+                      <p className="text-sm font-medium text-gray-800">
+                        Potential Drug Interaction
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        Check prescriptions for patients on multiple medications
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
                     <Activity className="h-6 w-6 text-green-500" />
                     <div>
-                      <p className="text-sm font-medium text-gray-800">Improved Treatment Efficacy</p>
-                      <p className="text-xs text-gray-600">New treatment plan showing positive results for diabetes patients</p>
+                      <p className="text-sm font-medium text-gray-800">
+                        Improved Treatment Efficacy
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        New treatment plan showing positive results for diabetes
+                        patients
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
                     <TrendingUp className="h-6 w-6 text-blue-500" />
                     <div>
-                      <p className="text-sm font-medium text-gray-800">Treatment Efficacy Trend</p>
-                      <p className="text-xs text-gray-600">15% improvement in patient outcomes for hypertension treatments</p>
+                      <p className="text-sm font-medium text-gray-800">
+                        Treatment Efficacy Trend
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        15% improvement in patient outcomes for hypertension
+                        treatments
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
                     <Brain className="h-6 w-6 text-purple-500" />
                     <div>
-                      <p className="text-sm font-medium text-gray-800">AI Diagnosis Accuracy</p>
-                      <p className="text-xs text-gray-600">95% accuracy in preliminary diagnoses this month</p>
+                      <p className="text-sm font-medium text-gray-800">
+                        AI Diagnosis Accuracy
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        95% accuracy in preliminary diagnoses this month
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -445,7 +518,9 @@ export default function EnhancedDoctorDashboard() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-gray-800">WhatsApp Bot Insights</CardTitle>
+                <CardTitle className="text-gray-800">
+                  WhatsApp Bot Insights
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={200}>
@@ -458,12 +533,22 @@ export default function EnhancedDoctorDashboard() {
                   </BarChart>
                 </ResponsiveContainer>
                 <div className="mt-4">
-                  <h4 className="font-semibold text-gray-700 mb-2">Key Insights</h4>
+                  <h4 className="font-semibold text-gray-700 mb-2">
+                    Key Insights
+                  </h4>
                   <ul className="space-y-2 text-sm text-gray-600">
-                    <li>• 150 appointment reminders sent, reducing no-shows by 30%</li>
-                    <li>• 120 medication reminders improving adherence rates</li>
-                    <li>• 80 health tips shared, increasing patient engagement</li>
-                    <li>• 50 quick queries resolved, saving 5 hours of staff time</li>
+                    <li>
+                      • 150 appointment reminders sent, reducing no-shows by 30%
+                    </li>
+                    <li>
+                      • 120 medication reminders improving adherence rates
+                    </li>
+                    <li>
+                      • 80 health tips shared, increasing patient engagement
+                    </li>
+                    <li>
+                      • 50 quick queries resolved, saving 5 hours of staff time
+                    </li>
                   </ul>
                 </div>
               </CardContent>
@@ -479,14 +564,18 @@ export default function EnhancedDoctorDashboard() {
             <CardContent>
               <div className="space-y-4">
                 {patientData.map((patient) => (
-                  <div key={patient.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                  <div
+                    key={patient.id}
+                    className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
+                  >
                     <div className="flex justify-between items-start">
                       <div>
                         <h4 className="font-semibold text-gray-800">
                           {patient.name} - {patient.condition}
                         </h4>
                         <p className="text-gray-600 mt-1">
-                          Last visit: {patient.lastVisit} | Next appointment: {patient.nextAppointment}
+                          Last visit: {patient.lastVisit} | Next appointment:{" "}
+                          {patient.nextAppointment}
                         </p>
                       </div>
                       <Badge
@@ -494,8 +583,8 @@ export default function EnhancedDoctorDashboard() {
                           patient.followUpStatus === "Completed"
                             ? "default"
                             : patient.followUpStatus === "Scheduled"
-                            ? "secondary"
-                            : "destructive"
+                              ? "secondary"
+                              : "destructive"
                         }
                       >
                         {patient.followUpStatus}
@@ -525,7 +614,9 @@ export default function EnhancedDoctorDashboard() {
                         variant="outline"
                         size="sm"
                         className="text-blue-600 border-blue-300 hover:bg-blue-50"
-                        onClick={() => handleNavigation(`/patient/${patient.id}`)}
+                        onClick={() =>
+                          handleNavigation(`/patient/${patient.id}`)
+                        }
                       >
                         View Full History
                       </Button>
@@ -533,7 +624,11 @@ export default function EnhancedDoctorDashboard() {
                         variant="outline"
                         size="sm"
                         className="text-green-600 border-green-300 hover:bg-green-50"
-                        onClick={() => handleNavigation(`/patient/${patient.id}/treatment-plan`)}
+                        onClick={() =>
+                          handleNavigation(
+                            `/patient/${patient.id}/treatment-plan`
+                          )
+                        }
                       >
                         Treatment Plan
                       </Button>
@@ -545,9 +640,13 @@ export default function EnhancedDoctorDashboard() {
                             ? "text-purple-600 border-purple-300 hover:bg-purple-50"
                             : "text-yellow-600 border-yellow-300 hover:bg-yellow-50"
                         }
-                        onClick={() => handleNavigation(`/patient/${patient.id}/follow-up`)}
+                        onClick={() =>
+                          handleNavigation(`/patient/${patient.id}/follow-up`)
+                        }
                       >
-                        {patient.followUpStatus === "Completed" ? "Schedule Next Follow-up" : "Manage Follow-up"}
+                        {patient.followUpStatus === "Completed"
+                          ? "Schedule Next Follow-up"
+                          : "Manage Follow-up"}
                       </Button>
                     </div>
                   </div>
@@ -558,5 +657,5 @@ export default function EnhancedDoctorDashboard() {
         </div>
       </div>
     </div>
-  )
+  );
 }

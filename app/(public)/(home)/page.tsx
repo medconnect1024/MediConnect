@@ -59,9 +59,9 @@ export default function Home() {
                   Your AI-Powered Doctor Companion
                 </h1>
                 <p className="mx-auto max-w-[700px] text-blue-800 md:text-xl">
-                  Revolutionize your medical practice with MediConnect. Enhance
-                  patient care, streamline workflows, and unlock the power of AI
-                  in healthcare.
+                  Revolutionize your medical practice with MyMediRecords.
+                  Enhance patient care, streamline workflows, and unlock the
+                  power of AI in healthcare.
                 </p>
               </div>
               <div className="w-full max-w-sm space-y-2">
@@ -135,7 +135,7 @@ export default function Home() {
         >
           <div className="container px-4 md:px-6 mx-auto">
             <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl text-center mb-12 text-blue-700">
-              Why Choose MediConnect
+              Why Choose MyMediRecords
             </h2>
             <div className="grid gap-6 lg:grid-cols-3">
               <StatCard value="50%" label="Reduction in Administrative Tasks" />
@@ -162,13 +162,13 @@ export default function Home() {
                   name: "Dr. Emily Chen",
                   role: "Cardiologist",
                   quote:
-                    "MediConnect has revolutionized my practice. The AI-assisted diagnosis and automated follow-ups have significantly improved patient care.",
+                    "MyMediRecords has revolutionized my practice. The AI-assisted diagnosis and automated follow-ups have significantly improved patient care.",
                 },
                 {
                   name: "Dr. Michael Patel",
                   role: "General Practitioner",
                   quote:
-                    "The smart scheduling features have made patient communication effortless. I can't imagine practicing without MediConnect now.",
+                    "The smart scheduling features have made patient communication effortless. I can't imagine practicing without MyMediRecords now.",
                 },
                 {
                   name: "Dr. Sarah Johnson",
@@ -215,7 +215,7 @@ export default function Home() {
                 </h2>
                 <p className="mx-auto max-w-[600px] text-blue-100 md:text-xl">
                   Join thousands of healthcare professionals already benefiting
-                  from MediConnect's AI-powered solutions.
+                  from MyMediRecords's AI-powered solutions.
                 </p>
               </div>
               <div className="w-full max-w-sm space-y-2">
@@ -240,7 +240,7 @@ export default function Home() {
 
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t border-blue-200">
         <p className="text-xs text-blue-800">
-          © 2024 MediConnect. All rights reserved.
+          © 2024 MyMediRecords. All rights reserved.
         </p>
         <nav className="sm:ml-auto flex gap-4 sm:gap-6">
           <a

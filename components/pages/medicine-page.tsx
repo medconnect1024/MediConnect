@@ -190,6 +190,13 @@ export default function MedicinePage({
             <SelectItem value="Oral">Oral</SelectItem>
             <SelectItem value="Intravenous">Intravenous</SelectItem>
             <SelectItem value="Intramuscular">Intramuscular</SelectItem>
+            <SelectItem value="subcutaneous">subcutaneous</SelectItem>
+            <SelectItem value=" intra articular"> intra articular</SelectItem>
+            <SelectItem value="local application">local application</SelectItem>
+            <SelectItem value="per rectal ">per rectal </SelectItem>
+            <SelectItem value="in the eyes">in the eyes</SelectItem>
+            <SelectItem value="in the ears">in the ears</SelectItem>
+            <SelectItem value="sub lingual">sub lingual</SelectItem>
           </SelectContent>
         </Select>
         <Select
@@ -240,6 +247,9 @@ export default function MedicinePage({
               1 hour before food
             </SelectItem>
             <SelectItem value="Evening 5 pm">Evening 5 pm</SelectItem>
+            <SelectItem value="Early morning">Early morning </SelectItem>
+            <SelectItem value="With food ">With food </SelectItem>
+            <SelectItem value="30 minutes">30 minutes before food</SelectItem>
           </SelectContent>
         </Select>
         <Button
