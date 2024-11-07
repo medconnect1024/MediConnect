@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useUser } from "@clerk/nextjs";
 import {
   Popover,
   PopoverContent,
@@ -92,6 +93,11 @@ interface ApiPrescription {
   };
 }
 
+type NotificationType = {
+  message: string;
+  type: "success" | "error";
+};
+
 const steps = [
   "Symptoms",
   "Findings",
@@ -101,7 +107,13 @@ const steps = [
   "Follow-Up",
 ];
 
-export default function MultiStepPrescription() {
+interface MultiStepPrescriptionProps {
+  patientId: number;
+}
+
+export default function MultiStepPrescription({
+  patientId,
+}: MultiStepPrescriptionProps) {
   const [activeStep, setActiveStep] = useState(0);
   const [symptoms, setSymptoms] = useState<PrescriptionItem[]>([]);
   const [findings, setFindings] = useState<FindingItem[]>([]);
@@ -132,11 +144,17 @@ export default function MultiStepPrescription() {
   );
 
   const savePrescription = useMutation(api.prescriptions.savePrescription);
-  const getLastPrescription = useQuery(api.prescriptions.getLastPrescription);
+  const getLastPrescriptionForPatient = useQuery(
+    api.prescriptions.getLastPrescriptionForPatient,
+    {
+      patientId: patientId.toString(),
+    }
+  );
+  const { user } = useUser();
 
   useEffect(() => {
-    if (getLastPrescription) {
-      const apiPrescription = getLastPrescription as ApiPrescription;
+    if (getLastPrescriptionForPatient) {
+      const apiPrescription = getLastPrescriptionForPatient as ApiPrescription;
       setPreviousPrescriptions([
         {
           prescriptionId: apiPrescription._id,
@@ -159,15 +177,20 @@ export default function MultiStepPrescription() {
         },
       ]);
     }
-  }, [getLastPrescription]);
+  }, [getLastPrescriptionForPatient]);
 
   const handleSubmit = async () => {
-    const patientId = "121"; // Replace with actual value or state
-    const doctorId = "121"; // Replace with actual value or state
+    if (!user) {
+      console.error("User not signed in");
+      return;
+    }
+
+    const doctorId = user.id;
+    const patientIdString = patientId.toString();
 
     const newPrescription = {
       doctorId,
-      patientId,
+      patientId: patientIdString,
       medicines: medicines.map((m) => ({
         id: m.id,
         name: m.name,
@@ -193,7 +216,6 @@ export default function MultiStepPrescription() {
     try {
       const result = await savePrescription(newPrescription);
       setSaveSuccess(true);
-      // Clear form data and reset to first step
       setSymptoms([]);
       setFindings([]);
       setDiagnoses([]);
@@ -208,7 +230,7 @@ export default function MultiStepPrescription() {
       setSeverity("Mild");
       setActiveStep(0);
       setShowPreview(false);
-      setTimeout(() => setSaveSuccess(false), 3000); // Hide message after 3 seconds
+      setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
       console.error("Error saving prescription:", error);
     }
@@ -216,9 +238,9 @@ export default function MultiStepPrescription() {
 
   const renderPreviousPrescriptions = () => (
     <div className="space-y-4">
-      <h3 className="text-2xl font-semibold">Previous Prescriptions</h3>
+      <h3 className="text-2xl font-semibold">Previous Prescription</h3>
       {previousPrescriptions.length === 0 ? (
-        <p>No previous prescriptions found.</p>
+        <p>No previous prescriptions found for this patient.</p>
       ) : (
         previousPrescriptions.map((prescription, index) => (
           <Card key={index} className="mb-4">
@@ -342,7 +364,7 @@ export default function MultiStepPrescription() {
                     selected={followUpDate}
                     onSelect={(date) => {
                       setFollowUpDate(date);
-                      document.body.click(); // This will close the popover
+                      document.body.click();
                     }}
                     initialFocus
                     className="p-5"
@@ -435,7 +457,9 @@ export default function MultiStepPrescription() {
   return (
     <Card className="w-full max-w-6xl mx-auto min-h-screen sm:min-h-[600px] relative">
       <CardHeader>
-        <CardTitle className="text-3xl">Prescription Management</CardTitle>
+        <CardTitle className="text-1xl">
+          Prescription Management for Patient ID: {patientId}
+        </CardTitle>
       </CardHeader>
       <CardContent className="min-h-[calc(100vh-200px)] sm:min-h-[400px]">
         <div className="mb-8">

@@ -25,7 +25,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { PlusIcon, Eye, XCircle, Loader2 } from "lucide-react";
+import { PlusIcon, Eye, XCircle, Loader2, FileIcon } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type LabReport = {
@@ -44,7 +44,11 @@ type NotificationType = {
   type: "success" | "error";
 };
 
-export default function LabReportPage() {
+interface LabReportPageProps {
+  patientId: number | null; // Changed to accept number | null
+}
+
+export default function LabReportPage({ patientId }: LabReportPageProps) {
   const reports = useQuery(api.labReports.list);
   const addReport = useMutation(api.labReports.add);
   const generateUploadUrl = useMutation(api.labReports.generateUploadUrl);
@@ -60,6 +64,9 @@ export default function LabReportPage() {
     fileType: "pdf",
     fileName: "",
   });
+  // Filter reports for the specific patientId
+  const filteredReports =
+    reports?.filter((report) => report.patientId === String(patientId)) || [];
 
   // Handle file upload to Convex storage
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,10 +119,14 @@ export default function LabReportPage() {
   };
 
   const handleUpload = async () => {
-    if (!newReport.notes || !newReport.storageId) return;
+    if (!newReport.notes || !newReport.storageId || patientId === null) return;
 
     try {
+      // Convert patientId to string
+      const patientIdAsString = String(patientId);
+
       await addReport({
+        patientId: patientIdAsString,
         date: newReport.date!,
         notes: newReport.notes,
         storageId: newReport.storageId,
@@ -170,20 +181,26 @@ export default function LabReportPage() {
           </div>
           <div className="grid gap-2">
             <Label>Report Content</Label>
-            {report.fileUrl &&
-              (report.fileType === "pdf" ? (
+            {report.fileUrl ? (
+              report.fileType === "pdf" ? (
                 <iframe
                   src={report.fileUrl}
                   className="w-full h-[600px] rounded-md border"
                   title="PDF Report"
                 />
               ) : (
-                <img
-                  src={report.fileUrl}
-                  alt="Lab Report"
-                  className="max-w-full h-auto rounded-md"
-                />
-              ))}
+                <div className="flex items-center justify-center bg-gray-100 rounded-md p-4">
+                  <FileIcon className="h-12 w-12 text-gray-400" />
+                  <p className="ml-2 text-sm text-gray-600">
+                    Image preview not available
+                  </p>
+                </div>
+              )
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                File content not available
+              </p>
+            )}
           </div>
         </div>
       </DialogContent>
@@ -197,18 +214,17 @@ export default function LabReportPage() {
       </div>
     );
   }
-
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-3xl">Lab Reports</CardTitle>
+        <CardTitle className="text-1xl">
+          Lab Reports for Patient ID: {patientId}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {notification && (
           <Alert
-            className={`mb-4 ${
-              notification.type === "success" ? "bg-green-50" : "bg-red-50"
-            }`}
+            className={`mb-4 ${notification.type === "success" ? "bg-green-50" : "bg-red-50"}`}
           >
             <AlertDescription className="flex items-center justify-between">
               <span>{notification.message}</span>
@@ -267,56 +283,47 @@ export default function LabReportPage() {
                   disabled={isUploading}
                 />
                 {isUploading && (
-                  <p className="text-sm text-muted-foreground mt-2 flex items-center">
-                    <Loader2 className="h-3 w-3 animate-spin mr-2" />
-                    Uploading file...
-                  </p>
-                )}
-                {newReport.fileName && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Selected file: {newReport.fileName}
-                  </p>
+                  <p className="text-sm text-muted-foreground">Uploading...</p>
                 )}
               </div>
             </div>
-            <Button
-              onClick={handleUpload}
-              className="ml-auto bg-blue-500 hover:bg-blue-600 text-white"
-              disabled={!newReport.notes || !newReport.storageId || isUploading}
-            >
-              <PlusIcon className="mr-2 h-4 w-4" /> Upload Report
-            </Button>
+            <div className="flex justify-end gap-4 mt-4">
+              <Button variant="outline" onClick={handleUpload}>
+                Upload Report
+              </Button>
+            </div>
           </div>
         </div>
 
-        <h3 className="text-lg font-semibold mb-4">Report List</h3>
-        <ScrollArea className="h-[400px] w-full rounded-md border">
+        <ScrollArea>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[100px]">Sl. No</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>File Name</TableHead>
                 <TableHead>Notes</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>File</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {reports.map((report, index) => (
-                <TableRow key={report._id}>
-                  <TableCell className="font-medium">{index + 1}</TableCell>
-                  <TableCell>
-                    {new Date(report.date).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>{report.fileName}</TableCell>
-                  <TableCell className="max-w-[200px] truncate">
-                    {report.notes}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <ViewReport report={report} />
+              {filteredReports.length > 0 ? (
+                filteredReports.map((report) => (
+                  <TableRow key={report._id}>
+                    <TableCell>{report.date}</TableCell>
+                    <TableCell>{report.notes}</TableCell>
+                    <TableCell>{report.fileName}</TableCell>
+                    <TableCell>
+                      <ViewReport report={report} />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4}>
+                    No reports available for this patient
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </ScrollArea>

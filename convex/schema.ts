@@ -101,6 +101,7 @@ export default defineSchema({
       }),
   
       labReports: defineTable({
+        patientId: v.optional(v.string()),
         date: v.string(),
         notes: v.string(),
         storageId: v.string(),

@@ -94,12 +94,14 @@ export const savePrescription = mutation({
 
 //   return prescriptions.length > 0 ? prescriptions[0] : null;
 // });
-export const getLastPrescription = query({
-  async handler(ctx) {
-    const lastPrescription = await ctx.db
+// In your Convex query file (e.g., prescriptions.ts)
+export const getLastPrescriptionForPatient = query({
+  args: { patientId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
       .query("prescriptions")
+      .filter((q) => q.eq(q.field("patientId"), args.patientId))
       .order("desc")
       .first();
-    return lastPrescription;
   },
 });

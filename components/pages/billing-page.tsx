@@ -1,110 +1,134 @@
-import React, { useState, useEffect } from 'react'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Eye, Download, Plus, X, Search } from "lucide-react"
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Eye, Download, Plus, X, Search } from "lucide-react";
 
 type BillItem = {
-  id: string
-  name: string
-  cost: number
-}
+  id: string;
+  name: string;
+  cost: number;
+};
 
 type Bill = {
-  id: string
-  billNumber: string
-  date: string
-  items: BillItem[]
-  total: number
+  id: string;
+  billNumber: string;
+  date: string;
+  items: BillItem[];
+  total: number;
+};
+
+interface BillingPageProps {
+  patientId: number | null;
 }
 
-export default function BillingPage() {
+const BillingPage: React.FC<BillingPageProps> = ({ patientId }) => {
   const [bills, setBills] = useState<Bill[]>([
     {
-      id: '1',
-      billNumber: 'BILL001',
-      date: '2023-10-15',
+      id: "1",
+      billNumber: "BILL001",
+      date: "2023-10-15",
       items: [
-        { id: '1', name: 'Consultation', cost: 100 },
-        { id: '2', name: 'X-Ray', cost: 150 },
+        { id: "1", name: "Consultation", cost: 100 },
+        { id: "2", name: "X-Ray", cost: 150 },
       ],
-      total: 250
+      total: 250,
     },
     {
-      id: '2',
-      billNumber: 'BILL002',
-      date: '2023-11-20',
+      id: "2",
+      billNumber: "BILL002",
+      date: "2023-11-20",
       items: [
-        { id: '1', name: 'Consultation', cost: 100 },
-        { id: '3', name: 'Blood Test', cost: 200 },
+        { id: "1", name: "Consultation", cost: 100 },
+        { id: "3", name: "Blood Test", cost: 200 },
       ],
-      total: 300
+      total: 300,
     },
-  ])
+  ]);
 
   const [newBillItems, setNewBillItems] = useState<BillItem[]>([
-    { id: '1', name: 'Consultation Charges', cost: 100 },
-    { id: '2', name: 'Bed Charges', cost: 500 },
-    { id: '3', name: 'ECG', cost: 150 },
-    { id: '4', name: 'ICU', cost: 1000 },
-  ])
+    { id: "1", name: "Consultation Charges", cost: 100 },
+    { id: "2", name: "Bed Charges", cost: 500 },
+    { id: "3", name: "ECG", cost: 150 },
+    { id: "4", name: "ICU", cost: 1000 },
+  ]);
 
-  const [selectedItems, setSelectedItems] = useState<string[]>([])
-  const [newItemName, setNewItemName] = useState('')
-  const [newItemCost, setNewItemCost] = useState('')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filteredItems, setFilteredItems] = useState<BillItem[]>(newBillItems)
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [newItemName, setNewItemName] = useState("");
+  const [newItemCost, setNewItemCost] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredItems, setFilteredItems] = useState<BillItem[]>(newBillItems);
 
   useEffect(() => {
-    const filtered = newBillItems.filter(item =>
+    const filtered = newBillItems.filter((item) =>
       item.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    setFilteredItems(filtered)
-  }, [searchTerm, newBillItems])
+    );
+    setFilteredItems(filtered);
+  }, [searchTerm, newBillItems]);
 
   const handleItemSelect = (itemId: string) => {
-    setSelectedItems(prev => 
-      prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]
-    )
-  }
+    setSelectedItems((prev) =>
+      prev.includes(itemId)
+        ? prev.filter((id) => id !== itemId)
+        : [...prev, itemId]
+    );
+  };
 
   const handleCostEdit = (itemId: string, newCost: number) => {
-    setNewBillItems(prev => prev.map(item => 
-      item.id === itemId ? { ...item, cost: newCost } : item
-    ))
-  }
+    setNewBillItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId ? { ...item, cost: newCost } : item
+      )
+    );
+  };
 
   const handleAddNewItem = () => {
     if (newItemName && newItemCost) {
       const newItem: BillItem = {
         id: Date.now().toString(),
         name: newItemName,
-        cost: parseFloat(newItemCost)
-      }
-      setNewBillItems(prev => [...prev, newItem])
-      setNewItemName('')
-      setNewItemCost('')
+        cost: parseFloat(newItemCost),
+      };
+      setNewBillItems((prev) => [...prev, newItem]);
+      setNewItemName("");
+      setNewItemCost("");
     }
-  }
+  };
 
   const handleCreateBill = () => {
-    const selectedBillItems = newBillItems.filter(item => selectedItems.includes(item.id))
-    const total = selectedBillItems.reduce((sum, item) => sum + item.cost, 0)
+    const selectedBillItems = newBillItems.filter((item) =>
+      selectedItems.includes(item.id)
+    );
+    const total = selectedBillItems.reduce((sum, item) => sum + item.cost, 0);
     const newBill: Bill = {
       id: Date.now().toString(),
-      billNumber: `BILL${bills.length + 1}`.padStart(7, '0'),
-      date: new Date().toISOString().split('T')[0],
+      billNumber: `BILL${bills.length + 1}`.padStart(7, "0"),
+      date: new Date().toISOString().split("T")[0],
       items: selectedBillItems,
-      total
-    }
-    setBills(prev => [...prev, newBill])
-    setSelectedItems([])
-  }
+      total,
+    };
+    setBills((prev) => [...prev, newBill]);
+    setSelectedItems([]);
+  };
 
   const BillDetails = ({ bill }: { bill: Bill }) => (
     <Dialog>
@@ -133,19 +157,23 @@ export default function BillingPage() {
               {bill.items.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell>{item.name}</TableCell>
-                  <TableCell className="text-right">₹{item.cost.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">
+                    ₹{item.cost.toFixed(2)}
+                  </TableCell>
                 </TableRow>
               ))}
               <TableRow>
                 <TableCell className="font-bold">Total</TableCell>
-                <TableCell className="text-right font-bold">₹{bill.total.toFixed(2)}</TableCell>
+                <TableCell className="text-right font-bold">
+                  ₹{bill.total.toFixed(2)}
+                </TableCell>
               </TableRow>
             </TableBody>
           </Table>
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -187,7 +215,9 @@ export default function BillingPage() {
                     <Input
                       type="number"
                       value={item.cost}
-                      onChange={(e) => handleCostEdit(item.id, parseFloat(e.target.value))}
+                      onChange={(e) =>
+                        handleCostEdit(item.id, parseFloat(e.target.value))
+                      }
                       className="w-24 h-8"
                     />
                   </TableCell>
@@ -195,7 +225,11 @@ export default function BillingPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setNewBillItems(prev => prev.filter(i => i.id !== item.id))}
+                      onClick={() =>
+                        setNewBillItems((prev) =>
+                          prev.filter((i) => i.id !== item.id)
+                        )
+                      }
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -220,7 +254,7 @@ export default function BillingPage() {
             onChange={(e) => setNewItemCost(e.target.value)}
             className="h-8"
           />
-          <Button 
+          <Button
             onClick={handleAddNewItem}
             className="bg-blue-500 hover:bg-blue-600 text-white h-8"
           >
@@ -229,44 +263,43 @@ export default function BillingPage() {
           </Button>
         </div>
 
-        <Button onClick={handleCreateBill} className="w-full bg-blue-500 hover:bg-blue-600 text-white">
+        <Button
+          onClick={handleCreateBill}
+          className="bg-green-500 hover:bg-green-600 text-white"
+        >
           Create Bill
         </Button>
 
-        <h3 className="text-lg font-semibold my-4">Bill History</h3>
-        <ScrollArea className="h-[300px] w-full rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-b">
-                <TableHead className="w-[60px] border-r">Sl. No</TableHead>
-                <TableHead className="border-r">Bill Number</TableHead>
-                <TableHead className="border-r">Bill Date</TableHead>
-                <TableHead className="border-r">Total Amount</TableHead>
-                <TableHead className="text-center">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {bills.map((bill, index) => (
-                <TableRow key={bill.id} className="h-12 border-b">
-                  <TableCell className="font-medium border-r">{index + 1}</TableCell>
-                  <TableCell className="border-r">{bill.billNumber}</TableCell>
-                  <TableCell className="border-r">{bill.date}</TableCell>
-                  <TableCell className="border-r">₹{bill.total.toFixed(2)}</TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex justify-center space-x-2">
-                      <BillDetails bill={bill} />
-                      <Button variant="ghost" size="sm">
-                        <Download className="mr-2 h-4 w-4" />
-                        Download
-                      </Button>
-                    </div>
-                  </TableCell>
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold mb-4">Existing Bills</h3>
+          <ScrollArea className="h-[300px] w-full rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Bill Number</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </ScrollArea>
+              </TableHeader>
+              <TableBody>
+                {bills.map((bill) => (
+                  <TableRow key={bill.id}>
+                    <TableCell>{bill.billNumber}</TableCell>
+                    <TableCell>{bill.date}</TableCell>
+                    <TableCell>₹{bill.total.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">
+                      <BillDetails bill={bill} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ScrollArea>
+        </div>
       </CardContent>
     </Card>
-  )
-}
+  );
+};
+
+export default BillingPage;

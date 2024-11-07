@@ -21,15 +21,18 @@ interface PatientCardProps {
   patientId: number;
   isSelected: boolean;
   onClick: () => void;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 const PatientCard: React.FC<PatientCardProps> = ({
   patientId,
   isSelected,
   onClick,
+  isOpen,
+  onOpenChange,
 }) => {
   const patientInfo = useQuery(api.patients.getPatientById, { patientId });
-  const [isOpen, setIsOpen] = useState(false);
 
   if (!patientInfo) return null;
 
@@ -52,7 +55,7 @@ const PatientCard: React.FC<PatientCardProps> = ({
   const age = calculateAge(dateOfBirth);
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+    <Collapsible open={isOpen} onOpenChange={onOpenChange}>
       <CollapsibleTrigger asChild>
         <Card
           className={`mb-2 p-2 cursor-pointer ${
@@ -60,10 +63,7 @@ const PatientCard: React.FC<PatientCardProps> = ({
               ? "bg-blue-500 text-white hover:bg-blue-600"
               : "hover:bg-gray-100"
           }`}
-          onClick={() => {
-            onClick();
-            setIsOpen(!isOpen);
-          }}
+          onClick={onClick}
         >
           <CardContent className="p-2">
             <div className="flex justify-between items-center">
@@ -112,7 +112,14 @@ const PatientCard: React.FC<PatientCardProps> = ({
 const Sidebar: React.FC<{
   onPatientSelect: (patientId: number) => void;
   selectedPatientId: number | null;
-}> = ({ onPatientSelect, selectedPatientId }) => {
+  openPatientId: number | null;
+  setOpenPatientId: (patientId: number | null) => void;
+}> = ({
+  onPatientSelect,
+  selectedPatientId,
+  openPatientId,
+  setOpenPatientId,
+}) => {
   const appointments = useQuery(api.patients.getAppointments);
 
   const onQueuePatients =
@@ -130,6 +137,11 @@ const Sidebar: React.FC<{
     }
   }, [onQueuePatients, selectedPatientId, onPatientSelect]);
 
+  const handlePatientClick = (patientId: number) => {
+    onPatientSelect(patientId);
+    setOpenPatientId(patientId === openPatientId ? null : patientId);
+  };
+
   return (
     <aside className="w-full md:w-64 overflow-y-auto border-r p-4 flex flex-col h-full">
       <h2 className="mb-4 font-semibold">Today's Patients ({totalPatients})</h2>
@@ -144,7 +156,11 @@ const Sidebar: React.FC<{
               key={appointment.id}
               patientId={Number(appointment.patientId)}
               isSelected={selectedPatientId === Number(appointment.patientId)}
-              onClick={() => onPatientSelect(Number(appointment.patientId))}
+              onClick={() => handlePatientClick(Number(appointment.patientId))}
+              isOpen={openPatientId === Number(appointment.patientId)}
+              onOpenChange={(open) =>
+                setOpenPatientId(open ? Number(appointment.patientId) : null)
+              }
             />
           ))}
         </div>
@@ -160,7 +176,11 @@ const Sidebar: React.FC<{
               key={appointment.id}
               patientId={Number(appointment.patientId)}
               isSelected={selectedPatientId === Number(appointment.patientId)}
-              onClick={() => onPatientSelect(Number(appointment.patientId))}
+              onClick={() => handlePatientClick(Number(appointment.patientId))}
+              isOpen={openPatientId === Number(appointment.patientId)}
+              onOpenChange={(open) =>
+                setOpenPatientId(open ? Number(appointment.patientId) : null)
+              }
             />
           ))}
         </div>
@@ -239,10 +259,12 @@ export default function Component() {
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(
     null
   );
+  const [openPatientId, setOpenPatientId] = useState<number | null>(null);
 
   const handlePatientSelect = (patientId: number) => {
     setSelectedPatientId(patientId);
-    setSelectedSection("overview");
+    // Remove this line to maintain the current section when switching patients
+    // setSelectedSection("overview");
   };
 
   return (
@@ -250,17 +272,35 @@ export default function Component() {
       <Sidebar
         onPatientSelect={handlePatientSelect}
         selectedPatientId={selectedPatientId}
+        openPatientId={openPatientId}
+        setOpenPatientId={setOpenPatientId}
       />
       <main className="flex-1 overflow-y-auto p-4">
         <ActionButtons
           setSelectedSection={setSelectedSection}
           selectedSection={selectedSection}
         />
-        {selectedSection === "overview" && <MedicalHistoryPage />}
-        {selectedSection === "prescription" && <PrescriptionPage />}
-        {selectedSection === "vaccination" && <VaccinationPage />}
-        {selectedSection === "labReports" && <LabReportPage />}
-        {selectedSection === "billing" && <BillingPage />}
+        {selectedPatientId !== null ? (
+          <>
+            {selectedSection === "overview" && (
+              <MedicalHistoryPage patientId={selectedPatientId} />
+            )}
+            {selectedSection === "prescription" && (
+              <PrescriptionPage patientId={selectedPatientId} />
+            )}
+            {selectedSection === "vaccination" && (
+              <VaccinationPage patientId={selectedPatientId} />
+            )}
+            {selectedSection === "labReports" && (
+              <LabReportPage patientId={selectedPatientId} />
+            )}
+            {selectedSection === "billing" && (
+              <BillingPage patientId={selectedPatientId} />
+            )}
+          </>
+        ) : (
+          <p className="text-center mt-4">No patients available.</p>
+        )}
       </main>
     </div>
   );

@@ -12,6 +12,7 @@ export const generateUploadUrl = mutation({
 // Add new lab report
 export const add = mutation({
   args: {
+    patientId: v.optional(v.string()),
     date: v.string(),
     notes: v.string(),
     storageId: v.string(),
