@@ -16,7 +16,15 @@ export const savePrescription = mutation({
         route: v.string(),   // Add route
       })
     ),
-    symptoms: v.array(v.object({ id: v.string(), name: v.string() })),
+    symptoms: v.array(
+      v.object({
+        id: v.string(),
+        name: v.string(),
+        duration: v.optional(v.string()),   // Add duration
+        frequency: v.optional(v.string()),  // Add frequency
+        severity: v.optional(v.string())    // Add severity
+      })
+    ),
     findings: v.array(v.object({ id: v.string(), description: v.string() })),
     diagnoses: v.array(v.object({ id: v.string(), name: v.string() })),
     severity:  v.optional(v.string()),

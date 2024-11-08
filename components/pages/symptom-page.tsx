@@ -5,11 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Plus, X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const SYMPTOMS = [
   "Abdominal Pain",
   "Acid Reflux",
-  "Airsickness",
+  "Air sickness",
   "Bad Breath",
   "Belching",
   "Bellyache",
@@ -18,7 +33,7 @@ const SYMPTOMS = [
   "Breathing Problems",
   "Bruises",
   "Burping",
-  "Carsickness",
+  "Car sickness",
   "Chest Pain",
   "Chilblains",
   "Choking",
@@ -74,7 +89,7 @@ const SYMPTOMS = [
   "Raynaud's Syndrome",
   "Rectal Bleeding",
   "Sciatica",
-  "Seasickness",
+  "Sea sickness",
   "Shortness of Breath",
   "Speech and Communication Disorders",
   "Stammering",
@@ -116,7 +131,7 @@ const SYMPTOMS = [
   "Cuts and grazes",
   "Dehydration",
   "Diarrhoea",
-  "Dizziness (lightheadedness)",
+  "Dizziness (light headedness)",
   "Dry mouth",
   "Earache",
   "Eating and digestion with cancer",
@@ -208,7 +223,7 @@ const SYMPTOMS = [
   "Eye discharge",
   "Eye strain",
   "Facial droop",
-  "Faecal incontinence",
+  "Fecal incontinence",
   "Fatigue",
   "Feeling restless",
   "Feeling worthless",
@@ -251,7 +266,7 @@ const SYMPTOMS = [
   "Nausea",
   "Nerve pain",
   "Night sweats",
-  "Nosebleeds",
+  "Nose bleeds",
   "Pain (lower back)",
   "Pain and aches",
   "Pain in groin",
@@ -298,14 +313,27 @@ const SYMPTOMS = [
   "Withdrawal symptoms from addiction",
 ];
 
-type PrescriptionItem = {
+const FREQUENCY_OPTIONS = [
+  "1 time a day",
+  "2 times a day",
+  "More than 2 times a day",
+];
+
+const SEVERITY_OPTIONS = ["Mild", "Moderate", "Severe"];
+
+const DURATION_OPTIONS = ["1 day", "2 days", "3 days", "More than one week"];
+
+type SymptomItem = {
   id: string;
   name: string;
+  frequency: string;
+  severity: string;
+  duration: string;
 };
 
 interface SymptomPageProps {
-  symptoms: PrescriptionItem[];
-  setSymptoms: React.Dispatch<React.SetStateAction<PrescriptionItem[]>>;
+  symptoms: SymptomItem[];
+  setSymptoms: React.Dispatch<React.SetStateAction<SymptomItem[]>>;
 }
 
 export default function SymptomsComponent({
@@ -314,6 +342,13 @@ export default function SymptomsComponent({
 }: SymptomPageProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [newSymptom, setNewSymptom] = useState<SymptomItem>({
+    id: "",
+    name: "",
+    frequency: "",
+    severity: "",
+    duration: "",
+  });
 
   const filteredSymptoms = useMemo(() => {
     if (!searchTerm) return [];
@@ -322,11 +357,23 @@ export default function SymptomsComponent({
     );
   }, [searchTerm]);
 
-  const handleAddItem = (item: string) => {
-    const newItem: PrescriptionItem = { id: Date.now().toString(), name: item };
-    setSymptoms((prev) => [...prev, newItem]);
-    setSearchTerm("");
-    setIsSearching(false);
+  const handleAddItem = () => {
+    if (newSymptom.name.trim()) {
+      const symptomToAdd = {
+        ...newSymptom,
+        id: Date.now().toString(),
+      };
+      setSymptoms((prev) => [...prev, symptomToAdd]);
+      setNewSymptom({
+        id: "",
+        name: "",
+        frequency: "",
+        severity: "",
+        duration: "",
+      });
+      setSearchTerm("");
+      setIsSearching(false);
+    }
   };
 
   const handleRemoveItem = (id: string) => {
@@ -346,23 +393,90 @@ export default function SymptomsComponent({
             onChange={(e) => {
               setSearchTerm(e.target.value);
               setIsSearching(true);
+              setNewSymptom((prev) => ({ ...prev, name: e.target.value }));
             }}
             onFocus={() => setIsSearching(true)}
             onBlur={() => {
-              // Delay hiding the results to allow for item selection
               setTimeout(() => setIsSearching(false), 200);
             }}
           />
         </div>
+        <Select
+          value={newSymptom.frequency}
+          onValueChange={(value) =>
+            setNewSymptom((prev) => ({ ...prev, frequency: value }))
+          }
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Frequency" />
+          </SelectTrigger>
+          <SelectContent>
+            {FREQUENCY_OPTIONS.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+            <SelectItem value="custom">Type your own</SelectItem>
+          </SelectContent>
+        </Select>
+        {newSymptom.frequency === "custom" && (
+          <Input
+            placeholder="Custom frequency"
+            value={newSymptom.frequency}
+            onChange={(e) =>
+              setNewSymptom((prev) => ({ ...prev, frequency: e.target.value }))
+            }
+          />
+        )}
+        <Select
+          value={newSymptom.severity}
+          onValueChange={(value) =>
+            setNewSymptom((prev) => ({ ...prev, severity: value }))
+          }
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Severity" />
+          </SelectTrigger>
+          <SelectContent>
+            {SEVERITY_OPTIONS.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={newSymptom.duration}
+          onValueChange={(value) =>
+            setNewSymptom((prev) => ({ ...prev, duration: value }))
+          }
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Duration" />
+          </SelectTrigger>
+          <SelectContent>
+            {DURATION_OPTIONS.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+            <SelectItem value="custom">Type your own</SelectItem>
+          </SelectContent>
+        </Select>
+        {newSymptom.duration === "custom" && (
+          <Input
+            placeholder="Custom duration"
+            value={newSymptom.duration}
+            onChange={(e) =>
+              setNewSymptom((prev) => ({ ...prev, duration: e.target.value }))
+            }
+          />
+        )}
         <Button
           variant="outline"
           size="icon"
           className="h-8 w-10"
-          onClick={() => {
-            if (searchTerm.trim()) {
-              handleAddItem(searchTerm.trim());
-            }
-          }}
+          onClick={handleAddItem}
         >
           <Plus className="h-6 w-6" />
         </Button>
@@ -373,31 +487,48 @@ export default function SymptomsComponent({
             <li
               key={symptom}
               className="p-2 hover:bg-gray-200 cursor-pointer transition-colors"
-              onClick={() => handleAddItem(symptom)}
+              onClick={() => {
+                setNewSymptom((prev) => ({ ...prev, name: symptom }));
+                setSearchTerm(symptom);
+                setIsSearching(false);
+              }}
             >
               {symptom}
             </li>
           ))}
         </ul>
       )}
-      <ScrollArea className="h-[150px] mt-4">
-        <div className="flex flex-wrap gap-3">
-          {symptoms.map((item) => (
-            <div key={item.id} className="flex items-center">
-              <Button
-                variant="secondary"
-                size="lg"
-                className="flex items-center gap-2 text-lg "
-              >
-                {item.name}
-              </Button>
-              <X
-                className="h-4 w-4 cursor-pointer text-red-500 ml-2"
-                onClick={() => handleRemoveItem(item.id)} // Call handleRemoveItem directly here
-              />
-            </div>
-          ))}
-        </div>
+      <ScrollArea className="h-[300px] mt-4">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Symptom</TableHead>
+              <TableHead>Frequency</TableHead>
+              <TableHead>Severity</TableHead>
+              <TableHead>Duration</TableHead>
+              <TableHead>Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {symptoms.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell>{item.name}</TableCell>
+                <TableCell>{item.frequency}</TableCell>
+                <TableCell>{item.severity}</TableCell>
+                <TableCell>{item.duration}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveItem(item.id)}
+                  >
+                    <X className="h-4 w-4 text-red-500" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </ScrollArea>
     </div>
   );

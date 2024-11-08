@@ -29,9 +29,15 @@ import MedicinePage from "./medicine-page";
 import InvestigationsPage from "./investigations-page";
 import { Id } from "@/convex/_generated/dataModel";
 
-type PrescriptionItem = { id: string; name: string };
+type SymptomItem = {
+  id: string;
+  name: string;
+  frequency: string;
+  severity: string;
+  duration: string;
+};
 
-export type FindingItem = {
+type FindingItem = {
   id: string;
   name: string;
 };
@@ -48,11 +54,11 @@ type MedicineItem = {
 
 type Prescription = {
   prescriptionId: string;
-  symptoms: PrescriptionItem[];
+  symptoms: SymptomItem[];
   findings: FindingItem[];
-  diagnoses: PrescriptionItem[];
+  diagnoses: { id: string; name: string }[];
   medicines: MedicineItem[];
-  investigations: PrescriptionItem[];
+  investigations: { id: string; name: string }[];
   investigationNotes?: string;
   followUpDate?: string;
   medicineReminder: {
@@ -77,10 +83,10 @@ interface ApiPrescription {
   medicineInstructions?: string;
   severity?: string;
   findings: { id: string; description: string }[];
-  symptoms: PrescriptionItem[];
-  diagnoses: PrescriptionItem[];
+  symptoms: SymptomItem[];
+  diagnoses: { id: string; name: string }[];
   medicines: MedicineItem[];
-  investigations: PrescriptionItem[];
+  investigations: { id: string; name: string }[];
   medicineReminder: {
     message: boolean;
     call: boolean;
@@ -92,11 +98,6 @@ interface ApiPrescription {
     pulse: string;
   };
 }
-
-type NotificationType = {
-  message: string;
-  type: "success" | "error";
-};
 
 const steps = [
   "Symptoms",
@@ -115,11 +116,15 @@ export default function MultiStepPrescription({
   patientId,
 }: MultiStepPrescriptionProps) {
   const [activeStep, setActiveStep] = useState(0);
-  const [symptoms, setSymptoms] = useState<PrescriptionItem[]>([]);
+  const [symptoms, setSymptoms] = useState<SymptomItem[]>([]);
   const [findings, setFindings] = useState<FindingItem[]>([]);
-  const [diagnoses, setDiagnoses] = useState<PrescriptionItem[]>([]);
+  const [diagnoses, setDiagnoses] = useState<{ id: string; name: string }[]>(
+    []
+  );
   const [medicines, setMedicines] = useState<MedicineItem[]>([]);
-  const [investigations, setInvestigations] = useState<PrescriptionItem[]>([]);
+  const [investigations, setInvestigations] = useState<
+    { id: string; name: string }[]
+  >([]);
   const [investigationNotes, setInvestigationNotes] = useState("");
   const [followUpDate, setFollowUpDate] = useState<Date | undefined>(undefined);
   const [medicineReminder, setMedicineReminder] = useState({
@@ -200,7 +205,13 @@ export default function MultiStepPrescription({
         durationDays: m.durationDays,
         timing: m.timing,
       })),
-      symptoms: symptoms.map((s) => ({ id: s.id, name: s.name })),
+      symptoms: symptoms.map((s) => ({
+        id: s.id,
+        name: s.name,
+        frequency: s.frequency,
+        severity: s.severity,
+        duration: s.duration,
+      })),
       findings: findings.map((f) => ({ id: f.id, description: f.name })),
       diagnoses: diagnoses.map((d) => ({ id: d.id, name: d.name })),
       investigations: investigations.map((i) => ({ id: i.id, name: i.name })),
@@ -251,7 +262,12 @@ export default function MultiStepPrescription({
               <div className="space-y-2">
                 <p>
                   <strong>Symptoms:</strong>{" "}
-                  {prescription.symptoms.map((s) => s.name).join(", ")}
+                  {prescription.symptoms
+                    .map(
+                      (s) =>
+                        `${s.name} (Frequency: ${s.frequency}, Severity: ${s.severity}, Duration: ${s.duration})`
+                    )
+                    .join(", ")}
                 </p>
                 <p>
                   <strong>Findings:</strong>{" "}
@@ -392,7 +408,10 @@ export default function MultiStepPrescription({
         <h4 className="text-lg font-semibold ">Symptoms</h4>
         <ul className="list-disc pl-5">
           {symptoms.map((s) => (
-            <li key={s.id}>{s.name}</li>
+            <li key={s.id}>
+              {s.name} - Frequency: {s.frequency}, Severity: {s.severity},
+              Duration: {s.duration}
+            </li>
           ))}
         </ul>
       </div>
