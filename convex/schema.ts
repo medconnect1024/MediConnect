@@ -95,6 +95,11 @@ export default defineSchema({
         temperature: v.string(),
         bloodPressure: v.string(),
         pulse: v.string(),
+        height: v.string(),
+        weight: v.string(),
+        bmi: v.string(),
+        waistHip: v.string(),
+        spo2: v.string(),
       }),
     })
       .index("by_patient_id", ["patientId"])

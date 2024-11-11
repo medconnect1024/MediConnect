@@ -45,6 +45,11 @@ export const savePrescription = mutation({
       temperature: v.string(),
       bloodPressure: v.string(),
       pulse: v.string(),
+      height: v.string(),
+      weight: v.string(),
+      bmi: v.string(),
+      waistHip: v.string(),
+      spo2: v.string(),
     }),
   },
   async handler(ctx, args) {

@@ -28,6 +28,8 @@ import DiagnosisPage from "./diagnosis-page";
 import MedicinePage from "./medicine-page";
 import InvestigationsPage from "./investigations-page";
 import { Id } from "@/convex/_generated/dataModel";
+import EnhancedPreviousPrescriptions from "./previous-prescriptions";
+import EnhancedPrescriptionPreview from "./prescription-preview";
 
 type SymptomItem = {
   id: string;
@@ -143,6 +145,11 @@ export default function MultiStepPrescription({
     temperature: "",
     bloodPressure: "",
     pulse: "",
+    height: "",
+    weight: "",
+    bmi: "",
+    waistHip: "",
+    spo2: "",
   });
   const [severity, setSeverity] = useState<"Mild" | "Moderate" | "Severe">(
     "Mild"
@@ -237,7 +244,16 @@ export default function MultiStepPrescription({
       setMedicineReminder({ message: false, call: false });
       setMedicineInstructions("");
       setChronicCondition(false);
-      setVitals({ temperature: "", bloodPressure: "", pulse: "" });
+      setVitals({
+        temperature: "",
+        bloodPressure: "",
+        pulse: "",
+        height: "",
+        weight: "",
+        bmi: "",
+        waistHip: "",
+        spo2: "",
+      });
       setSeverity("Mild");
       setActiveStep(0);
       setShowPreview(false);
@@ -248,65 +264,7 @@ export default function MultiStepPrescription({
   };
 
   const renderPreviousPrescriptions = () => (
-    <div className="space-y-4">
-      <h3 className="text-2xl font-semibold">Previous Prescription</h3>
-      {previousPrescriptions.length === 0 ? (
-        <p>No previous prescriptions found for this patient.</p>
-      ) : (
-        previousPrescriptions.map((prescription, index) => (
-          <Card key={index} className="mb-4">
-            <CardContent className="p-4">
-              <h4 className="text-lg font-semibold mb-2">
-                Prescription {prescription.prescriptionId}
-              </h4>
-              <div className="space-y-2">
-                <p>
-                  <strong>Symptoms:</strong>{" "}
-                  {prescription.symptoms
-                    .map(
-                      (s) =>
-                        `${s.name} (Frequency: ${s.frequency}, Severity: ${s.severity}, Duration: ${s.duration})`
-                    )
-                    .join(", ")}
-                </p>
-                <p>
-                  <strong>Findings:</strong>{" "}
-                  {prescription.findings.map((f) => f.name).join(", ")}
-                </p>
-                <p>
-                  <strong>Diagnoses:</strong>{" "}
-                  {prescription.diagnoses.map((d) => d.name).join(", ")}
-                </p>
-                <p>
-                  <strong>Severity:</strong>{" "}
-                  {prescription.severity &&
-                  ["Mild", "Moderate", "Severe"].includes(prescription.severity)
-                    ? prescription.severity
-                    : "Not specified"}
-                </p>
-                <p>
-                  <strong>Medicines:</strong>
-                </p>
-                <ul className="list-disc pl-5">
-                  {prescription.medicines.map((m, idx) => (
-                    <li key={idx}>
-                      {m.name} - {m.dosage} {m.route}, {m.timesPerDay} times per
-                      day for {m.durationDays} days ({m.timing})
-                    </li>
-                  ))}
-                </ul>
-                <p>
-                  <strong>Follow-up Date:</strong>{" "}
-                  {prescription.followUpDate
-                    ? format(new Date(prescription.followUpDate), "PPP")
-                    : "Not set"}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ))
-      )}
-    </div>
+    <EnhancedPreviousPrescriptions prescriptions={previousPrescriptions} />
   );
 
   const renderStepContent = (step: number) => {
@@ -318,8 +276,6 @@ export default function MultiStepPrescription({
           <FindingsPage
             findings={findings}
             setFindings={setFindings}
-            chronicCondition={chronicCondition}
-            setChronicCondition={setChronicCondition}
             vitals={vitals}
             setVitals={setVitals}
           />
@@ -331,6 +287,8 @@ export default function MultiStepPrescription({
             setDiagnoses={setDiagnoses}
             severity={severity}
             setSeverity={setSeverity}
+            chronicCondition={chronicCondition}
+            setChronicCondition={setChronicCondition}
           />
         );
       case 3:
@@ -402,75 +360,24 @@ export default function MultiStepPrescription({
   };
 
   const renderPreview = () => (
-    <div className="space-y-4">
-      <h3 className="text-2xl font-semibold">Prescription Preview</h3>
-      <div>
-        <h4 className="text-lg font-semibold ">Symptoms</h4>
-        <ul className="list-disc pl-5">
-          {symptoms.map((s) => (
-            <li key={s.id}>
-              {s.name} - Frequency: {s.frequency}, Severity: {s.severity},
-              Duration: {s.duration}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <h4 className="text-lg font-semibold">Findings</h4>
-        <ul className="list-disc pl-5">
-          {findings.map((f) => (
-            <li key={f.id}>{f.name}</li>
-          ))}
-        </ul>
-        <p>Chronic Condition: {chronicCondition ? "Yes" : "No"}</p>
-        <p>
-          Vitals: Temperature: {vitals.temperature}, Blood Pressure:{" "}
-          {vitals.bloodPressure}, Pulse: {vitals.pulse}
-        </p>
-      </div>
-      <div>
-        <h4 className="text-lg font-semibold">Diagnosis</h4>
-        <ul className="list-disc pl-5">
-          {diagnoses.map((d) => (
-            <li key={d.id}>
-              {d.name} -{" "}
-              <span className="font-medium  text-gray-600">{severity}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <h4 className="text-lg font-semibold">Medicines</h4>
-        <ul className="list-disc pl-5">
-          {medicines.map((m) => (
-            <li key={m.id}>
-              {m.name} - {m.dosage} {m.route}, {m.timesPerDay} times per day for{" "}
-              {m.durationDays} days ({m.timing})
-            </li>
-          ))}
-        </ul>
-        <p>Instructions: {medicineInstructions}</p>
-        <p>
-          Reminders: {medicineReminder.message ? "Message, " : ""}
-          {medicineReminder.call ? "Call" : ""}
-        </p>
-      </div>
-      <div>
-        <h4 className="text-lg font-semibold">Investigations</h4>
-        <ul className="list-disc pl-5">
-          {investigations.map((i) => (
-            <li key={i.id}>{i.name}</li>
-          ))}
-        </ul>
-        <p>Notes: {investigationNotes}</p>
-      </div>
-      <div>
-        <h4 className="text-lg font-semibold">Follow-Up</h4>
-        <p>
-          {followUpDate ? format(followUpDate, "PPP") : "No follow-up date set"}
-        </p>
-      </div>
-    </div>
+    <EnhancedPrescriptionPreview
+      data={{
+        patientId: patientId.toString(),
+        doctorId: user?.id || "",
+        symptoms,
+        findings,
+        diagnoses,
+        medicines,
+        investigations,
+        investigationNotes,
+        followUpDate,
+        medicineReminder,
+        medicineInstructions,
+        chronicCondition,
+        vitals,
+        severity,
+      }}
+    />
   );
 
   return (

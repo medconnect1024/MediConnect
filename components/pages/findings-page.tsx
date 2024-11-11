@@ -5,10 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Plus, X } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 
-// Predefined findings list
 // Predefined findings list
 const FINDINGS = [
   "Abdominal Bruits",
@@ -444,18 +443,26 @@ export type FindingItem = {
 interface FindingsComponentProps {
   findings: FindingItem[];
   setFindings: React.Dispatch<React.SetStateAction<FindingItem[]>>;
-  chronicCondition: boolean;
-  setChronicCondition: React.Dispatch<React.SetStateAction<boolean>>;
   vitals: {
     temperature: string;
     bloodPressure: string;
     pulse: string;
+    height: string;
+    weight: string;
+    bmi: string;
+    waistHip: string;
+    spo2: string;
   };
   setVitals: React.Dispatch<
     React.SetStateAction<{
       temperature: string;
       bloodPressure: string;
       pulse: string;
+      height: string;
+      weight: string;
+      bmi: string;
+      waistHip: string;
+      spo2: string;
     }>
   >;
 }
@@ -463,13 +470,14 @@ interface FindingsComponentProps {
 export default function FindingsComponent({
   findings,
   setFindings,
-  chronicCondition,
-  setChronicCondition,
   vitals,
   setVitals,
 }: FindingsComponentProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [systolic, diastolic] = vitals.bloodPressure
+    .split("/")
+    .map((v) => v.trim()) || ["", ""];
 
   // Filter findings based on search term
   const filteredFindings = useMemo(() => {
@@ -479,7 +487,6 @@ export default function FindingsComponent({
     );
   }, [searchTerm]);
 
-  // Adds a finding to the list immediately
   const handleAddItem = (item: string) => {
     if (!findings.some((f) => f.name === item)) {
       const newItem: FindingItem = { id: Date.now().toString(), name: item };
@@ -489,10 +496,28 @@ export default function FindingsComponent({
     setIsSearching(false);
   };
 
-  // Removes a finding by its ID
   const handleRemoveItem = (id: string) => {
     setFindings((prev) => prev.filter((item) => item.id !== id));
   };
+
+  const handleBPChange = (sys: string, dia: string) => {
+    setVitals((prev) => ({
+      ...prev,
+      bloodPressure: `${sys}/${dia}`.replace(/^\/*|\/*$/g, ""),
+    }));
+  };
+
+  // Calculate BMI when height or weight changes
+  useEffect(() => {
+    if (vitals.height && vitals.weight) {
+      const heightInMeters = parseFloat(vitals.height) / 100;
+      const weightInKg = parseFloat(vitals.weight);
+      if (heightInMeters > 0 && weightInKg > 0) {
+        const bmi = (weightInKg / (heightInMeters * heightInMeters)).toFixed(2);
+        setVitals((prev) => ({ ...prev, bmi }));
+      }
+    }
+  }, [vitals.height, vitals.weight]);
 
   return (
     <div className="mb-8">
@@ -539,6 +564,7 @@ export default function FindingsComponent({
           ))}
         </ul>
       )}
+
       <ScrollArea className="h-[150px] mt-4">
         <div className="flex flex-wrap gap-3">
           {findings.map((item) => (
@@ -546,7 +572,7 @@ export default function FindingsComponent({
               <Button
                 variant="secondary"
                 size="lg"
-                className="flex items-center gap-2 text-lg "
+                className="flex items-center gap-2 text-lg"
               >
                 {item.name}
               </Button>
@@ -559,37 +585,123 @@ export default function FindingsComponent({
         </div>
       </ScrollArea>
 
-      <h4 className="text-lg font-semibold mt-6">Vitals</h4>
-      <div className="flex space-x-4 mb-4">
-        <Input
-          placeholder="Temperature"
-          value={vitals.temperature}
-          onChange={(e) =>
-            setVitals({ ...vitals, temperature: e.target.value })
-          }
-        />
-        <Input
-          placeholder="Blood Pressure"
-          value={vitals.bloodPressure}
-          onChange={(e) =>
-            setVitals({ ...vitals, bloodPressure: e.target.value })
-          }
-        />
-        <Input
-          placeholder="Pulse"
-          value={vitals.pulse}
-          onChange={(e) => setVitals({ ...vitals, pulse: e.target.value })}
-        />
-      </div>
+      <Card className="mt-6">
+        <CardContent className="pt-6">
+          <h4 className="text-lg font-semibold mb-4">Vitals</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <Label>BP</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  className="w-16"
+                  value={systolic}
+                  onChange={(e) => handleBPChange(e.target.value, diastolic)}
+                  placeholder="120"
+                />
+                <span>/</span>
+                <Input
+                  className="w-16"
+                  value={diastolic}
+                  onChange={(e) => handleBPChange(systolic, e.target.value)}
+                  placeholder="80"
+                />
+                <span className="text-sm text-muted-foreground">mmHg</span>
+              </div>
+            </div>
 
-      <div className="flex items-center space-x-2 mt-4">
-        <Checkbox
-          id="chronicCondition"
-          checked={chronicCondition}
-          onCheckedChange={(checked) => setChronicCondition(checked as boolean)}
-        />
-        <Label htmlFor="chronicCondition">Chronic Condition</Label>
-      </div>
+            <div className="space-y-2">
+              <Label>Pulse</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={vitals.pulse}
+                  onChange={(e) =>
+                    setVitals({ ...vitals, pulse: e.target.value })
+                  }
+                  placeholder="70"
+                />
+                <span className="text-sm text-muted-foreground">bpm</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Height</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={vitals.height}
+                  onChange={(e) =>
+                    setVitals({ ...vitals, height: e.target.value })
+                  }
+                  placeholder="170"
+                />
+                <span className="text-sm text-muted-foreground">cm</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Weight</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={vitals.weight}
+                  onChange={(e) =>
+                    setVitals({ ...vitals, weight: e.target.value })
+                  }
+                  placeholder="80"
+                />
+                <span className="text-sm text-muted-foreground">kg</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Temperature</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={vitals.temperature}
+                  onChange={(e) =>
+                    setVitals({ ...vitals, temperature: e.target.value })
+                  }
+                  placeholder="98"
+                />
+                <span className="text-sm text-muted-foreground">F</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>BMI</Label>
+              <div className="flex items-center gap-2">
+                <Input value={vitals.bmi} readOnly placeholder="25.0" />
+                <span className="text-sm text-muted-foreground">Kg/m2</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Waist/Hip</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={vitals.waistHip}
+                  onChange={(e) =>
+                    setVitals({ ...vitals, waistHip: e.target.value })
+                  }
+                  placeholder="32/36"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>SPO2</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={vitals.spo2}
+                  onChange={(e) =>
+                    setVitals({ ...vitals, spo2: e.target.value })
+                  }
+                  placeholder="98"
+                />
+                <span className="text-sm text-muted-foreground">%</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

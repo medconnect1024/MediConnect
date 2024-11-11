@@ -696,6 +696,8 @@ interface DiagnosisPageProps {
   setSeverity: React.Dispatch<
     React.SetStateAction<"Mild" | "Moderate" | "Severe">
   >;
+  chronicCondition: boolean;
+  setChronicCondition: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export default function DiagnosisPage({
@@ -703,6 +705,8 @@ export default function DiagnosisPage({
   setDiagnoses,
   severity,
   setSeverity,
+  chronicCondition,
+  setChronicCondition,
 }: DiagnosisPageProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -778,13 +782,13 @@ export default function DiagnosisPage({
               <Button
                 variant="secondary"
                 size="lg"
-                className="flex items-center gap-2 text-lg "
+                className="flex items-center gap-2 text-lg"
               >
                 {item.name}
               </Button>
               <X
                 className="h-4 w-4 cursor-pointer text-red-500 ml-2"
-                onClick={() => handleRemoveItem(item.id)} // Call handleRemoveItem directly here
+                onClick={() => handleRemoveItem(item.id)}
               />
             </div>
           ))}
@@ -813,6 +817,22 @@ export default function DiagnosisPage({
             <Label htmlFor="r3">Severe</Label>
           </div>
         </RadioGroup>
+      </div>
+
+      {/* Chronic Condition Checkbox */}
+      <div className="mt-4">
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="chronicCondition"
+            checked={chronicCondition}
+            onChange={(e) => setChronicCondition(e.target.checked)}
+            className="h-4 w-4 text-primary border-gray-300 rounded focus:ring-0"
+          />
+          <Label htmlFor="chronicCondition" className="text-lg">
+            Chronic Condition
+          </Label>
+        </div>
       </div>
     </div>
   );
