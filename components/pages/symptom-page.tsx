@@ -317,11 +317,18 @@ const FREQUENCY_OPTIONS = [
   "1 time a day",
   "2 times a day",
   "More than 2 times a day",
+  "Type your own",
 ];
 
 const SEVERITY_OPTIONS = ["Mild", "Moderate", "Severe"];
 
-const DURATION_OPTIONS = ["1 day", "2 days", "3 days", "More than one week"];
+const DURATION_OPTIONS = [
+  "1 day",
+  "2 days",
+  "3 days",
+  "More than one week",
+  "Type your own",
+];
 
 type SymptomItem = {
   id: string;
@@ -336,10 +343,12 @@ interface SymptomPageProps {
   setSymptoms: React.Dispatch<React.SetStateAction<SymptomItem[]>>;
 }
 
-export default function SymptomsComponent({
-  symptoms,
-  setSymptoms,
-}: SymptomPageProps) {
+export default function Component(
+  { symptoms, setSymptoms }: SymptomPageProps = {
+    symptoms: [],
+    setSymptoms: () => {},
+  }
+) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [newSymptom, setNewSymptom] = useState<SymptomItem>({
@@ -349,6 +358,10 @@ export default function SymptomsComponent({
     severity: "",
     duration: "",
   });
+  const [customFrequency, setCustomFrequency] = useState("");
+  const [customDuration, setCustomDuration] = useState("");
+  const [isCustomFrequencyOpen, setIsCustomFrequencyOpen] = useState(false);
+  const [isCustomDurationOpen, setIsCustomDurationOpen] = useState(false);
 
   const filteredSymptoms = useMemo(() => {
     if (!searchTerm) return [];
@@ -362,6 +375,14 @@ export default function SymptomsComponent({
       const symptomToAdd = {
         ...newSymptom,
         id: Date.now().toString(),
+        frequency:
+          newSymptom.frequency === "Type your own"
+            ? customFrequency
+            : newSymptom.frequency,
+        duration:
+          newSymptom.duration === "Type your own"
+            ? customDuration
+            : newSymptom.duration,
       };
       setSymptoms((prev) => [...prev, symptomToAdd]);
       setNewSymptom({
@@ -371,13 +392,53 @@ export default function SymptomsComponent({
         severity: "",
         duration: "",
       });
+      setCustomFrequency("");
+      setCustomDuration("");
       setSearchTerm("");
       setIsSearching(false);
+      setIsCustomFrequencyOpen(false);
+      setIsCustomDurationOpen(false);
     }
   };
 
   const handleRemoveItem = (id: string) => {
     setSymptoms((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const handleFrequencyChange = (value: string) => {
+    if (value === "Type your own") {
+      setIsCustomFrequencyOpen(true);
+    } else {
+      setIsCustomFrequencyOpen(false);
+      setNewSymptom((prev) => ({ ...prev, frequency: value }));
+    }
+  };
+
+  const handleDurationChange = (value: string) => {
+    if (value === "Type your own") {
+      setIsCustomDurationOpen(true);
+    } else {
+      setIsCustomDurationOpen(false);
+      setNewSymptom((prev) => ({ ...prev, duration: value }));
+    }
+  };
+
+  const addCustomFrequency = () => {
+    if (customFrequency && !FREQUENCY_OPTIONS.includes(customFrequency)) {
+      FREQUENCY_OPTIONS.push(customFrequency);
+      setNewSymptom((prev) => ({ ...prev, frequency: customFrequency }));
+      setCustomFrequency("");
+      setIsCustomFrequencyOpen(false);
+    }
+  };
+
+  const addCustomDuration = () => {
+    if (customDuration && !DURATION_OPTIONS.includes(customDuration)) {
+      DURATION_OPTIONS.push(customDuration);
+      setNewSymptom((prev) => ({ ...prev, duration: customDuration }));
+      setCustomDuration("");
+      setIsCustomDurationOpen(false);
+    }
   };
 
   return (
@@ -403,9 +464,7 @@ export default function SymptomsComponent({
         </div>
         <Select
           value={newSymptom.frequency}
-          onValueChange={(value) =>
-            setNewSymptom((prev) => ({ ...prev, frequency: value }))
-          }
+          onValueChange={handleFrequencyChange}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Frequency" />
@@ -416,17 +475,19 @@ export default function SymptomsComponent({
                 {option}
               </SelectItem>
             ))}
-            <SelectItem value="custom">Type your own</SelectItem>
           </SelectContent>
         </Select>
-        {newSymptom.frequency === "custom" && (
-          <Input
-            placeholder="Custom frequency"
-            value={newSymptom.frequency}
-            onChange={(e) =>
-              setNewSymptom((prev) => ({ ...prev, frequency: e.target.value }))
-            }
-          />
+        {isCustomFrequencyOpen && (
+          <div className="flex items-center space-x-2">
+            <Input
+              placeholder="Custom frequency"
+              value={customFrequency}
+              onChange={(e) => setCustomFrequency(e.target.value)}
+            />
+            <Button variant="outline" onClick={addCustomFrequency}>
+              Add
+            </Button>
+          </div>
         )}
         <Select
           value={newSymptom.severity}
@@ -447,9 +508,7 @@ export default function SymptomsComponent({
         </Select>
         <Select
           value={newSymptom.duration}
-          onValueChange={(value) =>
-            setNewSymptom((prev) => ({ ...prev, duration: value }))
-          }
+          onValueChange={handleDurationChange}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Duration" />
@@ -460,17 +519,19 @@ export default function SymptomsComponent({
                 {option}
               </SelectItem>
             ))}
-            <SelectItem value="custom">Type your own</SelectItem>
           </SelectContent>
         </Select>
-        {newSymptom.duration === "custom" && (
-          <Input
-            placeholder="Custom duration"
-            value={newSymptom.duration}
-            onChange={(e) =>
-              setNewSymptom((prev) => ({ ...prev, duration: e.target.value }))
-            }
-          />
+        {isCustomDurationOpen && (
+          <div className="flex items-center space-x-2">
+            <Input
+              placeholder="Custom duration"
+              value={customDuration}
+              onChange={(e) => setCustomDuration(e.target.value)}
+            />
+            <Button variant="outline" onClick={addCustomDuration}>
+              Add
+            </Button>
+          </div>
         )}
         <Button
           variant="outline"
@@ -506,24 +567,23 @@ export default function SymptomsComponent({
               <TableHead>Frequency</TableHead>
               <TableHead>Severity</TableHead>
               <TableHead>Duration</TableHead>
-              <TableHead>Action</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {symptoms.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>{item.name}</TableCell>
-                <TableCell>{item.frequency}</TableCell>
-                <TableCell>{item.severity}</TableCell>
-                <TableCell>{item.duration}</TableCell>
+            {symptoms.map((symptom) => (
+              <TableRow key={symptom.id}>
+                <TableCell>{symptom.name}</TableCell>
+                <TableCell>{symptom.frequency}</TableCell>
+                <TableCell>{symptom.severity}</TableCell>
+                <TableCell>{symptom.duration}</TableCell>
                 <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveItem(item.id)}
+                  <button
+                    onClick={() => handleRemoveItem(symptom.id)}
+                    className="text-red-500 hover:underline"
                   >
-                    <X className="h-4 w-4 text-red-500" />
-                  </Button>
+                    X
+                  </button>
                 </TableCell>
               </TableRow>
             ))}

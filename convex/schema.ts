@@ -9,10 +9,22 @@ export default defineSchema({
     lastName: v.optional(v.string()),
     profileImageUrl: v.optional(v.string()),
     role: v.optional(v.union(v.literal("Doctor"), v.literal("Patient"))),
+    phone: v.optional(v.string()),
+    specialization: v.optional(v.string()),
+    licenseNumber: v.optional(v.string()),
+    yearsOfPractice: v.optional(v.number()),
+    practiceType: v.optional(v.union(v.literal("Private"), v.literal("Hospital"), v.literal("Clinic"))),
+    bio: v.optional(v.string()),
+    clinicName: v.optional(v.string()),
+    logo: v.optional(v.string()),
+    address: v.optional(v.string()),
+    city: v.optional(v.string()),
+    state: v.optional(v.string()),
+    zipCode: v.optional(v.string()),
+    website: v.optional(v.string()),
   })
     .index("by_clerk_id", ["userId"])
     .index("by_email", ["email"]),
-  
     patients: defineTable({
       patientId: v.number(),
       email: v.string(),
@@ -33,10 +45,12 @@ export default defineSchema({
       heartRate: v.optional(v.string()),
       temperature: v.optional(v.string()),
       oxygenSaturation: v.optional(v.string()),
+      doctorId:v.optional(v.string()), // New field to store the ID of the doctor who registered the patient
     })
       .index("by_patient_id", ["patientId"])
       .index("by_email", ["email"])
       .index("by_phoneNumber", ["phoneNumber"]),
+     
   
   appointments: defineTable({
     appointmentId: v.string(),

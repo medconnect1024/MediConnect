@@ -21,6 +21,7 @@ export const registerPatient = mutation({
     heartRate: v.optional(v.string()),
     temperature: v.optional(v.string()),
     oxygenSaturation: v.optional(v.string()),
+    doctorId:v.optional(v.string()), // New field to store the ID of the doctor who registered the patient
   },
   async handler(ctx, args) {
     // Generate a unique ID for the patient
@@ -44,19 +45,19 @@ export const registerPatient = mutation({
 
     return { success: true, patientId };
   },
+  
 });
 
 
 
-export const getAppointments = query({
-  handler: async (ctx) => {
-    const appointments = await ctx.db.query("appointments").collect();
-    return appointments.map((appointment) => ({
-      id: appointment._id,
-      patientId: appointment.patientId,
-      date: appointment.appointmentDate,
-      status: appointment.status,
-    }));
+export const getAppointmentsByDoctor = query({
+  args: { doctorId: v.string() },
+  handler: async (ctx, args) => {
+    const appointments = await ctx.db
+      .query("appointments")
+      .filter((q) => q.eq(q.field("doctorId"), args.doctorId))
+      .collect();
+    return appointments;
   },
 });
 

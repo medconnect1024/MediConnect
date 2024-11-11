@@ -16,6 +16,7 @@ import { api } from "@/convex/_generated/api";
 import VaccinationPage from "@/components/pages/VaccinationPage";
 import MedicalHistoryPage from "@/components/pages/MedicalHistoryPage";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
 
 interface PatientCardProps {
   patientId: number;
@@ -90,7 +91,7 @@ const PatientCard: React.FC<PatientCardProps> = ({
       </CollapsibleTrigger>
       <CollapsibleContent className="px-2">
         <div
-          className={`p-2 rounded-b-md ${isSelected ? "bg-blue-400" : "bg-gray-100"}`}
+          className={`p-2 rounded-b-md ${isSelected ? "bg-gray-100" : "bg-gray-100"}`}
         >
           <p className="text-sm">
             <strong>Name:</strong>
@@ -120,7 +121,13 @@ const Sidebar: React.FC<{
   openPatientId,
   setOpenPatientId,
 }) => {
-  const appointments = useQuery(api.patients.getAppointments);
+  const { user } = useUser();
+  const doctorId = user?.id;
+
+  const appointments = useQuery(
+    api.patients.getAppointmentsByDoctor,
+    doctorId ? { doctorId } : "skip"
+  );
 
   const onQueuePatients =
     appointments?.filter((appointment) => appointment.status === "Scheduled") ||
@@ -153,7 +160,7 @@ const Sidebar: React.FC<{
         <div>
           {onQueuePatients.map((appointment) => (
             <PatientCard
-              key={appointment.id}
+              key={appointment._id}
               patientId={Number(appointment.patientId)}
               isSelected={selectedPatientId === Number(appointment.patientId)}
               onClick={() => handlePatientClick(Number(appointment.patientId))}
@@ -173,7 +180,7 @@ const Sidebar: React.FC<{
         <div>
           {completedAppointments.map((appointment) => (
             <PatientCard
-              key={appointment.id}
+              key={appointment._id}
               patientId={Number(appointment.patientId)}
               isSelected={selectedPatientId === Number(appointment.patientId)}
               onClick={() => handlePatientClick(Number(appointment.patientId))}
@@ -263,8 +270,6 @@ export default function Component() {
 
   const handlePatientSelect = (patientId: number) => {
     setSelectedPatientId(patientId);
-    // Remove this line to maintain the current section when switching patients
-    // setSelectedSection("overview");
   };
 
   return (

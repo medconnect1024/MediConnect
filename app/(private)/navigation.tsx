@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Users, UserPlus } from "lucide-react";
+import { LayoutDashboard, Users, UserPlus, UserCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import Logo from "@/components/common/Logo";
@@ -15,7 +15,7 @@ import {
   useQuery,
 } from "convex/react";
 import { Loading } from "@/components/shared/Loading";
-import { SignInButton, UserButton } from "@clerk/nextjs";
+import { SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import { api } from "../../convex/_generated/api";
 
 const menuItems = [
@@ -31,6 +31,14 @@ export default function FixedNavigation() {
   const [isOpen, setIsOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  const { user, isSignedIn } = useUser();
+  const loggedInEmail = user?.emailAddresses[0]?.emailAddress || "";
+
+  // Query to check if user email is present in users table
+  const userExists = useQuery(api.users.checkUserEmail, {
+    email: loggedInEmail,
+  });
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -113,6 +121,18 @@ export default function FixedNavigation() {
               </Button>
             </Link>
           ))}
+          {/* Update Profile button (only shown if user email is NOT found in the users table) */}
+          {!userExists && (
+            <Link href="/docprofile" passHref>
+              <Button
+                variant="ghost"
+                className="text-gray-600 hover:text-gray-800 flex items-center"
+              >
+                <UserCheck className="mr-2 h-4 w-4" />
+                Update Profile
+              </Button>
+            </Link>
+          )}
           <AuthLoading>
             <Loading />
           </AuthLoading>

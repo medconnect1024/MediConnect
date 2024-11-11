@@ -176,7 +176,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ patientId }) => {
   );
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card>
       <CardHeader>
         <CardTitle className="text-3xl">Billing</CardTitle>
       </CardHeader>

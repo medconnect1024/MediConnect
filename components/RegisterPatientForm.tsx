@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useUser } from "@clerk/nextjs";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -85,10 +86,19 @@ export default function RegisterPatientForm() {
 
   const registerPatient = useMutation(api.patients.registerPatient);
   const [activeTab, setActiveTab] = useState("personal");
+  const { user, isSignedIn } = useUser();
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!isSignedIn || !user) {
+      toast.error("You must be signed in to register a patient.");
+      return;
+    }
+
     try {
-      await registerPatient(values);
+      await registerPatient({
+        ...values,
+        doctorId: user.id, // Include the doctor's ID when registering the patient
+      });
       toast.success("Patient has been registered successfully");
       form.reset();
     } catch (error) {
@@ -103,6 +113,9 @@ export default function RegisterPatientForm() {
         <CardHeader className="bg-blue-500 text-white ">
           <div className="text-2xl font-bold">New Patient Registration</div>
         </CardHeader>
+        <h2 className="text-3xl font-bold text-gray-800 mb-6">
+          Welcome, Dr {user?.username || user?.firstName || "User"}!
+        </h2>
         <div className="p-4 sm:p-6 md:p-8">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -309,9 +322,9 @@ export default function RegisterPatientForm() {
                         name="gramPanchayat"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Gram Panchayat (Optional)</FormLabel>
+                            <FormLabel>Road(Optional)</FormLabel>
                             <FormControl>
-                              <Input placeholder="Gram Panchayat" {...field} />
+                              <Input placeholder="Road" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -337,9 +350,9 @@ export default function RegisterPatientForm() {
                         name="tehsil"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Tehsil (Optional)</FormLabel>
+                            <FormLabel>Taluk (Optional)</FormLabel>
                             <FormControl>
-                              <Input placeholder="Tehsil" {...field} />
+                              <Input placeholder="Taluk" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

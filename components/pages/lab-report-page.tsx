@@ -215,7 +215,7 @@ export default function LabReportPage({ patientId }: LabReportPageProps) {
     );
   }
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card>
       <CardHeader>
         <CardTitle className="text-1xl">
           Lab Reports for Patient ID: {patientId}

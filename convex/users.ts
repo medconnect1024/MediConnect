@@ -102,3 +102,17 @@ async function getCurrentUser(ctx: QueryCtx): Promise<Doc<"users"> | null> {
   }
   return await userQuery(ctx, identity.subject);
 }
+
+export const checkUserEmail = query({
+  args: { email: v.string() },
+  async handler(ctx, { email }) {
+    // Query the "users" table to check if the email exists
+    const userRecord = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .unique();
+      
+    // Return true if a user is found, otherwise false
+    return userRecord !== null;
+  },
+});
