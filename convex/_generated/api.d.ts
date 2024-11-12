@@ -17,6 +17,7 @@ import type {
 } from "convex/server";
 import type * as contacts from "../contacts.js";
 import type * as crons from "../crons.js";
+import type * as getdoctorslots from "../getdoctorslots.js";
 import type * as http from "../http.js";
 import type * as labReports from "../labReports.js";
 import type * as messages from "../messages.js";
@@ -38,6 +39,7 @@ import type * as watiWebhook from "../watiWebhook.js";
 declare const fullApi: ApiFromModules<{
   contacts: typeof contacts;
   crons: typeof crons;
+  getdoctorslots: typeof getdoctorslots;
   http: typeof http;
   labReports: typeof labReports;
   messages: typeof messages;
