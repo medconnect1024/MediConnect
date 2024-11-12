@@ -35,7 +35,21 @@ const PatientCard: React.FC<PatientCardProps> = ({
 }) => {
   const patientInfo = useQuery(api.patients.getPatientById, { patientId });
 
-  if (!patientInfo) return null;
+  if (patientInfo === undefined) {
+    return (
+      <div className="text-sm text-gray-500">
+        Loading patient information...
+      </div>
+    );
+  }
+
+  if (patientInfo === null || "error" in patientInfo) {
+    return (
+      <div className="text-sm text-red-500">
+        {patientInfo?.error || "Patient not found"}
+      </div>
+    );
+  }
 
   const { firstName, lastName, gender, dateOfBirth, phoneNumber } = patientInfo;
 
@@ -94,8 +108,7 @@ const PatientCard: React.FC<PatientCardProps> = ({
           className={`p-2 rounded-b-md ${isSelected ? "bg-gray-100" : "bg-gray-100"}`}
         >
           <p className="text-sm">
-            <strong>Name:</strong>
-            {firstName} {lastName}
+            <strong>Name:</strong> {firstName} {lastName}
           </p>
           <p className="text-sm">
             <strong>Phone:</strong> {phoneNumber}
@@ -129,20 +142,43 @@ const Sidebar: React.FC<{
     doctorId ? { doctorId } : "skip"
   );
 
-  const onQueuePatients =
-    appointments?.filter((appointment) => appointment.status === "Scheduled") ||
-    [];
-  const completedAppointments =
-    appointments?.filter((appointment) => appointment.status === "Completed") ||
-    [];
+  useEffect(() => {
+    if (appointments && appointments.length > 0 && !selectedPatientId) {
+      const scheduledAppointments = appointments.filter(
+        (appointment) => appointment.status === "Scheduled"
+      );
+      if (scheduledAppointments.length > 0) {
+        onPatientSelect(Number(scheduledAppointments[0].patientId));
+      }
+    }
+  }, [appointments, selectedPatientId, onPatientSelect]);
+
+  if (!doctorId) {
+    return (
+      <p className="text-center mt-4">Doctor information not available.</p>
+    );
+  }
+
+  if (appointments === undefined) {
+    return <p className="text-center mt-4">Loading appointments...</p>;
+  }
+
+  if (appointments === null) {
+    return (
+      <p className="text-center mt-4">
+        Error loading appointments. Please try again.
+      </p>
+    );
+  }
+
+  const onQueuePatients = appointments.filter(
+    (appointment) => appointment.status === "Scheduled"
+  );
+  const completedAppointments = appointments.filter(
+    (appointment) => appointment.status === "Completed"
+  );
 
   const totalPatients = onQueuePatients.length + completedAppointments.length;
-
-  useEffect(() => {
-    if (onQueuePatients.length > 0 && !selectedPatientId) {
-      onPatientSelect(Number(onQueuePatients[0].patientId));
-    }
-  }, [onQueuePatients, selectedPatientId, onPatientSelect]);
 
   const handlePatientClick = (patientId: number) => {
     onPatientSelect(patientId);
@@ -158,18 +194,24 @@ const Sidebar: React.FC<{
           On Queue ({onQueuePatients.length})
         </h3>
         <div>
-          {onQueuePatients.map((appointment) => (
-            <PatientCard
-              key={appointment._id}
-              patientId={Number(appointment.patientId)}
-              isSelected={selectedPatientId === Number(appointment.patientId)}
-              onClick={() => handlePatientClick(Number(appointment.patientId))}
-              isOpen={openPatientId === Number(appointment.patientId)}
-              onOpenChange={(open) =>
-                setOpenPatientId(open ? Number(appointment.patientId) : null)
-              }
-            />
-          ))}
+          {onQueuePatients.length > 0 ? (
+            onQueuePatients.map((appointment) => (
+              <PatientCard
+                key={appointment._id}
+                patientId={Number(appointment.patientId)}
+                isSelected={selectedPatientId === Number(appointment.patientId)}
+                onClick={() =>
+                  handlePatientClick(Number(appointment.patientId))
+                }
+                isOpen={openPatientId === Number(appointment.patientId)}
+                onOpenChange={(open) =>
+                  setOpenPatientId(open ? Number(appointment.patientId) : null)
+                }
+              />
+            ))
+          ) : (
+            <p className="text-sm text-gray-500">No patients in queue.</p>
+          )}
         </div>
       </div>
 
@@ -178,18 +220,26 @@ const Sidebar: React.FC<{
           Appointment Completed ({completedAppointments.length})
         </h3>
         <div>
-          {completedAppointments.map((appointment) => (
-            <PatientCard
-              key={appointment._id}
-              patientId={Number(appointment.patientId)}
-              isSelected={selectedPatientId === Number(appointment.patientId)}
-              onClick={() => handlePatientClick(Number(appointment.patientId))}
-              isOpen={openPatientId === Number(appointment.patientId)}
-              onOpenChange={(open) =>
-                setOpenPatientId(open ? Number(appointment.patientId) : null)
-              }
-            />
-          ))}
+          {completedAppointments.length > 0 ? (
+            completedAppointments.map((appointment) => (
+              <PatientCard
+                key={appointment._id}
+                patientId={Number(appointment.patientId)}
+                isSelected={selectedPatientId === Number(appointment.patientId)}
+                onClick={() =>
+                  handlePatientClick(Number(appointment.patientId))
+                }
+                isOpen={openPatientId === Number(appointment.patientId)}
+                onOpenChange={(open) =>
+                  setOpenPatientId(open ? Number(appointment.patientId) : null)
+                }
+              />
+            ))
+          ) : (
+            <p className="text-sm text-gray-500">
+              No completed appointments yet.
+            </p>
+          )}
         </div>
       </div>
     </aside>
@@ -304,7 +354,9 @@ export default function Component() {
             )}
           </>
         ) : (
-          <p className="text-center mt-4">No patients available.</p>
+          <p className="text-center mt-4">
+            Please select a patient to view their information.
+          </p>
         )}
       </main>
     </div>

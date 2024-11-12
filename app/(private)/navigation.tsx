@@ -4,9 +4,14 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Users, UserPlus, UserCheck } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  UserPlus,
+  UserCheck,
+  Search,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
 import Logo from "@/components/common/Logo";
 import {
   AuthLoading,
@@ -27,25 +32,30 @@ const menuItems = [
 export default function FixedNavigation() {
   const pathname = usePathname();
   const [searchTerm, setSearchTerm] = useState("");
-  const patients = useQuery(api.patientsearch.searchPatients, { searchTerm });
   const [isOpen, setIsOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   const { user, isSignedIn } = useUser();
   const loggedInEmail = user?.emailAddresses[0]?.emailAddress || "";
+  const userId = user?.id || "";
 
   // Query to check if user email is present in users table
   const userExists = useQuery(api.users.checkUserEmail, {
     email: loggedInEmail,
   });
 
+  const patients = useQuery(api.patientsearch.searchPatients, {
+    searchTerm,
+    doctorId: userId,
+  });
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
-  const handleResultClick = (patientName: string) => {
-    router.push(`/consultation?patientId=${encodeURIComponent(patientName)}`);
+  const handleResultClick = (patientId: string) => {
+    router.push(`/consultation?patientId=${encodeURIComponent(patientId)}`);
     setIsOpen(false);
   };
 
@@ -89,9 +99,9 @@ export default function FixedNavigation() {
                           key={patient._id}
                           className="px-2 py-1 text-sm hover:bg-gray-100 cursor-pointer truncate"
                           role="option"
-                          onClick={() => handleResultClick(patient.firstName)}
+                          onClick={() => handleResultClick(patient._id)}
                         >
-                          {patient.firstName}
+                          {patient.firstName} {patient.lastName}
                         </li>
                       ))}
                     </ul>

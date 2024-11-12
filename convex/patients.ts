@@ -48,6 +48,17 @@ export const registerPatient = mutation({
   
 });
 
+export const getPatientsByDoctor = query({
+  args: { doctorId: v.string() },
+  handler: async (ctx, args) => {
+    // Query the patients by the doctorId
+    const patients = await ctx.db
+      .query("patients") // Assuming your collection is called "patients"
+      .filter((q) => q.eq(q.field("doctorId"), args.doctorId)) // Filter based on doctorId
+      .collect();
+    return patients;
+  },
+});
 
 
 export const getAppointmentsByDoctor = query({
@@ -66,14 +77,15 @@ export const getPatientById = query({
     patientId: v.number(),
   },
   handler: async (ctx, { patientId }) => {
-    const patient = await ctx.db
-      .query("patients")
-      .withIndex("by_patient_id", (q) => q.eq("patientId", patientId))
-      .unique();
+    try {
+      const patient = await ctx.db
+        .query("patients")
+        .withIndex("by_patient_id", (q) => q.eq("patientId", patientId))
+        .unique();
 
-    if (!patient) {
-      throw new Error("Patient not found.");
-    }
+      if (!patient) {
+        return { error: "Patient not found." };  // Return a custom error object
+      }
 
     return {
       id: patient._id,
@@ -96,5 +108,90 @@ export const getPatientById = query({
       temperature: patient.temperature,
       oxygenSaturation: patient.oxygenSaturation,
     };
+  } catch (error) {
+    console.error("Error fetching patient:", error);
+    return { error: "An error occurred while fetching the patient data." };  // Generic error response
+  }
+  },
+});
+// API to fetch patients by name
+export const getPatientByName = query({
+  args: {
+    firstName: v.string(),
+  },
+  handler: async (ctx, { firstName }) => {
+    try {
+      const patients = await ctx.db
+        .query("patients")
+        //.filter((q) => q.startsWith(q.field("firstName"), firstName))
+        .collect();
+
+      return patients.map((patient) => ({
+        id: patient._id,
+        firstName: patient.firstName,
+        middleName: patient.middleName,
+        lastName: patient.lastName,
+        dateOfBirth: patient.dateOfBirth,
+        gender: patient.gender,
+        phoneNumber: patient.phoneNumber,
+        houseNo: patient.houseNo,
+        gramPanchayat: patient.gramPanchayat,
+        village: patient.village,
+        tehsil: patient.tehsil,
+        district: patient.district,
+        state: patient.state,
+        systolic: patient.systolic,
+        diastolic: patient.diastolic,
+        heartRate: patient.heartRate,
+        temperature: patient.temperature,
+        oxygenSaturation: patient.oxygenSaturation,
+      }));
+    } catch (error) {
+      console.error("Error fetching patient by name:", error);
+      return { error: "An error occurred while fetching patient data by name." };  // Generic error response
+    }
+  },
+});
+
+// API to fetch patients by phone number
+export const getPatientByPhone = query({
+  args: {
+    phoneNumber: v.string(),
+  },
+  handler: async (ctx, { phoneNumber }) => {
+    try {
+      const patient = await ctx.db
+        .query("patients")
+        .withIndex("by_phoneNumber", (q) => q.eq("phoneNumber", phoneNumber))
+        .unique();
+
+      if (!patient) {
+        return { error: "Patient not found." };
+      }
+
+      return {
+        id: patient._id,
+        firstName: patient.firstName,
+        middleName: patient.middleName,
+        lastName: patient.lastName,
+        dateOfBirth: patient.dateOfBirth,
+        gender: patient.gender,
+        phoneNumber: patient.phoneNumber,
+        houseNo: patient.houseNo,
+        gramPanchayat: patient.gramPanchayat,
+        village: patient.village,
+        tehsil: patient.tehsil,
+        district: patient.district,
+        state: patient.state,
+        systolic: patient.systolic,
+        diastolic: patient.diastolic,
+        heartRate: patient.heartRate,
+        temperature: patient.temperature,
+        oxygenSaturation: patient.oxygenSaturation,
+      };
+    } catch (error) {
+      console.error("Error fetching patient by phone number:", error);
+      return { error: "An error occurred while fetching the patient data by phone number." };
+    }
   },
 });

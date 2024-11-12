@@ -8,6 +8,7 @@ import { Search, Plus, X } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Textarea } from "@/components/ui/textarea";
+import { INVESTIGATION_NAMES } from "@/components/data/investigationNames";
 
 type PrescriptionItem = {
   id: string;
@@ -21,14 +22,14 @@ interface InvestigationsPageProps {
   setInvestigationNotes: React.Dispatch<React.SetStateAction<string>>;
 }
 
-const INVESTIGATION_NAMES = [
-  "CBC",
-  "Thyroid Profile",
-  "Liver Function Test",
-  "Kidney Function Test",
-  "Blood Sugar",
-  "Lipid Profile",
-];
+// const INVESTIGATION_NAMES = [
+//   "CBC",
+//   "Thyroid Profile",
+//   "Liver Function Test",
+//   "Kidney Function Test",
+//   "Blood Sugar",
+//   "Lipid Profile",
+// ];
 
 export default function InvestigationsPage({
   investigations,

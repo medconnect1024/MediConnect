@@ -8,7 +8,7 @@ export default defineSchema({
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
     profileImageUrl: v.optional(v.string()),
-    role: v.optional(v.union(v.literal("Doctor"), v.literal("Patient"))),
+    role: v.optional(v.union(v.literal("Doctor"), v.literal("Patient"),v.literal("Desk"))),
     phone: v.optional(v.string()),
     specialization: v.optional(v.string()),
     licenseNumber: v.optional(v.string()),

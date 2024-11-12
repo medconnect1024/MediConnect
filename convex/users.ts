@@ -47,7 +47,7 @@ export const createUser = internalMutation({
 
 export const updateUserRole = mutation({
   args: {
-    role: v.optional(v.union(v.literal("Doctor"), v.literal("Patient"))),
+    role: v.optional(v.union(v.literal("Doctor"), v.literal("Patient"),v.literal("Desk"))),
   },
   async handler(ctx, { role }) {
     const identity = await ctx.auth.getUserIdentity();
