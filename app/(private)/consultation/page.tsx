@@ -175,7 +175,7 @@ const Sidebar: React.FC<{
     (appointment) => appointment.status === "Scheduled"
   );
   const completedAppointments = appointments.filter(
-    (appointment) => appointment.status === "Completed"
+    (appointment) => appointment.status === "completed"
   );
 
   const totalPatients = onQueuePatients.length + completedAppointments.length;
