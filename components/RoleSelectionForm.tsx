@@ -28,7 +28,7 @@ export default function RoleSelectionForm() {
 
   const onSubmit = async ({role}: z.infer<typeof formSchema>) => {
     await updateUserRole({role});
-    router.push("/dashboard");
+    router.push("/docdashboard");
   };
 
   return (

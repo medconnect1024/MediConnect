@@ -16,8 +16,8 @@ export default function ConvexClientProvider({
   return (
     <ClerkProvider
       afterSignOutUrl="/"
-      signInForceRedirectUrl="/docdashboard"
-      signUpForceRedirectUrl="/roleselection"
+      signInForceRedirectUrl="/roleselection"
+      //signUpForceRedirectUrl="/roleselection"
       appearance={{
         variables: {
           colorPrimary: "hsl(222.2, 47.4%, 11.2%)",

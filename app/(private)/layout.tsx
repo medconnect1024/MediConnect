@@ -2,6 +2,9 @@ import Header from "@/components/Header";
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata } from "next";
 import FixedNavigation from "./navigation";
+import RoleSelection from "./roleselection/page";
+import RoleBasedNavigation from "@/components/RoleBasedNavigation";
+import { useState } from "react";
 
 //TODO: change content
 export const metadata: Metadata = {
@@ -30,20 +33,24 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({
+
   children,
-  dashboard3,
+
 }: {
   children: React.ReactNode;
-  dashboard3: React.ReactNode;
+  
 }) {
   return (
-    <>
-      <FixedNavigation />
-      <main className="flex min-h-[calc(100dvh-4rem)] flex-col items-center p-2 mt-10">
-        {children}
-      </main>
+    
+    <html lang="en">
+    <body>
+        <FixedNavigation/>
+          <main className="flex min-h-[calc(100dvh-4rem)] flex-col items-center p-2 mt-16">
+            {children}
+          </main>
       <Toaster />
-    </>
+    </body>
+  </html>
   );
 }
 // import React from 'react'

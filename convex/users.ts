@@ -113,6 +113,6 @@ export const checkUserEmail = query({
       .unique();
       
     // Return true if a user is found, otherwise false
-    return userRecord !== null;
+    return userRecord;
   },
 });
