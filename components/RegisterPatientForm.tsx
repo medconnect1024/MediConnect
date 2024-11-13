@@ -113,9 +113,9 @@ export default function RegisterPatientForm() {
         <CardHeader className="bg-blue-500 text-white ">
           <div className="text-2xl font-bold">New Patient Registration</div>
         </CardHeader>
-        <h2 className="text-3xl font-bold text-gray-800 mb-6">
+        {/* <h2 className="text-3xl font-bold text-gray-800 mb-6">
           Welcome, Dr {user?.username || user?.firstName || "User"}!
-        </h2>
+        </h2> */}
         <div className="p-4 sm:p-6 md:p-8">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

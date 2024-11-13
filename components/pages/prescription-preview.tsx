@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+// import { generatePrescriptionPDF } from "./generatePrescriptionPDF";
 
 type SymptomItem = {
   id: string;
@@ -54,6 +55,11 @@ type PrescriptionData = {
     temperature: string;
     bloodPressure: string;
     pulse: string;
+    height: string;
+    weight: string;
+    bmi: string;
+    waistHip: string;
+    spo2: string;
   };
   severity?: "Mild" | "Moderate" | "Severe";
 };
@@ -83,16 +89,28 @@ export default function EnhancedPrescriptionPreview({
               </CardHeader>
               <CardContent>
                 <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Temperature</TableHead>
+                      <TableHead>Blood Pressure</TableHead>
+                      <TableHead>Pulse</TableHead>
+                      <TableHead>Height</TableHead>
+                      <TableHead>Weight</TableHead>
+                      <TableHead>BMI</TableHead>
+                      <TableHead>Waist/Hip</TableHead>
+                      <TableHead>SPO2</TableHead>
+                    </TableRow>
+                  </TableHeader>
                   <TableBody>
                     <TableRow>
-                      <TableCell className="font-medium">Temperature</TableCell>
                       <TableCell>{data.vitals.temperature}</TableCell>
-                      <TableCell className="font-medium">
-                        Blood Pressure
-                      </TableCell>
                       <TableCell>{data.vitals.bloodPressure}</TableCell>
-                      <TableCell className="font-medium">Pulse</TableCell>
                       <TableCell>{data.vitals.pulse}</TableCell>
+                      <TableCell>{data.vitals.height}</TableCell>
+                      <TableCell>{data.vitals.weight}</TableCell>
+                      <TableCell>{data.vitals.bmi}</TableCell>
+                      <TableCell>{data.vitals.waistHip}</TableCell>
+                      <TableCell>{data.vitals.spo2}</TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>

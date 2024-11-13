@@ -52,17 +52,24 @@ export default defineSchema({
       .index("by_phoneNumber", ["phoneNumber"]),
      
   
-  appointments: defineTable({
-    appointmentId: v.string(),
-    doctorId: v.string(),
-    patientId: v.string(),
-    appointmentDate: v.string(),
-    reasonForVisit: v.optional(v.string()),
-    status: v.optional(
-      v.union(v.literal("Scheduled"), v.literal("Completed"), v.literal("Cancelled"))
-    ),
-    prescriptionId: v.optional(v.string()),
-  })
+        appointments: defineTable({
+          patientId: v.string(),
+          doctorId: v.string(),
+          appointmentId: v.string(),
+          speciality:v.optional(v.string()),
+          service: v.optional(v.string()),
+          provider: v.optional(v.string()),
+          location: v.optional(v.string()),
+          appointmentType: v.optional(v.union(v.literal("regular"), v.literal("recurring"))),
+          isTeleconsultation: v.optional(v.boolean()),
+          status: v.union(v.literal("Scheduled"), v.literal("waitlist"), v.literal("completed"), v.literal("cancelled")),
+          appointmentDate: v.string(),
+          notes: v.optional(v.string()),
+          reasonForVisit: v.optional(v.string()),
+          insuranceDetails: v.optional(v.string()),
+          createdAt: v.optional(v.string()),  // Make createdAt optional
+          updatedAt: v.optional(v.string()),
+        })
     .index("by_doctor_id", ["doctorId"])
     .index("by_patient_id", ["patientId"]),
   

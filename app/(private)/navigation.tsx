@@ -13,6 +13,7 @@ import {
   Calendar,
   FileText,
   Settings,
+  Plus,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import Logo from "@/components/common/Logo";
@@ -39,14 +40,20 @@ const patientMenuItems = [
 ];
 
 const deskMenuItems = [
-  { name: "Registration Desk", icon: LayoutDashboard, path: "/registrationdesk" },
+  {
+    name: "Registration Desk",
+    icon: LayoutDashboard,
+    path: "/registrationdesk",
+  },
   { name: "Add Patient", icon: UserPlus, path: "/registerpatient" },
+  { name: "Appointment", icon: Plus, path: "/appointmment" },
 ];
 
 export default function FixedNavigation() {
   const pathname = usePathname();
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [initialRedirect, setInitialRedirect] = useState(false); // Define initialRedirect state here
   const searchRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { user, isSignedIn } = useUser();
@@ -73,23 +80,28 @@ export default function FixedNavigation() {
   };
 
   useEffect(() => {
-    if (userExists) {
-      const currentPath = pathname.split('/')[1]; // Get the first part of the path
+    if (userExists && !initialRedirect) {
+      const currentPath = pathname.split("/")[1]; // Get the first part of the path
       const roleDashboards = {
         Doctor: "dashboard",
         Desk: "registrationdesk",
-        Patient: "patientdashboard"
+        Patient: "patientdashboard",
       };
-      
+
       const userRole = userExists.role as keyof typeof roleDashboards;
       const correctDashboard = roleDashboards[userRole];
 
-      // Only redirect if the user is not on their correct dashboard
-      if (currentPath !== correctDashboard) {
+      // Check session storage to ensure redirect only happens once
+      if (
+        currentPath !== correctDashboard &&
+        !sessionStorage.getItem("redirected")
+      ) {
         router.push(`/${correctDashboard}`);
+        sessionStorage.setItem("redirected", "true"); // Mark redirect as done
+        setInitialRedirect(true);
       }
     }
-  }, [userExists, pathname, router]);
+  }, [userExists, pathname, router, initialRedirect]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -142,7 +154,10 @@ export default function FixedNavigation() {
                 <div className="absolute z-10 left-0 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
                   {patients ? (
                     patients.length > 0 ? (
-                      <ul className="max-h-60 overflow-auto py-1" role="listbox">
+                      <ul
+                        className="max-h-60 overflow-auto py-1"
+                        role="listbox"
+                      >
                         {patients.map((patient) => (
                           <li
                             key={patient._id}
@@ -192,7 +207,7 @@ export default function FixedNavigation() {
               </Button>
             </Link>
           )}
-          <Link href="/settings" passHref>
+          {/* <Link href="/settings" passHref>
             <Button
               variant="ghost"
               className="text-gray-600 hover:text-gray-800 flex items-center"
@@ -200,7 +215,7 @@ export default function FixedNavigation() {
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </Button>
-          </Link>
+          </Link> */}
           <AuthLoading>
             <Loading />
           </AuthLoading>

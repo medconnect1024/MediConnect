@@ -15,6 +15,7 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as appointment from "../appointment.js";
 import type * as contacts from "../contacts.js";
 import type * as crons from "../crons.js";
 import type * as getdoctorslots from "../getdoctorslots.js";
@@ -37,6 +38,7 @@ import type * as watiWebhook from "../watiWebhook.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  appointment: typeof appointment;
   contacts: typeof contacts;
   crons: typeof crons;
   getdoctorslots: typeof getdoctorslots;

@@ -1,3 +1,4 @@
+import FixedNavigation from "@/app/(private)/navigation";
 import Header from "./Header";
 import type { Metadata } from "next";
 
@@ -34,7 +35,7 @@ export default function RootLayout({
 }) {
   return (
     <>
-      <Header />
+      <FixedNavigation />
       <main className="flex min-h-[calc(100dvh-4rem)] flex-col items-center">
         {children}
       </main>

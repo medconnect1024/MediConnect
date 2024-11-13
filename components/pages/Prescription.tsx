@@ -18,7 +18,14 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { CalendarIcon, ChevronRight, ChevronLeft, Eye, X } from "lucide-react";
+import {
+  CalendarIcon,
+  ChevronRight,
+  ChevronLeft,
+  Eye,
+  X,
+  Download,
+} from "lucide-react";
 import { format } from "date-fns";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -30,7 +37,12 @@ import InvestigationsPage from "./investigations-page";
 import { Id } from "@/convex/_generated/dataModel";
 import EnhancedPreviousPrescriptions from "./previous-prescriptions";
 import EnhancedPrescriptionPreview from "./prescription-preview";
-
+import { generatePrescriptionPDF } from "./generatePrescriptionPDF";
+import {
+  PDFDownloadLink,
+  Document,
+  PDFDownloadLinkProps,
+} from "@react-pdf/renderer";
 type SymptomItem = {
   id: string;
   name: string;
@@ -155,7 +167,6 @@ export default function MultiStepPrescription({
     "Mild"
   );
 
-  const savePrescription = useMutation(api.prescriptions.savePrescription);
   const getLastPrescriptionForPatient = useQuery(
     api.prescriptions.getLastPrescriptionForPatient,
     {
@@ -197,42 +208,7 @@ export default function MultiStepPrescription({
       return;
     }
 
-    const doctorId = user.id;
-    const patientIdString = patientId.toString();
-
-    const newPrescription = {
-      doctorId,
-      patientId: patientIdString,
-      medicines: medicines.map((m) => ({
-        id: m.id,
-        name: m.name,
-        dosage: m.dosage,
-        route: m.route,
-        timesPerDay: m.timesPerDay,
-        durationDays: m.durationDays,
-        timing: m.timing,
-      })),
-      symptoms: symptoms.map((s) => ({
-        id: s.id,
-        name: s.name,
-        frequency: s.frequency,
-        severity: s.severity,
-        duration: s.duration,
-      })),
-      findings: findings.map((f) => ({ id: f.id, description: f.name })),
-      diagnoses: diagnoses.map((d) => ({ id: d.id, name: d.name })),
-      investigations: investigations.map((i) => ({ id: i.id, name: i.name })),
-      investigationNotes,
-      followUpDate: followUpDate ? followUpDate.toISOString() : undefined,
-      medicineReminder,
-      medicineInstructions,
-      chronicCondition,
-      vitals,
-      severity,
-    };
-
     try {
-      const result = await savePrescription(newPrescription);
       setSaveSuccess(true);
       setSymptoms([]);
       setFindings([]);
@@ -483,6 +459,29 @@ export default function MultiStepPrescription({
             >
               Submit Prescription
             </Button>
+            <PDFDownloadLink
+              document={generatePrescriptionPDF({
+                patientId: patientId.toString(),
+                doctorId: user?.id || "",
+                symptoms,
+                findings,
+                diagnoses,
+                medicines,
+                investigations,
+                investigationNotes,
+                followUpDate,
+                medicineReminder,
+                medicineInstructions,
+                chronicCondition,
+                vitals,
+                severity,
+              })}
+              fileName="prescription.pdf"
+            >
+              <Button className="w-full sm:w-auto bg-green-500 text-white hover:bg-green-600">
+                <Download className="mr-2 h-4 w-4" /> Download PDF
+              </Button>
+            </PDFDownloadLink>
           </DialogFooter>
         </DialogContent>
       </Dialog>

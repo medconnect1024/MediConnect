@@ -62,7 +62,7 @@ export default function Header() {
           </Unauthenticated>
           <Authenticated>
             <UserButton />
-            <Link href="/docdashboard" passHref>
+            <Link href="/dashboard" passHref>
               <Button className="bg-[#2178e9] text-white hover:bg-[#0769e9]">
                 Dashboard
               </Button>
@@ -131,7 +131,7 @@ export default function Header() {
           </Unauthenticated>
           <Authenticated>
             <UserButton />
-            <Link href="/docdashboard" passHref>
+            <Link href="/dashboard" passHref>
               <Button
                 className="bg-[#3292f7] text-white hover:bg-[#2a83f7] w-full mt-4"
                 onClick={closeMenu}

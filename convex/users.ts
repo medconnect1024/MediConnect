@@ -116,3 +116,6 @@ export const checkUserEmail = query({
     return userRecord;
   },
 });
+export const getDoctors = query(async (ctx) => {
+  return await ctx.db.query('users').collect()
+})

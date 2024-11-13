@@ -195,3 +195,6 @@ export const getPatientByPhone = query({
     }
   },
 });
+export const getAllPatients = query(async (ctx) => {
+  return await ctx.db.query('patients').collect()
+})
