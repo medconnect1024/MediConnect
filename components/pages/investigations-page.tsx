@@ -1,35 +1,42 @@
-"use client";
+'use client'
 
-import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, Plus, X } from "lucide-react";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { Textarea } from "@/components/ui/textarea";
-import { INVESTIGATION_NAMES } from "@/components/data/investigationNames";
+import React, { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Search, Plus, X, ChevronDown } from "lucide-react"
+import { useQuery } from "convex/react"
+import { api } from "@/convex/_generated/api"
+import { Textarea } from "@/components/ui/textarea"
+import { INVESTIGATION_NAMES } from "@/components/data/investigationNames"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 type PrescriptionItem = {
-  id: string;
-  name: string;
-};
-
-interface InvestigationsPageProps {
-  investigations: PrescriptionItem[];
-  setInvestigations: React.Dispatch<React.SetStateAction<PrescriptionItem[]>>;
-  investigationNotes: string;
-  setInvestigationNotes: React.Dispatch<React.SetStateAction<string>>;
+  id: string
+  name: string
 }
 
-// const INVESTIGATION_NAMES = [
-//   "CBC",
-//   "Thyroid Profile",
-//   "Liver Function Test",
-//   "Kidney Function Test",
-//   "Blood Sugar",
-//   "Lipid Profile",
-// ];
+interface InvestigationsPageProps {
+  investigations: PrescriptionItem[]
+  setInvestigations: React.Dispatch<React.SetStateAction<PrescriptionItem[]>>
+  investigationNotes: string
+  setInvestigationNotes: React.Dispatch<React.SetStateAction<string>>
+}
+
+// Mock data for related investigations
+const RELATED_INVESTIGATIONS: { [key: string]: string[] } = {
+  CBC: ["Hemoglobin", "WBC Count", "Platelet Count"],
+  "Thyroid Profile": ["TSH", "T3", "T4"],
+  "Liver Function Test": ["ALT", "AST", "Bilirubin"],
+  "Kidney Function Test": ["Creatinine", "BUN", "eGFR"],
+  "Blood Sugar": ["Fasting Blood Sugar", "HbA1c", "Postprandial Blood Sugar"],
+  "Lipid Profile": ["Total Cholesterol", "HDL", "LDL", "Triglycerides"],
+}
 
 export default function InvestigationsPage({
   investigations,
@@ -37,40 +44,53 @@ export default function InvestigationsPage({
   investigationNotes,
   setInvestigationNotes,
 }: InvestigationsPageProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([])
+  const [selectedInvestigation, setSelectedInvestigation] = useState<string | null>(null)
+  const [relatedInvestigations, setRelatedInvestigations] = useState<string[]>([])
 
-  const searchResults = useQuery(api.patientsearch.search, { searchTerm });
+  const searchResults = useQuery(api.patientsearch.search, { searchTerm })
 
-  // Update suggestions based on search term
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchTerm(value);
+    const value = e.target.value
+    setSearchTerm(value)
     if (value) {
       const filtered = INVESTIGATION_NAMES.filter((name) =>
         name.toLowerCase().includes(value.toLowerCase())
-      );
-      setFilteredSuggestions(filtered);
+      )
+      setFilteredSuggestions(filtered)
     } else {
-      setFilteredSuggestions([]);
+      setFilteredSuggestions([])
     }
-  };
+  }
 
   const handleAddItem = (item: string) => {
-    const newItem: PrescriptionItem = { id: Date.now().toString(), name: item };
-    setInvestigations((prev) => [...prev, newItem]);
-    setSearchTerm("");
-    setFilteredSuggestions([]);
-  };
+    const newItem: PrescriptionItem = { id: Date.now().toString(), name: item }
+    setInvestigations((prev) => [...prev, newItem])
+    setSelectedInvestigation(item)
+    setRelatedInvestigations(RELATED_INVESTIGATIONS[item] || [])
+    setSearchTerm("")
+    setFilteredSuggestions([])
+  }
 
   const handleRemoveItem = (id: string) => {
-    setInvestigations((prev) => prev.filter((item) => item.id !== id));
-  };
+    setInvestigations((prev) => prev.filter((item) => item.id !== id))
+  }
+
+  const handleRelatedInvestigationToggle = (relatedItem: string) => {
+    const isAlreadyAdded = investigations.some((item) => item.name === relatedItem)
+    if (isAlreadyAdded) {
+      setInvestigations((prev) => prev.filter((item) => item.name !== relatedItem))
+    } else {
+      const newItem: PrescriptionItem = { id: Date.now().toString(), name: relatedItem }
+      setInvestigations((prev) => [...prev, newItem])
+    }
+  }
 
   useEffect(() => {
     // Here you can handle data passing to the Prescription page dynamically
     // Add any necessary data handling or state syncing here if needed.
-  }, [investigations]);
+  }, [investigations])
 
   return (
     <div className="mb-8">
@@ -91,7 +111,7 @@ export default function InvestigationsPage({
           className="h-8 w-10"
           onClick={() => {
             if (searchTerm.trim()) {
-              handleAddItem(searchTerm.trim());
+              handleAddItem(searchTerm.trim())
             }
           }}
         >
@@ -113,28 +133,42 @@ export default function InvestigationsPage({
       )}
       <ScrollArea className="h-[150px] mt-4 border rounded-md">
         <div className="p-3">
-          <h4 className="text-lg font-semibold mb-2">
-            Selected Investigations
-          </h4>
+          <h4 className="text-lg font-semibold mb-2">Selected Investigations</h4>
           <div className="flex flex-wrap gap-3">
             {investigations.map((item) => (
               <div key={item.id} className="flex items-center">
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  className="flex items-center gap-2 text-lg "
-                >
+                <Button variant="secondary" size="lg" className="flex items-center gap-2 text-lg ">
                   {item.name}
                 </Button>
                 <X
                   className="h-4 w-4 cursor-pointer text-red-500 ml-2"
-                  onClick={() => handleRemoveItem(item.id)} // Call handleRemoveItem directly here
+                  onClick={() => handleRemoveItem(item.id)}
                 />
               </div>
             ))}
           </div>
         </div>
       </ScrollArea>
+      {selectedInvestigation && relatedInvestigations.length > 0 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="mt-4">
+              Related to {selectedInvestigation} <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56">
+            {relatedInvestigations.map((relatedItem) => (
+              <DropdownMenuCheckboxItem
+                key={relatedItem}
+                checked={investigations.some((item) => item.name === relatedItem)}
+                onCheckedChange={() => handleRelatedInvestigationToggle(relatedItem)}
+              >
+                {relatedItem}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       <Textarea
         placeholder="Investigation Notes"
         value={investigationNotes}
@@ -142,5 +176,5 @@ export default function InvestigationsPage({
         className="mt-4"
       />
     </div>
-  );
+  )
 }
