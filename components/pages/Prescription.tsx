@@ -18,14 +18,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  CalendarIcon,
-  ChevronRight,
-  ChevronLeft,
-  Eye,
-  X,
-  Download,
-} from "lucide-react";
+import { CalendarIcon, ChevronRight, ChevronLeft, Eye, X } from "lucide-react";
 import { format } from "date-fns";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -37,12 +30,8 @@ import InvestigationsPage from "./investigations-page";
 import { Id } from "@/convex/_generated/dataModel";
 import EnhancedPreviousPrescriptions from "./previous-prescriptions";
 import EnhancedPrescriptionPreview from "./prescription-preview";
-import { generatePrescriptionPDF } from "./generatePrescriptionPDF";
-import {
-  PDFDownloadLink,
-  Document,
-  PDFDownloadLinkProps,
-} from "@react-pdf/renderer";
+import { jsPDF } from "jspdf";
+
 type SymptomItem = {
   id: string;
   name: string;
@@ -113,6 +102,10 @@ interface ApiPrescription {
   };
 }
 
+interface MultiStepPrescriptionProps {
+  patientId: number;
+}
+
 const steps = [
   "Symptoms",
   "Findings",
@@ -121,10 +114,6 @@ const steps = [
   "Investigations",
   "Follow-Up",
 ];
-
-interface MultiStepPrescriptionProps {
-  patientId: number;
-}
 
 export default function MultiStepPrescription({
   patientId,
@@ -167,6 +156,8 @@ export default function MultiStepPrescription({
     "Mild"
   );
 
+  const savePrescription = useMutation(api.prescriptions.savePrescription);
+  const generateUploadUrl = useMutation(api.labReports.generateUploadUrl);
   const getLastPrescriptionForPatient = useQuery(
     api.prescriptions.getLastPrescriptionForPatient,
     {
@@ -202,14 +193,234 @@ export default function MultiStepPrescription({
     }
   }, [getLastPrescriptionForPatient]);
 
+  const generatePDF = async (prescriptionData: any) => {
+    const doc = new jsPDF();
+    let yPos = 30;
+    const lineHeight = 7;
+    const margin = 10;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    const clinicName = "HealthCare Clinic";
+    const clinicAddress = "123 Medical Street, Healthville, HC 12345";
+    const clinicPhone = "+1 (555) 123-4567";
+    const clinicEmail = "info@healthcareclinic.com";
+
+    const doctorName = "Dr. Jane Smith";
+    const doctorSpecialty = "General Practitioner";
+    const doctorLicense = "License No: MD12345";
+
+    const addText = (text: string) => {
+      doc.text(text, margin, yPos);
+      yPos += lineHeight;
+    };
+
+    const addSection = (title: string, content: string) => {
+      doc.setFontSize(14);
+      addText(title);
+      doc.setFontSize(12);
+      addText(content);
+      yPos += 5;
+    };
+
+    const addHeader = () => {
+      doc.setFontSize(18);
+      doc.setFont("undefined", "bold");
+      doc.text(clinicName, pageWidth / 2, 15, { align: "center" });
+      doc.setFontSize(12);
+      doc.setFont("undefined", "normal");
+      doc.text(clinicAddress, pageWidth / 2, 22, { align: "center" });
+      doc.setFontSize(10);
+      doc.text(
+        `Phone: ${clinicPhone} | Email: ${clinicEmail}`,
+        pageWidth / 2,
+        29,
+        { align: "center" }
+      );
+      doc.line(margin, 32, pageWidth - margin, 32);
+    };
+
+    const addFooter = () => {
+      doc.setFontSize(10);
+      doc.text(doctorName, margin, pageHeight - 20);
+      doc.text(doctorSpecialty, margin, pageHeight - 15);
+      doc.text(doctorLicense, margin, pageHeight - 10);
+      doc.text(
+        `Page ${doc.getNumberOfPages()}`,
+        pageWidth - margin,
+        pageHeight - 10,
+        {
+          align: "right",
+        }
+      );
+      doc.line(margin, pageHeight - 25, pageWidth - margin, pageHeight - 25);
+    };
+
+    addHeader();
+
+    doc.setFontSize(16);
+    doc.setFont("undefined", "bold");
+    yPos += lineHeight * 2;
+    doc.text("Prescription", pageWidth / 2, yPos, { align: "center" });
+    yPos += lineHeight * 2;
+
+    doc.setFontSize(12);
+    doc.setFont("undefined", "normal");
+
+    addText(`Patient ID: ${prescriptionData.patientId}`);
+    addText(`Doctor ID: ${prescriptionData.doctorId}`);
+    addText(`Date: ${format(new Date(), "PPP")}`);
+    yPos += 5;
+
+    addSection(
+      "Vitals",
+      `Temperature: ${prescriptionData.vitals.temperature}, Blood Pressure: ${prescriptionData.vitals.bloodPressure}, ` +
+        `Pulse: ${prescriptionData.vitals.pulse}, Height: ${prescriptionData.vitals.height}, Weight: ${prescriptionData.vitals.weight}, ` +
+        `BMI: ${prescriptionData.vitals.bmi}, Waist/Hip: ${prescriptionData.vitals.waistHip}, SPO2: ${prescriptionData.vitals.spo2}`
+    );
+
+    addSection(
+      "Symptoms",
+      prescriptionData.symptoms
+        .map(
+          (s: SymptomItem) =>
+            `${s.name} (Frequency: ${s.frequency}, Severity: ${s.severity}, Duration: ${s.duration})`
+        )
+        .join(", ")
+    );
+
+    addSection(
+      "Findings",
+      prescriptionData.findings.map((f: FindingItem) => f.name).join(", ")
+    );
+
+    addSection(
+      "Diagnoses",
+      prescriptionData.diagnoses.map((d: { name: string }) => d.name).join(", ")
+    );
+    addText(`Severity: ${prescriptionData.severity || "Not specified"}`);
+    addText(
+      `Chronic Condition: ${prescriptionData.chronicCondition ? "Yes" : "No"}`
+    );
+
+    if (yPos > pageHeight - 60) {
+      doc.addPage();
+      yPos = 30;
+      addHeader();
+    }
+
+    addSection(
+      "Medicines",
+      prescriptionData.medicines
+        .map(
+          (m: MedicineItem) =>
+            `${m.name} (Dosage: ${m.dosage}, Route: ${m.route}, Frequency: ${m.timesPerDay} times per day, ` +
+            `Duration: ${m.durationDays} days, Timing: ${m.timing})`
+        )
+        .join("; ")
+    );
+    addText(`Instructions: ${prescriptionData.medicineInstructions || "None"}`);
+    addText(
+      `Reminders: ${prescriptionData.medicineReminder.message ? "Message" : ""}${prescriptionData.medicineReminder.message && prescriptionData.medicineReminder.call ? ", " : ""}${prescriptionData.medicineReminder.call ? "Call" : ""}`
+    );
+
+    addSection(
+      "Investigations",
+      prescriptionData.investigations
+        .map((i: { name: string }) => i.name)
+        .join(", ")
+    );
+    if (prescriptionData.investigationNotes) {
+      addText(`Notes: ${prescriptionData.investigationNotes}`);
+    }
+
+    addSection(
+      "Follow-up",
+      prescriptionData.followUpDate
+        ? format(new Date(prescriptionData.followUpDate), "PPP")
+        : "No follow-up date set"
+    );
+
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      addFooter();
+    }
+
+    return doc.output("blob");
+  };
+
   const handleSubmit = async () => {
     if (!user) {
       console.error("User not signed in");
       return;
     }
 
+    const doctorId = user.id;
+    const patientIdString = patientId.toString();
+
+    const newPrescription = {
+      doctorId,
+      patientId: patientIdString,
+      medicines: medicines.map((m) => ({
+        id: m.id,
+        name: m.name,
+        dosage: m.dosage,
+        route: m.route,
+        timesPerDay: m.timesPerDay,
+        durationDays: m.durationDays,
+        timing: m.timing,
+      })),
+      symptoms: symptoms.map((s) => ({
+        id: s.id,
+        name: s.name,
+        frequency: s.frequency,
+        severity: s.severity,
+        duration: s.duration,
+      })),
+      findings: findings.map((f) => ({ id: f.id, description: f.name })),
+      diagnoses: diagnoses.map((d) => ({ id: d.id, name: d.name })),
+      investigations: investigations.map((i) => ({ id: i.id, name: i.name })),
+      investigationNotes,
+      followUpDate: followUpDate ? followUpDate.toISOString() : undefined,
+      medicineReminder,
+      medicineInstructions,
+      chronicCondition,
+      vitals,
+      severity,
+    };
+
     try {
+      // Generate PDF
+      const pdfBlob = await generatePDF(newPrescription);
+
+      // Get upload URL from Convex
+      const uploadUrl = await generateUploadUrl();
+
+      // Upload file to Convex storage
+      const result = await fetch(uploadUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/pdf",
+        },
+        body: pdfBlob,
+      });
+
+      if (!result.ok) {
+        throw new Error("Failed to upload file");
+      }
+
+      // Get the storageId from the upload response
+      const { storageId } = await result.json();
+
+      // Save prescription with storageId
+      const savedPrescription = await savePrescription({
+        ...newPrescription,
+        storageId,
+      });
+
       setSaveSuccess(true);
+      // Reset all state variables
       setSymptoms([]);
       setFindings([]);
       setDiagnoses([]);
@@ -459,29 +670,6 @@ export default function MultiStepPrescription({
             >
               Submit Prescription
             </Button>
-            <PDFDownloadLink
-              document={generatePrescriptionPDF({
-                patientId: patientId.toString(),
-                doctorId: user?.id || "",
-                symptoms,
-                findings,
-                diagnoses,
-                medicines,
-                investigations,
-                investigationNotes,
-                followUpDate,
-                medicineReminder,
-                medicineInstructions,
-                chronicCondition,
-                vitals,
-                severity,
-              })}
-              fileName="prescription.pdf"
-            >
-              <Button className="w-full sm:w-auto bg-green-500 text-white hover:bg-green-600">
-                <Download className="mr-2 h-4 w-4" /> Download PDF
-              </Button>
-            </PDFDownloadLink>
           </DialogFooter>
         </DialogContent>
       </Dialog>

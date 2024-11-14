@@ -51,6 +51,7 @@ export const savePrescription = mutation({
       waistHip: v.string(),
       spo2: v.string(),
     }),
+    storageId: v.optional(v.string()),
   },
   async handler(ctx, args) {
     const {
@@ -69,7 +70,8 @@ export const savePrescription = mutation({
       dosage,
       route,
       chronicCondition,  // Added field
-      vitals,  // Added field
+      vitals, 
+      storageId, // Added field
     } = args;
 
     // Auto-generate a unique prescriptionId
@@ -93,7 +95,8 @@ export const savePrescription = mutation({
       dosage,
       route,
       chronicCondition,  // Storing chronic condition
-      vitals,  // Storing vitals information
+      vitals, 
+      storageId,  // Storing vitals information
     });
 
     return { prescriptionId: newPrescriptionId };

@@ -122,6 +122,7 @@ export default defineSchema({
         waistHip: v.string(),
         spo2: v.string(),
       }),
+      storageId: v.optional(v.string()),
     })
       .index("by_patient_id", ["patientId"])
       .index("by_doctor_id", ["doctorId"]),
