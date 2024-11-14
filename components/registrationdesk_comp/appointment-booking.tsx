@@ -188,7 +188,10 @@ export default function AppointmentBooking() {
                         </FormControl>
                         <SelectContent>
                           {patients?.map((patient) => (
-                            <SelectItem key={patient._id} value={patient._id}>
+                            <SelectItem
+                              key={patient.patientId}
+                              value={patient.patientId.toString()}
+                            >
                               {patient.firstName} {patient.lastName}
                             </SelectItem>
                           ))}
@@ -216,7 +219,10 @@ export default function AppointmentBooking() {
                         </FormControl>
                         <SelectContent>
                           {doctors?.map((doctor) => (
-                            <SelectItem key={doctor._id} value={doctor._id}>
+                            <SelectItem
+                              key={doctor.userId}
+                              value={doctor.userId}
+                            >
                               {doctor.firstName}
                             </SelectItem>
                           ))}
@@ -564,51 +570,6 @@ export default function AppointmentBooking() {
               </div>
             </form>
           </Form>
-        </CardContent>
-      </Card>
-
-      {/* Appointments List */}
-      <Card className="max-w-4xl mx-auto">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">
-            Scheduled Appointments
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="px-4 py-2 text-left">Date</th>
-                  <th className="px-4 py-2 text-left">Patient</th>
-                  <th className="px-4 py-2 text-left">Doctor</th>
-                  <th className="px-4 py-2 text-left">Service</th>
-                  <th className="px-4 py-2 text-left">Provider</th>
-                  <th className="px-4 py-2 text-left">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {appointments?.map((appointment) => (
-                  <tr key={appointment._id} className="border-b">
-                    <td className="px-4 py-2">
-                      {format(new Date(appointment.appointmentDate), "PPP")}
-                    </td>
-                    <td className="px-4 py-2">{appointment.patientId}</td>
-                    <td className="px-4 py-2">{appointment.doctorId}</td>
-                    <td className="px-4 py-2">{appointment.service}</td>
-                    <td className="px-4 py-2">{appointment.provider}</td>
-                    <td className="px-4 py-2">
-                      <span
-                        className={`px-2 py-1 rounded-full text-sm ${getStatusColor(appointment.status)}`}
-                      >
-                        {appointment.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </CardContent>
       </Card>
     </div>
