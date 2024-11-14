@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { format } from "date-fns";
 import {
   Table,
@@ -12,6 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { jsPDF } from "jspdf";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 type SymptomItem = {
   id: string;
   name: string;
@@ -64,14 +66,18 @@ type PrescriptionData = {
   severity?: "Mild" | "Moderate" | "Severe";
 };
 
+
+
 export default function EnhancedPrescriptionPreview({
   data,
 }: {
   data: PrescriptionData;
 }) {
   
-  
-  const generatePDF = () => {
+  const generateUploadUrl = useMutation(api.labReports.generateUploadUrl);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const generatePDF = async () => {
     const doc = new jsPDF();
     let yPos = 30; // Start lower to accommodate the header
     const lineHeight = 7;
@@ -194,6 +200,39 @@ export default function EnhancedPrescriptionPreview({
       addFooter();
     }
   
+    try {
+      setIsUploading(true)
+
+      // Get the PDF as a Blob
+      const pdfBlob = doc.output('blob')
+
+      // Get upload URL from Convex
+      const uploadUrl = await generateUploadUrl()
+
+      // Upload file to Convex storage
+      const result = await fetch(uploadUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/pdf",
+        },
+        body: pdfBlob,
+      })
+
+      if (!result.ok) {
+        throw new Error("Failed to upload file")
+      }
+
+      // Handle successful upload
+      console.log("PDF uploaded successfully")
+      // You might want to add code here to update the UI or state to reflect the successful upload
+
+    } catch (error) {
+      console.error("Error uploading PDF:", error)
+      // Handle error (e.g., show error message to user)
+    } finally {
+      setIsUploading(false)
+    }
+      
     // Save the PDF
     doc.save('prescription.pdf');
   };
@@ -416,3 +455,7 @@ export default function EnhancedPrescriptionPreview({
     </Card>
   );
 }
+
+function setIsUploading(arg0: boolean) {
+    throw new Error("Function not implemented.");
+  }
