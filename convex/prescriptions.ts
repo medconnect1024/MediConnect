@@ -102,15 +102,7 @@ export const savePrescription = mutation({
     return { prescriptionId: newPrescriptionId };
   },
 });
-// export const getLastPrescription = query(async (ctx) => {
-//   const prescriptions = await ctx.db
-//     .query("prescriptions")
-//     .order("desc")
-//     .take(1); // Use `take` instead of `limit` to get the latest prescription
 
-//   return prescriptions.length > 0 ? prescriptions[0] : null;
-// });
-// In your Convex query file (e.g., prescriptions.ts)
 export const getLastPrescriptionForPatient = query({
   args: { patientId: v.string() },
   handler: async (ctx, args) => {
@@ -121,3 +113,34 @@ export const getLastPrescriptionForPatient = query({
       .first();
   },
 });
+
+export const generateFileUrl = mutation({
+  args: { storageId: v.string() },
+  handler: async (ctx, args) => {
+    const url = await ctx.storage.getUrl(args.storageId);
+    return url;
+  },
+});
+
+
+// New function to fetch all previous prescriptions for a patient
+export const getAllPrescriptionsForPatient = query({
+  args: { patientId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("prescriptions")
+      .filter((q) => q.eq(q.field("patientId"), args.patientId))
+      .order("desc")
+      .collect();
+  },
+});
+// export const getAllPrescriptionsForPatient = query({
+//   args: { patientId: v.string() },
+//   handler: async (ctx, args) => {
+//     return await ctx.db
+//       .query("prescriptions")
+//       .filter((q) => q.eq(q.field("patientId"), args.patientId))
+//       .order("desc");  // Returns all records in descending order
+//       .first();
+//   },
+// });

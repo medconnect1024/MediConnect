@@ -451,7 +451,10 @@ export default function MultiStepPrescription({
   };
 
   const renderPreviousPrescriptions = () => (
-    <EnhancedPreviousPrescriptions prescriptions={previousPrescriptions} />
+    <EnhancedPreviousPrescriptions
+      patientId={patientId.toString()}
+      userId={user?.id || ""}
+    />
   );
 
   const renderStepContent = (step: number) => {

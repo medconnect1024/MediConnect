@@ -1,5 +1,8 @@
-import React from "react";
-import { format } from "date-fns";
+"use client";
+
+import React, { useState } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -9,63 +12,81 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Eye } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
-
-type SymptomItem = {
-  id: string;
-  name: string;
-  frequency: string;
-  severity: string;
-  duration: string;
-};
-
-type FindingItem = {
-  id: string;
-  name: string;
-};
-
-type MedicineItem = {
-  id: string;
-  name: string;
-  dosage: string;
-  route: string;
-  timesPerDay: string;
-  durationDays: string;
-  timing: string;
-};
-
-type Prescription = {
-  prescriptionId: string;
-  symptoms: SymptomItem[];
-  findings: FindingItem[];
-  diagnoses: { id: string; name: string }[];
-  medicines: MedicineItem[];
-  investigations: { id: string; name: string }[];
-  investigationNotes?: string;
-  followUpDate?: string;
-  medicineReminder: {
-    message: boolean;
-    call: boolean;
-  };
-  medicineInstructions?: string;
-  chronicCondition: boolean;
-  vitals: {
-    temperature: string;
-    bloodPressure: string;
-    pulse: string;
-  };
-  severity?: "Mild" | "Moderate" | "Severe";
-};
+import { format } from "date-fns";
+import { Id } from "@/convex/_generated/dataModel";
 
 interface EnhancedPreviousPrescriptionsProps {
-  prescriptions: Prescription[];
+  patientId: string;
+  userId: string;
+}
+
+interface Prescription {
+  _id: Id<"prescriptions">;
+  doctorId: string;
+  patientId: string;
+  storageId?: string;
+  diagnoses: { id: string; name: string }[];
+  _creationTime: number;
+}
+
+interface User {
+  _id: Id<"users">;
+  userId: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  role?: "Doctor" | "Patient" | "Desk";
 }
 
 export default function EnhancedPreviousPrescriptions({
-  prescriptions,
+  patientId,
+  userId,
 }: EnhancedPreviousPrescriptionsProps) {
-  const lastTwoPrescriptions = prescriptions.slice(0, 2);
+  const prescriptions = useQuery(
+    api.prescriptions.getAllPrescriptionsForPatient,
+    { patientId }
+  );
+  const users = useQuery(api.users.getDoctors);
+  const [selectedPrescription, setSelectedPrescription] =
+    useState<Prescription | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const generateFileUrl = useMutation(api.prescriptions.generateFileUrl);
+
+  const handleViewPrescription = async (prescription: Prescription) => {
+    setSelectedPrescription(prescription);
+    if (!prescription.storageId) {
+      console.error("No storageId available for this prescription.");
+      setPdfUrl(null);
+      return;
+    }
+    try {
+      const url = await generateFileUrl({ storageId: prescription.storageId });
+      setPdfUrl(url);
+    } catch (error) {
+      console.error("Error generating PDF URL:", error);
+      setPdfUrl(null);
+    }
+  };
+
+  const getDoctorName = (userId: string): string => {
+    const user = users?.find((u: User) => u.userId === userId);
+    return user
+      ? `${user.firstName || ""} ${user.lastName || ""}`.trim()
+      : "Unknown Doctor";
+  };
+
+  if (!prescriptions || !users) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <Card className="w-full">
@@ -75,247 +96,76 @@ export default function EnhancedPreviousPrescriptions({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[calc(100vh-200px)]">
-          {lastTwoPrescriptions.length === 0 ? (
-            <p className="text-center text-gray-500">
-              No previous prescriptions found.
-            </p>
-          ) : (
-            lastTwoPrescriptions.map((prescription, index) => (
-              <Card key={prescription.prescriptionId} className="mb-6">
-                <CardHeader>
-                  <CardTitle className="text-xl">
-                    Prescription {prescription.prescriptionId}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <h4 className="text-lg font-semibold mb-2">Vitals</h4>
-                    <Table>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell className="font-medium">
-                            Temperature
-                          </TableCell>
-                          <TableCell>
-                            {prescription.vitals.temperature || "N/A"}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            Blood Pressure
-                          </TableCell>
-                          <TableCell>
-                            {prescription.vitals.bloodPressure || "N/A"}
-                          </TableCell>
-                          <TableCell className="font-medium">Pulse</TableCell>
-                          <TableCell>
-                            {prescription.vitals.pulse || "N/A"}
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </div>
-
-                  <div>
-                    <h4 className="text-lg font-semibold mb-2">Symptoms</h4>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Frequency</TableHead>
-                          <TableHead>Severity</TableHead>
-                          <TableHead>Duration</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {prescription.symptoms.length > 0 ? (
-                          prescription.symptoms.map((symptom) => (
-                            <TableRow key={symptom.id}>
-                              <TableCell>{symptom.name}</TableCell>
-                              <TableCell>{symptom.frequency}</TableCell>
-                              <TableCell>{symptom.severity}</TableCell>
-                              <TableCell>{symptom.duration}</TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-center">
-                              No symptoms recorded
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-
-                  <div>
-                    <h4 className="text-lg font-semibold mb-2">Findings</h4>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Description</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {prescription.findings.length > 0 ? (
-                          prescription.findings.map((finding) => (
-                            <TableRow key={finding.id}>
-                              <TableCell>{finding.name}</TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell className="text-center">
-                              No findings recorded
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-
-                  <div>
-                    <h4 className="text-lg font-semibold mb-2">Diagnosis</h4>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {prescription.diagnoses.length > 0 ? (
-                          prescription.diagnoses.map((diagnosis) => (
-                            <TableRow key={diagnosis.id}>
-                              <TableCell>{diagnosis.name}</TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell className="text-center">
-                              No diagnoses recorded
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                    <div className="mt-2 flex items-center space-x-2">
-                      <span className="font-medium">Severity:</span>
-                      <Badge
-                        variant={
-                          prescription.severity === "Severe"
-                            ? "destructive"
-                            : prescription.severity === "Moderate"
-                              ? "secondary"
-                              : "default"
-                        }
-                      >
-                        {prescription.severity || "Not specified"}
-                      </Badge>
-                    </div>
-                    <div className="mt-2">
-                      <span className="font-medium">Chronic Condition:</span>{" "}
-                      {prescription.chronicCondition ? "Yes" : "No"}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="text-lg font-semibold mb-2">Medicines</h4>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Dosage</TableHead>
-                          <TableHead>Route</TableHead>
-                          <TableHead>Frequency</TableHead>
-                          <TableHead>Duration</TableHead>
-                          <TableHead>Timing</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {prescription.medicines.length > 0 ? (
-                          prescription.medicines.map((medicine) => (
-                            <TableRow key={medicine.id}>
-                              <TableCell>{medicine.name}</TableCell>
-                              <TableCell>{medicine.dosage}</TableCell>
-                              <TableCell>{medicine.route}</TableCell>
-                              <TableCell>
-                                {medicine.timesPerDay} times per day
-                              </TableCell>
-                              <TableCell>
-                                {medicine.durationDays} days
-                              </TableCell>
-                              <TableCell>{medicine.timing}</TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={6} className="text-center">
-                              No medicines prescribed
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                    <div className="mt-2">
-                      <span className="font-medium">Instructions:</span>{" "}
-                      {prescription.medicineInstructions || "None"}
-                    </div>
-                    <div className="mt-2">
-                      <span className="font-medium">Reminders:</span>{" "}
-                      {prescription.medicineReminder.message ? "Message" : ""}{" "}
-                      {prescription.medicineReminder.call ? "Call" : ""}{" "}
-                      {!prescription.medicineReminder.message &&
-                      !prescription.medicineReminder.call
-                        ? "None"
-                        : ""}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="text-lg font-semibold mb-2">
-                      Investigations
-                    </h4>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {prescription.investigations.length > 0 ? (
-                          prescription.investigations.map((investigation) => (
-                            <TableRow key={investigation.id}>
-                              <TableCell>{investigation.name}</TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell className="text-center">
-                              No investigations ordered
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                    <div className="mt-2">
-                      <span className="font-medium">Notes:</span>{" "}
-                      {prescription.investigationNotes || "None"}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="text-lg font-semibold mb-2">Follow-Up</h4>
-                    <p>
-                      {prescription.followUpDate
-                        ? format(new Date(prescription.followUpDate), "PPP")
-                        : "No follow-up date set"}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </ScrollArea>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Date</TableHead>
+              <TableHead>Doctor Name</TableHead>
+              <TableHead>Patient Name</TableHead>
+              <TableHead>Diagnosis</TableHead>
+              <TableHead>Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {prescriptions.map((prescription: Prescription) => (
+              <TableRow key={prescription._id}>
+                <TableCell>
+                  {format(new Date(prescription._creationTime), "PPP")}
+                </TableCell>
+                <TableCell>{getDoctorName(prescription.doctorId)}</TableCell>
+                <TableCell>
+                  <PatientName patientId={prescription.patientId} />
+                </TableCell>
+                <TableCell>
+                  {prescription.diagnoses.map((d) => d.name).join(", ")}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    onClick={() => handleViewPrescription(prescription)}
+                    size="sm"
+                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                  >
+                    <Eye className="mr-2 h-4 w-4" /> View
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </CardContent>
+      <Dialog
+        open={!!selectedPrescription}
+        onOpenChange={() => setSelectedPrescription(null)}
+      >
+        <DialogContent className="max-w-4xl w-[90vw] h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Prescription Details</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="h-full">
+            {pdfUrl && (
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Prescription PDF</h3>
+                <iframe
+                  src={pdfUrl}
+                  className="w-full h-[calc(100vh-200px)]"
+                  title="Prescription PDF"
+                />
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
+}
+
+function PatientName({ patientId }: { patientId: string }) {
+  const patient = useQuery(api.patients.getPatientById, {
+    patientId: parseInt(patientId),
+  });
+
+  if (patient === undefined) return <span>Loading...</span>;
+  if ("error" in patient) return <span>Error: {patient.error}</span>;
+
+  return <span>{`${patient.firstName} ${patient.lastName}`}</span>;
 }

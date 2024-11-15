@@ -165,11 +165,12 @@ export default function AppointmentPage() {
             <div className="flex items-center gap-2">
               <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
                 <DialogTrigger asChild>
-                  <Button className="gap-2">
+                  <Button className="bg-blue-500 hover:bg-blue-600 text-white gap-2">
                     <Plus className="h-4 w-4" />
                     Book Appointment
                   </Button>
                 </DialogTrigger>
+
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Book Appointment</DialogTitle>

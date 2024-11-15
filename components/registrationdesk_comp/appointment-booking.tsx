@@ -554,13 +554,13 @@ export default function AppointmentBooking() {
               </div>
 
               <div className="flex justify-end space-x-4">
-                <Button
+                {/* <Button
                   variant="outline"
                   type="button"
                   onClick={() => form.reset()}
                 >
                   Cancel
-                </Button>
+                </Button> */}
                 <Button
                   type="submit"
                   className="bg-blue-500 hover:bg-blue-600 text-white"
