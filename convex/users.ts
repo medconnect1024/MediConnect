@@ -119,3 +119,39 @@ export const checkUserEmail = query({
 export const getDoctors = query(async (ctx) => {
   return await ctx.db.query('users').collect()
 })
+
+export const getUserDetails = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    return {
+      userId: user.userId,
+      email: user.email,
+      firstName: user.firstName ?? undefined,
+      lastName: user.lastName ?? undefined,
+      profileImageUrl: user.profileImageUrl ?? undefined,
+      role: user.role ?? undefined,
+      phone: user.phone ?? undefined,
+      specialization: user.specialization ?? undefined,
+      licenseNumber: user.licenseNumber ?? undefined,
+      yearsOfPractice: user.yearsOfPractice ?? undefined,
+      practiceType: user.practiceType ?? undefined,
+      bio: user.bio ?? undefined,
+      clinicName: user.clinicName ?? undefined,
+      logo: user.logo ?? undefined,
+      address: user.address ?? undefined,
+      city: user.city ?? undefined,
+      state: user.state ?? undefined,
+      zipCode: user.zipCode ?? undefined,
+      website: user.website ?? undefined,
+    };
+  },
+});

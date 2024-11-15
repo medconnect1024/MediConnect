@@ -8,7 +8,7 @@ export default function Logo() {
 
   return (
     <div className="flex items-center justify-start">
-      <Link href={isAuthenticated ? "/docdashboard" : "/"}>
+      <Link href={isAuthenticated ? "/dashboard" : "/"}>
         <div className="flex justify-center items-center transform md:scale-125 scale-100">
           <Image
             src={LogoImage}

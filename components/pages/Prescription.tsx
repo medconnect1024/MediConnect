@@ -18,6 +18,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CalendarIcon, ChevronRight, ChevronLeft, Eye, X } from "lucide-react";
 import { format } from "date-fns";
 import { useMutation, useQuery } from "convex/react";
@@ -30,6 +31,7 @@ import InvestigationsPage from "./investigations-page";
 import { Id } from "@/convex/_generated/dataModel";
 import EnhancedPreviousPrescriptions from "./previous-prescriptions";
 import EnhancedPrescriptionPreview from "./prescription-preview";
+import { sendPrescriptionToWhatsApp } from "./wati-sender";
 import { jsPDF } from "jspdf";
 
 type SymptomItem = {
@@ -118,6 +120,8 @@ const steps = [
 export default function MultiStepPrescription({
   patientId,
 }: MultiStepPrescriptionProps) {
+  const [sendToWhatsApp, setSendToWhatsApp] = useState(false);
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [activeStep, setActiveStep] = useState(0);
   const [symptoms, setSymptoms] = useState<SymptomItem[]>([]);
   const [findings, setFindings] = useState<FindingItem[]>([]);
@@ -155,7 +159,9 @@ export default function MultiStepPrescription({
   const [severity, setSeverity] = useState<"Mild" | "Moderate" | "Severe">(
     "Mild"
   );
-
+  const getPatientPhone = useQuery(api.patients.getPatientPhone, {
+    patientId: patientId.toString(),
+  });
   const savePrescription = useMutation(api.prescriptions.savePrescription);
   const generateUploadUrl = useMutation(api.labReports.generateUploadUrl);
   const getLastPrescriptionForPatient = useQuery(
@@ -165,6 +171,9 @@ export default function MultiStepPrescription({
     }
   );
   const { user } = useUser();
+  const userDetails = useQuery(api.users.getUserDetails, {
+    userId: user?.id ?? "",
+  });
 
   useEffect(() => {
     if (getLastPrescriptionForPatient) {
@@ -201,15 +210,22 @@ export default function MultiStepPrescription({
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
 
-    const clinicName = "HealthCare Clinic";
-    const clinicAddress = "123 Medical Street, Healthville, HC 12345";
-    const clinicPhone = "+1 (555) 123-4567";
-    const clinicEmail = "info@healthcareclinic.com";
+    // Fetch user (doctor) details
+    // Use the fetched user details
+    const clinicName = userDetails?.clinicName || "HealthCare Clinic";
+    const clinicAddress =
+      userDetails?.address || "123 Medical Street, Healthville, HC 12345";
+    const clinicPhone = userDetails?.phone || "+1 (555) 123-4567";
+    const clinicEmail = userDetails?.email || "info@healthcareclinic.com";
 
-    const doctorName = "Dr. Jane Smith";
-    const doctorSpecialty = "General Practitioner";
-    const doctorLicense = "License No: MD12345";
-
+    const doctorName = userDetails
+      ? `Dr. ${userDetails.firstName} ${userDetails.lastName}`
+      : "Dr. Jane Smith";
+    const doctorSpecialty =
+      userDetails?.specialization || "General Practitioner";
+    const doctorLicense = userDetails?.licenseNumber
+      ? `License No: ${userDetails.licenseNumber}`
+      : "License No: MD12345";
     const addText = (text: string) => {
       doc.text(text, margin, yPos);
       yPos += lineHeight;
@@ -268,8 +284,9 @@ export default function MultiStepPrescription({
     doc.setFont("undefined", "normal");
 
     addText(`Patient ID: ${prescriptionData.patientId}`);
-    addText(`Doctor ID: ${prescriptionData.doctorId}`);
+    addText(`Doctor: ${doctorName}`);
     addText(`Date: ${format(new Date(), "PPP")}`);
+    yPos += 5;
     yPos += 5;
 
     addSection(
@@ -393,7 +410,7 @@ export default function MultiStepPrescription({
     try {
       // Generate PDF
       const pdfBlob = await generatePDF(newPrescription);
-
+      setPdfBlob(pdfBlob);
       // Get upload URL from Convex
       const uploadUrl = await generateUploadUrl();
 
@@ -418,6 +435,15 @@ export default function MultiStepPrescription({
         ...newPrescription,
         storageId,
       });
+      // Send to WhatsApp if checkbox is checked
+      if (sendToWhatsApp && getPatientPhone) {
+        try {
+          await sendPrescriptionToWhatsApp(getPatientPhone, pdfBlob);
+          console.log("Prescription sent to WhatsApp successfully");
+        } catch (error) {
+          console.error("Error sending prescription to WhatsApp:", error);
+        }
+      }
 
       setSaveSuccess(true);
       // Reset all state variables
@@ -659,6 +685,21 @@ export default function MultiStepPrescription({
           <ScrollArea className="h-[calc(90vh-200px)]">
             {renderPreview()}
           </ScrollArea>
+          <div className="flex items-center space-x-2 mt-4">
+            <Checkbox
+              id="sendToWhatsApp"
+              checked={sendToWhatsApp}
+              onCheckedChange={(checked) =>
+                setSendToWhatsApp(checked as boolean)
+              }
+            />
+            <label
+              htmlFor="sendToWhatsApp"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Send prescription to WhatsApp
+            </label>
+          </div>
           <DialogFooter className="sm:justify-between">
             <Button
               onClick={() => setShowPreview(false)}

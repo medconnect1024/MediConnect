@@ -1,16 +1,23 @@
 "use client";
-import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/components/ui/form";
-import {ROLES} from "@/lib/constants";
-import {Button} from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { ROLES } from "@/lib/constants";
+import { Button } from "@/components/ui/button";
 
-import {zodResolver} from "@hookform/resolvers/zod";
-import {useForm} from "react-hook-form";
-import {z} from "zod";
-import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group";
-import {Save} from "lucide-react";
-import {useMutation} from "convex/react";
-import {api} from "@/convex/_generated/api";
-import {useRouter} from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Save } from "lucide-react";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   role: z.enum(["Doctor", "Patient"], {
@@ -26,9 +33,9 @@ export default function RoleSelectionForm() {
 
   const updateUserRole = useMutation(api.users.updateUserRole);
 
-  const onSubmit = async ({role}: z.infer<typeof formSchema>) => {
-    await updateUserRole({role});
-    router.push("/docdashboard");
+  const onSubmit = async ({ role }: z.infer<typeof formSchema>) => {
+    await updateUserRole({ role });
+    router.push("/dashboard");
   };
 
   return (
@@ -37,7 +44,7 @@ export default function RoleSelectionForm() {
         <FormField
           control={form.control}
           name="role"
-          render={({field}) => (
+          render={({ field }) => (
             <FormItem>
               <FormLabel>Select a role</FormLabel>
               <FormControl>
@@ -51,7 +58,11 @@ export default function RoleSelectionForm() {
                       className="flex-1 w-full h-20 flex justify-center items-center"
                       key={role.id}
                     >
-                      <RadioGroupItem value={role.value} id={role.id} className="hidden" />
+                      <RadioGroupItem
+                        value={role.value}
+                        id={role.id}
+                        className="hidden"
+                      />
                       <label
                         htmlFor={role.id}
                         className={`p-2 w-full h-full flex justify-center items-center border rounded-md cursor-pointer transition-colors

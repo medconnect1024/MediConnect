@@ -198,3 +198,15 @@ export const getPatientByPhone = query({
 export const getAllPatients = query(async (ctx) => {
   return await ctx.db.query('patients').collect()
 })
+
+export const getPatientPhone = query({
+  args: { patientId: v.string() },
+  handler: async (ctx, { patientId }) => {
+    const patient = await ctx.db
+      .query('patients')
+      .filter((q) => q.eq(q.field('patientId'), Number(patientId))) // Convert to number here
+      .first();
+
+    return patient?.phoneNumber;
+  },
+});
