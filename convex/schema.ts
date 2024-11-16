@@ -58,7 +58,7 @@ export default defineSchema({
           appointmentId: v.string(),
           speciality:v.optional(v.string()),
           service: v.optional(v.string()),
-          provider: v.optional(v.string()),
+          referredBy: v.optional(v.string()),
           location: v.optional(v.string()),
           appointmentType: v.optional(v.union(v.literal("regular"), v.literal("recurring"))),
           isTeleconsultation: v.optional(v.boolean()),

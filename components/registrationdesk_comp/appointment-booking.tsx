@@ -29,14 +29,15 @@ import { format } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   patientId: z.string().min(1, "Patient is required"),
   doctorId: z.string().min(1, "Doctor is required"),
-  appointmentId: z.string().min(1, "Appointment ID is required"),
   speciality: z.string().optional(),
   service: z.string().optional(),
-  provider: z.string().optional(),
+  referredBy: z.string().optional(),
   location: z.string().optional(),
   appointmentType: z.enum(["regular", "recurring"]),
   isTeleconsultation: z.boolean().optional(),
@@ -47,67 +48,12 @@ const formSchema = z.object({
   insuranceDetails: z.string().optional(),
 });
 
-interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  message: string;
-  variant: "success" | "error";
-}
-
-const NotificationModal: React.FC<ModalProps> = ({
-  isOpen,
-  onClose,
-  title,
-  message,
-  variant,
-}) => {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-        <div className="flex justify-between items-center mb-4">
-          <h2
-            className={`text-xl font-bold ${variant === "success" ? "text-green-600" : "text-red-600"}`}
-          >
-            {title}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <X size={24} />
-          </button>
-        </div>
-        <p className="text-gray-700 mb-4">{message}</p>
-        <Button
-          onClick={onClose}
-          className={`w-full ${variant === "success" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"} text-white`}
-        >
-          Close
-        </Button>
-      </div>
-    </div>
-  );
-};
-
 export default function AppointmentBooking() {
-  const [modalState, setModalState] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-    variant: "success" | "error";
-  }>({
-    isOpen: false,
-    title: "",
-    message: "",
-    variant: "success",
-  });
+  const { toast } = useToast();
   const addAppointment = useMutation(api.appointment.addAppointment);
-  const appointments = useQuery(api.appointment.getAppointments);
   const patients = useQuery(api.patients.getAllPatients);
   const doctors = useQuery(api.users.getDoctors);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -120,49 +66,30 @@ export default function AppointmentBooking() {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      const appointmentId = `APT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       await addAppointment({
         ...values,
+        appointmentId,
         appointmentDate: values.appointmentDate.toISOString(),
       });
-      setModalState({
-        isOpen: true,
+      toast({
         title: "Success",
-        message: "Appointment booked successfully",
-        variant: "success",
+        description: "Appointment booked successfully",
+        variant: "default",
       });
       form.reset();
+      router.push("/appointmment");
     } catch (error) {
-      setModalState({
-        isOpen: true,
+      toast({
         title: "Error",
-        message: "Failed to book appointment. Please try again.",
-        variant: "error",
+        description: "Failed to book appointment. Please try again.",
+        variant: "destructive",
       });
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "scheduled":
-        return "text-green-500 bg-green-50";
-      case "completed":
-        return "text-yellow-500 bg-yellow-50";
-      case "cancelled":
-        return "text-red-500 bg-red-50";
-      default:
-        return "text-gray-500 bg-gray-50";
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 space-y-8">
-      <NotificationModal
-        isOpen={modalState.isOpen}
-        onClose={() => setModalState((prev) => ({ ...prev, isOpen: false }))}
-        title={modalState.title}
-        message={modalState.message}
-        variant={modalState.variant}
-      />
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <CardTitle className="text-2xl font-bold">New Appointment</CardTitle>
@@ -170,7 +97,7 @@ export default function AppointmentBooking() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="patientId"
@@ -228,20 +155,6 @@ export default function AppointmentBooking() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="appointmentId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Appointment ID*</FormLabel>
-                      <FormControl>
-                        <Input {...field} className="bg-white" />
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -308,25 +221,17 @@ export default function AppointmentBooking() {
 
                 <FormField
                   control={form.control}
-                  name="provider"
+                  name="referredBy"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Provider</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="bg-white">
-                            <SelectValue placeholder="Select provider" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="dr-smith">Dr. Smith</SelectItem>
-                          <SelectItem value="dr-jones">Dr. Jones</SelectItem>
-                          <SelectItem value="dr-wilson">Dr. Wilson</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormLabel>Referred By</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className="bg-white"
+                          placeholder="Enter referrer's name"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -373,7 +278,9 @@ export default function AppointmentBooking() {
                       <FormControl>
                         <Button
                           variant={"outline"}
-                          className={`w-full bg-white pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                          className={`w-full bg-white pl-3 text-left font-normal ${
+                            !field.value && "text-muted-foreground"
+                          }`}
                           onClick={(e) => {
                             e.preventDefault();
                             const calendar =
@@ -554,16 +461,9 @@ export default function AppointmentBooking() {
               </div>
 
               <div className="flex justify-end space-x-4">
-                {/* <Button
-                  variant="outline"
-                  type="button"
-                  onClick={() => form.reset()}
-                >
-                  Cancel
-                </Button> */}
                 <Button
                   type="submit"
-                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                  className="bg-blue-500 hover:bg-blue-600 text-white w-full md:w-auto"
                 >
                   Book Appointment
                 </Button>
