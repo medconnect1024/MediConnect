@@ -112,6 +112,7 @@ export default defineSchema({
       medicineInstructions: v.optional(v.string()),
       // New fields
       chronicCondition: v.boolean(),
+      criticalLabValues:v.optional(v.string()), 
       vitals: v.object({
         temperature: v.string(),
         bloodPressure: v.string(),
@@ -162,3 +163,4 @@ export default defineSchema({
         // Add any additional fields you might need for scheduled calls
       }),
 });
+

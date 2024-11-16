@@ -50,6 +50,7 @@ type PrescriptionData = {
   };
   medicineInstructions?: string;
   chronicCondition: boolean;
+  criticalLabValues: string;
   vitals: {
     temperature: string;
     bloodPressure: string;
@@ -192,6 +193,10 @@ export default function EnhancedPrescriptionPreview({
                 <div className="mt-2">
                   <span className="font-medium">Chronic Condition: </span>
                   <span>{data.chronicCondition ? "Yes" : "No"}</span>
+                </div>
+                <div className="mt-2">
+                  <span className="font-medium">critical Lab Values: </span>
+                  <span>{data.criticalLabValues}</span>
                 </div>
               </CardContent>
             </Card>

@@ -1,3 +1,4 @@
+
 import { mutation,query } from "./_generated/server";
 import { v } from "convex/values";
 
@@ -40,7 +41,7 @@ export const savePrescription = mutation({
     medicineInstructions: v.optional(v.string()),
     // New fields
     chronicCondition: v.boolean(),
-   
+    criticalLabValues:v.optional(v.string()), 
     vitals: v.object({
       temperature: v.string(),
       bloodPressure: v.string(),
@@ -70,6 +71,7 @@ export const savePrescription = mutation({
       dosage,
       route,
       chronicCondition,  // Added field
+      criticalLabValues,
       vitals, 
       storageId, // Added field
     } = args;
@@ -95,6 +97,7 @@ export const savePrescription = mutation({
       dosage,
       route,
       chronicCondition,  // Storing chronic condition
+      criticalLabValues,
       vitals, 
       storageId,  // Storing vitals information
     });

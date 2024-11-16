@@ -72,6 +72,7 @@ type Prescription = {
   };
   medicineInstructions?: string;
   chronicCondition: boolean;
+  criticalLabValues?: string;
   vitals: {
     temperature: string;
     bloodPressure: string;
@@ -97,6 +98,7 @@ interface ApiPrescription {
     call: boolean;
   };
   chronicCondition: boolean;
+  criticalLabValues?: string;
   vitals: {
     temperature: string;
     bloodPressure: string;
@@ -146,6 +148,7 @@ export default function MultiStepPrescription({
   const [activeTab, setActiveTab] = useState("new");
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [chronicCondition, setChronicCondition] = useState(false);
+  const [criticalLabValues, setCriticalLabValues] = useState("");
   const [vitals, setVitals] = useState({
     temperature: "",
     bloodPressure: "",
@@ -403,6 +406,7 @@ export default function MultiStepPrescription({
       medicineReminder,
       medicineInstructions,
       chronicCondition,
+      criticalLabValues,
       vitals,
       severity,
     };
@@ -505,6 +509,8 @@ export default function MultiStepPrescription({
             setSeverity={setSeverity}
             chronicCondition={chronicCondition}
             setChronicCondition={setChronicCondition}
+            criticalLabValues={criticalLabValues}
+            setCriticalLabValues={setCriticalLabValues}
           />
         );
       case 3:
@@ -590,6 +596,7 @@ export default function MultiStepPrescription({
         medicineReminder,
         medicineInstructions,
         chronicCondition,
+        criticalLabValues,
         vitals,
         severity,
       }}

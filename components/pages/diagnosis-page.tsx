@@ -23,6 +23,8 @@ interface DiagnosisPageProps {
   >;
   chronicCondition: boolean;
   setChronicCondition: React.Dispatch<React.SetStateAction<boolean>>;
+  criticalLabValues: string;
+  setCriticalLabValues: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export default function DiagnosisPage({
@@ -32,6 +34,8 @@ export default function DiagnosisPage({
   setSeverity,
   chronicCondition,
   setChronicCondition,
+  criticalLabValues,
+  setCriticalLabValues,
 }: DiagnosisPageProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -158,6 +162,18 @@ export default function DiagnosisPage({
             Chronic Condition
           </Label>
         </div>
+      </div>
+
+      {/* Critical Lab Values */}
+      <div className="mt-4">
+        <h4 className="text-lg font-semibold mb-2">Critical Lab Values</h4>
+        <textarea
+          value={criticalLabValues}
+          onChange={(e) => setCriticalLabValues(e.target.value)}
+          placeholder="Enter critical lab values here..."
+          className="w-full border border-gray-300 rounded-md p-3 text-lg"
+          rows={4}
+        ></textarea>
       </div>
     </div>
   );
