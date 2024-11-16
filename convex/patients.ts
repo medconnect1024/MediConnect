@@ -1,6 +1,86 @@
 import { mutation,query} from "./_generated/server";
 import { v } from "convex/values";
 
+interface PatientData {
+  id: number;
+  name: string;
+  age: number;
+  lastVisit: string | null;
+  nextAppointment: string | null;
+  condition: string | null;
+  lastFollowUpCall: string | null;
+  followUpStatus: string | null;
+  followUpNotes: string | null;
+  appointmentType: string | null;
+  criticality: string | null;
+}
+export const getAppoitmentsByDoctor =  query({
+  // Define the arguments for the query
+  args: {
+    limit: v.optional(v.number()),
+    doctorId: v.optional(v.string()),
+  },
+  // Define the handler function for the query
+  handler: async (ctx, args) => {
+    const { limit = 10, doctorId } = args;
+
+    // Fetch patients
+    const patients = await ctx.db
+      .query("patients")
+      .take(limit);
+
+    // Process each patient to fetch related data
+    const patientData: PatientData[] = await Promise.all(
+      patients.map(async (patient) => {
+        // Fetch the most recent appointment for this patient
+        const appointment = await ctx.db
+          .query("appointments")
+          .withIndex("by_patient_id", (q) => q.eq("patientId", patient._id.toString()))
+          .order("desc")
+          .first();
+
+        // Fetch the most recent prescription for this patient
+        const prescription = await ctx.db
+          .query("prescriptions")
+          .withIndex("by_patient_id", (q) => q.eq("patientId", patient._id.toString()))
+          .order("desc")
+          .first();
+
+        // Calculate age from date of birth
+        const age = new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear();
+
+        return {
+          id: patient.patientId,
+          name: `${patient.firstName} ${patient.lastName}`,
+          age,
+          lastVisit: appointment?.appointmentDate ?? null,
+          nextAppointment: appointment?.status === "Scheduled" ? appointment.appointmentDate : null,
+          condition: prescription?.diagnoses[0]?.name ?? null,
+          lastFollowUpCall: null, // This information is not available in the current schema
+          followUpStatus: appointment?.status ?? null,
+          followUpNotes: prescription?.investigationNotes ?? null,
+          appointmentType: appointment?.appointmentType ?? null,
+          criticality: prescription?.severity ?? null,
+        };
+      })
+    );
+
+    // If doctorId is provided, filter patients by doctor
+    const filteredPatientData = doctorId
+      ? patientData.filter((patient) => {
+          const appointment = ctx.db
+            .query("appointments")
+            .withIndex("by_patient_id", (q) => q.eq("patientId", patient.id.toString()))
+            .filter((q) => q.eq(q.field("doctorId"), doctorId))
+            .first();
+          return appointment !== null;
+        })
+      : patientData;
+
+    return filteredPatientData;
+  },
+});
+
 export const registerPatient = mutation({
   args: {
     email: v.string(),

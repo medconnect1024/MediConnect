@@ -82,15 +82,17 @@ import {
   Bar,
 } from "recharts";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 export default function EnhancedDoctorDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const router = useRouter();
-  const { user, isSignedIn } = useUser();
-
+  const { user } = useUser()
+  const doctorId = user?.id  
   // Mock data (kept from original and extended)
-  const patientData = [
+  const patientData1 = [
     {
       id: 1,
       name: "John Doe",
@@ -148,6 +150,9 @@ export default function EnhancedDoctorDashboard() {
       criticality: "Medium",
     },
   ];
+
+  const patientData = useQuery(api.patients.getAppoitmentsByDoctor, { doctorId }) || [];
+
 
   const patientFlowData = [
     { name: "Mon", patients: 20 },
@@ -377,7 +382,7 @@ export default function EnhancedDoctorDashboard() {
                         </TableCell>
                         <TableCell className="text-gray-600">
                           <div className="flex items-center space-x-2">
-                            {getCriticalityIcon(patient.criticality)}
+                            {getCriticalityIcon(patient.name)}
                             <span>{patient.criticality}</span>
                           </div>
                         </TableCell>
@@ -387,7 +392,7 @@ export default function EnhancedDoctorDashboard() {
                             size="sm"
                             className="mr-2 text-blue-600 border-blue-300 hover:bg-blue-50"
                             onClick={() =>
-                              handleNavigation(`/patient/${patient.id}`)
+                              handleNavigation(`/consultation?patientId=${encodeURIComponent(patient.id)}`)
                             }
                           >
                             View
