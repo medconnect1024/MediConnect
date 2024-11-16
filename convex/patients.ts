@@ -72,6 +72,41 @@ export const getAppointmentsByDoctor = query({
   },
 });
 
+
+export const updateAppointmentStatus = mutation({
+  args: {
+    appointmentId: v.string(),
+    status: v.union(
+      v.literal("Scheduled"),
+      v.literal("waitlist"),
+      v.literal("completed"),
+      v.literal("cancelled"),
+      v.literal("attending")
+    ),
+  },
+  handler: async (ctx, args) => {
+    const { appointmentId, status } = args;
+
+    // Check if the appointment exists
+    const existingAppointment = await ctx.db
+      .query("appointments")
+      .filter((q) => q.eq(q.field("_id"), appointmentId))
+      .first();
+
+    if (!existingAppointment) {
+      throw new Error(`Appointment with ID ${appointmentId} not found`);
+    }
+
+    // Update the appointment status
+    const updatedAppointment = await ctx.db.patch(existingAppointment._id, {
+      status: status,
+      updatedAt: new Date().toISOString(),
+    });
+
+    return updatedAppointment;
+  },
+});
+
 export const getPatientById = query({
   args: {
     patientId: v.number(),

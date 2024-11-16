@@ -62,7 +62,7 @@ export default defineSchema({
           location: v.optional(v.string()),
           appointmentType: v.optional(v.union(v.literal("regular"), v.literal("recurring"))),
           isTeleconsultation: v.optional(v.boolean()),
-          status: v.union(v.literal("Scheduled"), v.literal("waitlist"), v.literal("completed"), v.literal("cancelled")),
+          status: v.union(v.literal("Scheduled"), v.literal("waitlist"), v.literal("completed"), v.literal("cancelled"),v.literal("attending")),
           appointmentDate: v.string(),
           notes: v.optional(v.string()),
           reasonForVisit: v.optional(v.string()),
