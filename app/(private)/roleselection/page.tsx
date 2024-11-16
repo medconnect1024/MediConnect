@@ -1,30 +1,59 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Heart, Brain, Stethoscope } from 'lucide-react'
 import { Card, CardContent } from "@/components/ui/card"
+
+const medicalMessages = [
+  "Did you know? The human heart beats about 115,000 times each day.",
+  "Fun fact: The human brain processes images in just 13 milliseconds.",
+  "Interesting: Your lungs can hold about 1.5 gallons of air.",
+  "Amazing: There are more bacteria in your mouth than there are people on Earth!",
+  "Wow: Your body produces about 25 million new cells each second.",
+]
+
+const icons = [Heart, Brain, Stethoscope]
 
 export default function LoadingScreen() {
   const router = useRouter()
+  const [messageIndex, setMessageIndex] = useState(0)
+  const Icon = icons[messageIndex % icons.length]
 
   useEffect(() => {
-    // Simulate a delay before navigating to the dashboard
-    const timer = setTimeout(() => {
-      router.push('/dashboard')
-    }, 3000) // 3 seconds delay
+    const messageTimer = setInterval(() => {
+      setMessageIndex((prevIndex) => (prevIndex + 1) % medicalMessages.length)
+    }, 3000)
 
-    // Clean up the timer
-    return () => clearTimeout(timer)
+    const navigationTimer = setTimeout(() => {
+      router.push('/dashboard')
+    }, 3000) // 15 seconds delay to show all messages
+
+    return () => {
+      clearInterval(messageTimer)
+      clearTimeout(navigationTimer)
+    }
   }, [router])
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
-      <Card className="w-[300px]">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-blue-100 via-blue-300 to-blue-500">
+      <Card className="w-[350px] bg-white/80 backdrop-blur-sm">
         <CardContent className="flex flex-col items-center justify-center p-6">
-          <Loader2 className="h-16 w-16 animate-spin text-primary" />
-          <p className="mt-4 text-lg font-semibold text-center">Loading your dashboard...</p>
-          <p className="mt-2 text-sm text-muted-foreground text-center">Please wait while we prepare your experience.</p>
+          <div className="relative">
+            <Loader2 className="h-24 w-24 animate-spin text-blue-600" />
+            <Icon className="h-12 w-12 text-blue-600 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+          </div>
+          <p className="mt-6 text-xl font-bold text-center text-blue-800">
+            Preparing Your Medical Dashboard
+          </p>
+          <p className="mt-2 text-sm text-blue-600 text-center">
+            Your health insights are just a moment away...
+          </p>
+          <div className="mt-6 p-4 bg-blue-100 rounded-lg">
+            <p className="text-sm text-blue-800 text-center italic">
+              {medicalMessages[messageIndex]}
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
