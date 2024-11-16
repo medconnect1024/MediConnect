@@ -1,4 +1,4 @@
-import FixedNavigation from "@/app/(private)/navigation";
+import FixedNavigation from "@/app/(private)/(main)/navigation";
 import Header from "./Header";
 import type { Metadata } from "next";
 

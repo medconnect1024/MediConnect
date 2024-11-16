@@ -25,7 +25,7 @@ import {
 } from "convex/react";
 import { Loading } from "@/components/shared/Loading";
 import { SignInButton, UserButton, useUser } from "@clerk/nextjs";
-import { api } from "../../convex/_generated/api";
+import { api } from "../../../convex/_generated/api";
 
 const doctorMenuItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },

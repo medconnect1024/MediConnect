@@ -1,6 +1,6 @@
 'use client'
 
-import FixedNavigation from '@/app/(private)/navigation'
+import FixedNavigation from '@/app/(private)/(main)/navigation'
 import RoleSelection from '@/app/(private)/roleselection/page'
 import { api } from '@/convex/_generated/api'
 import { useUser } from '@clerk/nextjs'

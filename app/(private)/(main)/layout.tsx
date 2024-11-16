@@ -2,7 +2,7 @@ import Header from "@/components/Header";
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata } from "next";
 import FixedNavigation from "./navigation";
-import RoleSelection from "./roleselection/page";
+import RoleSelection from "../roleselection/page";
 import RoleBasedNavigation from "@/components/RoleBasedNavigation";
 import { useState } from "react";
 
