@@ -64,7 +64,6 @@ export const checkAppointment = query({
       .query('appointments')
       .filter(q => 
         q.eq(q.field('appointmentDate'), args.appointmentDate) &&
-        q.eq(q.field('appointmentTime'), args.appointmentTime) &&
         (args.doctorId ? q.eq(q.field('doctorId'), args.doctorId) : true)
       )
       .collect();
@@ -72,3 +71,44 @@ export const checkAppointment = query({
     return existingAppointments.length === 0;
   },
 });
+
+export const checkDoctorAvailability = query({
+  args: {
+    doctorId: v.string(),
+    appointmentDate: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { doctorId, appointmentDate } = args
+
+    // Validate input
+    if (!doctorId || !appointmentDate) {
+      throw new Error('Both doctorId and appointmentDate are required')
+    }
+
+    // Parse the appointmentDate to ensure it's a valid date
+    const date = new Date(appointmentDate)
+    if (isNaN(date.getTime())) {
+      throw new Error('Invalid date format. Please provide the date in ISO 8601 format')
+    }
+
+    // Query the appointments table for conflicting appointments
+    const conflictingAppointments = await ctx.db
+      .query('appointments')
+      .filter((q) => 
+        q.eq(q.field('doctorId'), doctorId) &&
+        q.eq(q.field('appointmentDate'), appointmentDate) &&
+        q.neq(q.field('status'), 'cancelled')
+      )
+      .collect()
+
+    // Check if there are any conflicting appointments
+    const isAvailable = conflictingAppointments.length !== 0
+
+    return {
+      available: isAvailable,
+      message: isAvailable 
+        ? "The requested appointment slot is available." 
+        : "The requested appointment slot is available.",
+    }
+  },
+})

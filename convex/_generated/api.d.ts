@@ -21,13 +21,19 @@ import type * as crons from "../crons.js";
 import type * as getdoctorslots from "../getdoctorslots.js";
 import type * as http from "../http.js";
 import type * as labReports from "../labReports.js";
+import type * as lib_mockapi from "../lib/mockapi.js";
+import type * as lib_mockconvex from "../lib/mockconvex.js";
+import type * as lib_quickcache from "../lib/quickcache.js";
+import type * as lib_utils from "../lib/utils.js";
 import type * as messages from "../messages.js";
 import type * as patients from "../patients.js";
 import type * as patientsearch from "../patientsearch.js";
 import type * as prescriptions from "../prescriptions.js";
 import type * as scheduledCalls from "../scheduledCalls.js";
+import type * as service_openai from "../service/openai.js";
 import type * as users from "../users.js";
 import type * as watiWebhook from "../watiWebhook.js";
+import type * as watsappapi from "../watsappapi.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -44,13 +50,19 @@ declare const fullApi: ApiFromModules<{
   getdoctorslots: typeof getdoctorslots;
   http: typeof http;
   labReports: typeof labReports;
+  "lib/mockapi": typeof lib_mockapi;
+  "lib/mockconvex": typeof lib_mockconvex;
+  "lib/quickcache": typeof lib_quickcache;
+  "lib/utils": typeof lib_utils;
   messages: typeof messages;
   patients: typeof patients;
   patientsearch: typeof patientsearch;
   prescriptions: typeof prescriptions;
   scheduledCalls: typeof scheduledCalls;
+  "service/openai": typeof service_openai;
   users: typeof users;
   watiWebhook: typeof watiWebhook;
+  watsappapi: typeof watsappapi;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

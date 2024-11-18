@@ -6,6 +6,7 @@ import { Webhook } from "svix";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 import { handleWatiWebhook } from "./watiWebhook";
+import { handleWatiWebhook1 } from "./watsappapi";
 
 // Ensure all environment variables are set
 const WATI_API_URL = process.env.WATI_API_URL!;
@@ -73,6 +74,11 @@ http.route({
   handler: handleWatiWebhook
 });
 
+http.route({
+  path: "/wati-webhook1",
+  method: "POST",
+  handler: handleWatiWebhook1
+});
 
 async function validateClerkRequest(
   req: Request
