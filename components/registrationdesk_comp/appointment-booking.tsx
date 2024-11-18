@@ -24,7 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { CalendarIcon, Loader2, X } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -43,6 +43,7 @@ const formSchema = z.object({
   isTeleconsultation: z.boolean().optional(),
   status: z.enum(["Scheduled", "waitlist", "completed", "cancelled"]),
   appointmentDate: z.date(),
+  appointmentTime: z.string().min(1, "Appointment time is required"),
   notes: z.string().optional(),
   reasonForVisit: z.string().optional(),
   insuranceDetails: z.string().optional(),
@@ -321,6 +322,25 @@ export default function AppointmentBooking() {
                           initialFocus
                         />
                       </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="appointmentTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Appointment Time*</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="time"
+                          className="bg-white"
+                          placeholder="Select time"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

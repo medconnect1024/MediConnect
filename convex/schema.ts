@@ -64,6 +64,7 @@ export default defineSchema({
           isTeleconsultation: v.optional(v.boolean()),
           status: v.union(v.literal("Scheduled"), v.literal("waitlist"), v.literal("completed"), v.literal("cancelled"),v.literal("attending")),
           appointmentDate: v.string(),
+          appointmentTime: v.string(), // New field
           notes: v.optional(v.string()),
           reasonForVisit: v.optional(v.string()),
           insuranceDetails: v.optional(v.string()),

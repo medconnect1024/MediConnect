@@ -15,6 +15,7 @@ export const addAppointment = mutation({
     isTeleconsultation: v.optional(v.boolean()),
     status: v.union(v.literal('Scheduled'), v.literal('waitlist'), v.literal('completed'), v.literal('cancelled')),
     appointmentDate: v.string(),
+    appointmentTime: v.string(), // New field
     notes: v.optional(v.string()),
     reasonForVisit: v.optional(v.string()),
     insuranceDetails: v.optional(v.string()),
@@ -32,6 +33,7 @@ export const addAppointment = mutation({
       isTeleconsultation: args.isTeleconsultation,
       status: args.status,
       appointmentDate: args.appointmentDate,
+      appointmentTime: args.appointmentTime, // New field
       notes: args.notes,
       reasonForVisit: args.reasonForVisit,
       insuranceDetails: args.insuranceDetails,
@@ -50,3 +52,23 @@ export const getAppointments = query(async (ctx) => {
 export const getAllPatients = query(async (ctx) => {
   return await ctx.db.query('patients').collect()
 })
+
+export const checkAppointment = query({
+  args: { 
+    appointmentDate: v.string(),
+    appointmentTime: v.string(),
+    doctorId: v.optional(v.string())
+  },
+  handler: async (ctx, args) => {
+    const existingAppointments = await ctx.db
+      .query('appointments')
+      .filter(q => 
+        q.eq(q.field('appointmentDate'), args.appointmentDate) &&
+        q.eq(q.field('appointmentTime'), args.appointmentTime) &&
+        (args.doctorId ? q.eq(q.field('doctorId'), args.doctorId) : true)
+      )
+      .collect();
+
+    return existingAppointments.length === 0;
+  },
+});

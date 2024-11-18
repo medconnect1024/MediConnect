@@ -1,23 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { format, addDays } from "date-fns";
+import {
+  format,
+  addMinutes,
+  isAfter,
+  isBefore,
+  parseISO,
+  startOfDay,
+  endOfDay,
+} from "date-fns";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import {
-  ArrowUpDown,
-  ChevronDown,
-  Info,
-  Plus,
-  Calendar as CalendarIcon,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ArrowUpDown, ChevronDown, Info, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -44,37 +44,64 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
-import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { DateRange } from "react-day-picker";
+
 import AppointmentBooking from "./appointment-booking";
 
 export default function AppointmentPage() {
   const [selectedDoctor, setSelectedDoctor] = useState<string>("all");
   const [showBuffers, setShowBuffers] = useState(false);
   const [activeTab, setActiveTab] = useState("upcoming");
-  const [dateRange, setDateRange] = useState<
-    { from: Date; to: Date } | undefined
-  >();
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isBookingOpen, setIsBookingOpen] = useState(false);
 
   const doctors = useQuery(api.users.getDoctors) || [];
   const appointments = useQuery(api.appointment.getAppointments) || [];
 
-  const filteredAppointments = appointments.filter(
-    (apt) =>
+  const handleSelect = (range: DateRange | undefined) => {
+    setDateRange(range);
+    if (range?.from) {
+      setActiveTab("date-range");
+    }
+  };
+
+  const filteredAppointments = appointments.filter((apt) => {
+    const appointmentDate = parseISO(apt.appointmentDate);
+    const today = startOfDay(new Date());
+
+    const isInDateRange =
+      dateRange?.from && dateRange?.to
+        ? isAfter(appointmentDate, startOfDay(dateRange.from)) &&
+          isBefore(appointmentDate, endOfDay(dateRange.to))
+        : true;
+
+    return (
       (selectedDoctor === "all" || apt.doctorId === selectedDoctor) &&
-      (activeTab === "upcoming" ||
+      ((activeTab === "upcoming" && isAfter(appointmentDate, today)) ||
         (activeTab === "pending" && apt.status === "Scheduled") ||
-        (activeTab === "past" && new Date(apt.appointmentDate) < new Date()) ||
-        (activeTab === "date-range" &&
-          dateRange &&
-          new Date(apt.appointmentDate) >= dateRange.from &&
-          new Date(apt.appointmentDate) <= dateRange.to))
+        (activeTab === "past" && isBefore(appointmentDate, today)) ||
+        (activeTab === "date-range" && isInDateRange))
+    );
+  });
+
+  const groupedAppointments = filteredAppointments.reduce(
+    (acc: Record<string, typeof appointments>, apt) => {
+      const date = format(parseISO(apt.appointmentDate), "yyyy-MM-dd");
+      if (!acc[date]) acc[date] = [];
+      acc[date].push(apt);
+      return acc;
+    },
+    {}
+  );
+
+  const sortedDates = Object.keys(groupedAppointments).sort(
+    (a, b) => parseISO(a).getTime() - parseISO(b).getTime()
   );
 
   const handleBookingClose = () => {
@@ -140,13 +167,22 @@ export default function AppointmentPage() {
                 <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
                 <TabsTrigger value="pending">Pending</TabsTrigger>
                 <TabsTrigger value="past">Past</TabsTrigger>
-                <TabsTrigger value="date-range" className="gap-2">
+                <TabsTrigger value="date-range" className="relative">
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="ghost" className="gap-2 h-8 px-2">
-                        Date Range
+                      <div className="flex items-center gap-2 cursor-pointer">
+                        {dateRange?.from ? (
+                          <>
+                            {format(dateRange.from, "LLL dd, y")} -{" "}
+                            {dateRange.to
+                              ? format(dateRange.to, "LLL dd, y")
+                              : "..."}
+                          </>
+                        ) : (
+                          "Date Range"
+                        )}
                         <ChevronDown className="h-4 w-4" />
-                      </Button>
+                      </div>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
@@ -154,7 +190,7 @@ export default function AppointmentPage() {
                         mode="range"
                         defaultMonth={dateRange?.from}
                         selected={dateRange}
-                        // onSelect={setDateRange}
+                        onSelect={handleSelect}
                         numberOfMonths={2}
                       />
                     </PopoverContent>
@@ -170,7 +206,6 @@ export default function AppointmentPage() {
                     Book Appointment
                   </Button>
                 </DialogTrigger>
-
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Book Appointment</DialogTitle>
@@ -198,62 +233,56 @@ export default function AppointmentPage() {
           </div>
 
           <div className="space-y-6">
-            {filteredAppointments.length > 0 ? (
-              <>
-                <div className="text-lg font-semibold">
-                  {format(
-                    new Date(filteredAppointments[0].appointmentDate),
-                    "EEEE, d MMMM yyyy"
-                  )}
-                </div>
-                {filteredAppointments.map((appointment) => {
-                  const doctor = doctors.find(
-                    (d) => d._id === appointment.doctorId
-                  );
-                  return (
-                    <div
-                      key={appointment._id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="h-8 w-8 rounded-full bg-primary/10" />
-                        <div>
-                          <div className="font-medium">
-                            {format(
-                              new Date(appointment.appointmentDate),
-                              "h:mm a"
-                            )}{" "}
-                            -{" "}
-                            {/* {format(
-                              addDays(
-                                new Date(appointment.appointmentDate),
-                                appointment._creationTime
-                              ),
-                              "h:mm a"
-                            )} */}
+            {sortedDates.length > 0 ? (
+              sortedDates.map((date) => (
+                <div key={date}>
+                  <div className="text-lg font-semibold mb-4">
+                    {format(parseISO(date), "EEEE, d MMMM yyyy")}
+                  </div>
+                  {groupedAppointments[date].map((appointment) => {
+                    const doctor = doctors.find(
+                      (d) => d.userId === appointment.doctorId
+                    );
+                    const appointmentDate = parseISO(
+                      appointment.appointmentDate
+                    );
+                    const appointmentEndTime = addMinutes(appointmentDate, 30); // Assuming 30-minute appointments
+
+                    return (
+                      <div
+                        key={appointment._id}
+                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors mb-4"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="h-8 w-8 rounded-full bg-primary/10" />
+                          <div>
+                            <div className="font-medium">
+                              {format(appointmentDate, "h:mm a")} -{" "}
+                              {format(appointmentEndTime, "h:mm a")}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {doctor
+                                ? `${doctor.firstName} ${doctor.lastName}`
+                                : "Unknown Doctor"}{" "}
+                              • {appointment.service}
+                            </div>
                           </div>
+                        </div>
+                        <div className="flex items-center gap-4">
                           <div className="text-sm text-muted-foreground">
-                            {doctor
-                              ? `${doctor.firstName} ${doctor.lastName}`
-                              : "Unknown Doctor"}{" "}
-                            • {appointment.service}
+                            {appointment.isTeleconsultation
+                              ? "Teleconsultation"
+                              : "In-person"}
                           </div>
+                          <Button variant="ghost" size="sm">
+                            Details
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-sm text-muted-foreground">
-                          {appointment.isTeleconsultation
-                            ? "Teleconsultation"
-                            : "In-person"}
-                        </div>
-                        <Button variant="ghost" size="sm">
-                          Details
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </>
+                    );
+                  })}
+                </div>
+              ))
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 No appointments found
