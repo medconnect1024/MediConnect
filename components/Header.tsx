@@ -1,18 +1,46 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
-import { AuthLoading, Authenticated, Unauthenticated } from "convex/react";
-import { SignInButton, UserButton } from "@clerk/nextjs";
+import {
+  AuthLoading,
+  Authenticated,
+  Unauthenticated,
+  useQuery,
+} from "convex/react";
+import { SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import { Loading } from "@/components/shared/Loading";
 import Logo from "@/components/common/Logo";
+import { useRouter } from "next/navigation";
+import { api } from "@/convex/_generated/api";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const router = useRouter();
+  const { user } = useUser();
+  const loggedInEmail = user?.emailAddresses[0]?.emailAddress || "";
+
+  // Query to fetch user role from the database
+  const userExists = useQuery(api.users.checkUserEmail, {
+    email: loggedInEmail,
+  });
 
   const closeMenu = () => setMenuOpen(false);
+
+  const handleDashboardNavigation = () => {
+    if (userExists?.role) {
+      const roleDashboards: Record<string, string> = {
+        Doctor: "/dashboard",
+        Desk: "/registrationdesk",
+        Patient: "/patientdashboard",
+      };
+      const rolePath = roleDashboards[userExists.role] || "/";
+      router.push(rolePath);
+      closeMenu();
+    }
+  };
 
   return (
     <header className="bg-white dark:bg-blue-500 shadow-md sticky top-0 z-50">
@@ -62,11 +90,12 @@ export default function Header() {
           </Unauthenticated>
           <Authenticated>
             <UserButton />
-            <Link href="/dashboard" passHref>
-              <Button className="bg-[#2178e9] text-white hover:bg-[#0769e9]">
-                Dashboard
-              </Button>
-            </Link>
+            <Button
+              className="bg-[#2178e9] text-white hover:bg-[#0769e9]"
+              onClick={handleDashboardNavigation}
+            >
+              Dashboard
+            </Button>
           </Authenticated>
         </nav>
 
@@ -131,14 +160,12 @@ export default function Header() {
           </Unauthenticated>
           <Authenticated>
             <UserButton />
-            <Link href="/dashboard" passHref>
-              <Button
-                className="bg-[#3292f7] text-white hover:bg-[#2a83f7] w-full mt-4"
-                onClick={closeMenu}
-              >
-                Dashboard
-              </Button>
-            </Link>
+            <Button
+              className="bg-[#3292f7] text-white hover:bg-[#2a83f7] w-full mt-4"
+              onClick={handleDashboardNavigation}
+            >
+              Dashboard
+            </Button>
           </Authenticated>
         </nav>
       )}

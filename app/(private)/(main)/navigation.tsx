@@ -207,7 +207,7 @@ export default function FixedNavigation() {
               </Button>
             </Link>
           )}
-          {/* <Link href="/settings" passHref>
+          <Link href="/settings" passHref>
             <Button
               variant="ghost"
               className="text-gray-600 hover:text-gray-800 flex items-center"
@@ -215,7 +215,7 @@ export default function FixedNavigation() {
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </Button>
-          </Link> */}
+          </Link>
           <AuthLoading>
             <Loading />
           </AuthLoading>

@@ -510,8 +510,8 @@ export default function Component() {
               </Button>
             ) : (
               <Button
-                className="ml-auto"
-                onClick={() => (window.location.href = "/dashboard")}
+              // className="ml-auto"
+              // onClick={() => (window.location.href = "/dashboard")}
               >
                 Go to Dashboard
               </Button>
