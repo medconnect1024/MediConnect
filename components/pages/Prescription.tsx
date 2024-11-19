@@ -136,6 +136,7 @@ export default function MultiStepPrescription({
   >([]);
   const [investigationNotes, setInvestigationNotes] = useState("");
   const [followUpDate, setFollowUpDate] = useState<Date | undefined>(undefined);
+  const [isPopoverOpen, setPopoverOpen] = useState(false);
   const [medicineReminder, setMedicineReminder] = useState({
     message: false,
     call: false,
@@ -538,7 +539,7 @@ export default function MultiStepPrescription({
           <div className="mb-8">
             <h3 className="text-xl font-semibold mb-4">Follow-Up</h3>
             <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 justify-between">
-              <Popover>
+              <Popover open={isPopoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -559,8 +560,8 @@ export default function MultiStepPrescription({
                     mode="single"
                     selected={followUpDate}
                     onSelect={(date) => {
-                      setFollowUpDate(date);
-                      document.body.click();
+                      setFollowUpDate(date); // Set the selected date
+                      setPopoverOpen(false); // Close the popover after selecting the date
                     }}
                     initialFocus
                     className="p-5"
@@ -573,6 +574,44 @@ export default function MultiStepPrescription({
               >
                 <Eye className="mr-2" /> Preview Prescription
               </Button>
+            </div>
+            <div className="mt-4 flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="medicineReminderMessage"
+                  checked={medicineReminder.message}
+                  onCheckedChange={(checked) =>
+                    setMedicineReminder((prev) => ({
+                      ...prev,
+                      message: checked as boolean,
+                    }))
+                  }
+                />
+                <label
+                  htmlFor="medicineReminderMessage"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Message Reminder
+                </label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="medicineReminderCall"
+                  checked={medicineReminder.call}
+                  onCheckedChange={(checked) =>
+                    setMedicineReminder((prev) => ({
+                      ...prev,
+                      call: checked as boolean,
+                    }))
+                  }
+                />
+                <label
+                  htmlFor="medicineReminderCall"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Call Reminder
+                </label>
+              </div>
             </div>
           </div>
         );

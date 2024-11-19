@@ -63,8 +63,6 @@ export default function MedicinePage({
   setMedicines,
   medicineInstructions,
   setMedicineInstructions,
-  medicineReminder,
-  setMedicineReminder,
 }: MedicinePageProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -304,44 +302,6 @@ export default function MedicinePage({
         onChange={(e) => setMedicineInstructions(e.target.value)}
         className="mt-4"
       />
-      <div className="mt-4 flex items-center space-x-4">
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="medicineReminderMessage"
-            checked={medicineReminder.message}
-            onCheckedChange={(checked) =>
-              setMedicineReminder((prev) => ({
-                ...prev,
-                message: checked as boolean,
-              }))
-            }
-          />
-          <label
-            htmlFor="medicineReminderMessage"
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
-            Message Reminder
-          </label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="medicineReminderCall"
-            checked={medicineReminder.call}
-            onCheckedChange={(checked) =>
-              setMedicineReminder((prev) => ({
-                ...prev,
-                call: checked as boolean,
-              }))
-            }
-          />
-          <label
-            htmlFor="medicineReminderCall"
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
-            Call Reminder
-          </label>
-        </div>
-      </div>
     </div>
   );
 }

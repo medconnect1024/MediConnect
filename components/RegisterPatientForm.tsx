@@ -118,7 +118,7 @@ export default function RegisterPatientForm() {
         doctorId: user.id,
       });
       toast.success("Patient has been registered successfully");
-      form.reset();
+      form.reset(); // Reset the form after successful submission
     } catch (error) {
       toast.error("Failed to register patient. Please try again.");
       console.error("Error registering patient:", error);

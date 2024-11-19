@@ -1,42 +1,31 @@
-'use client'
+"use client";
 
-import React, { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Search, Plus, X, ChevronDown } from "lucide-react"
-import { useQuery } from "convex/react"
-import { api } from "@/convex/_generated/api"
-import { Textarea } from "@/components/ui/textarea"
-import { INVESTIGATION_NAMES } from "@/components/data/investigationNames"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Search, Plus, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 type PrescriptionItem = {
-  id: string
-  name: string
-}
+  id: string;
+  name: string;
+};
 
 interface InvestigationsPageProps {
-  investigations: PrescriptionItem[]
-  setInvestigations: React.Dispatch<React.SetStateAction<PrescriptionItem[]>>
-  investigationNotes: string
-  setInvestigationNotes: React.Dispatch<React.SetStateAction<string>>
+  investigations: PrescriptionItem[];
+  setInvestigations: React.Dispatch<React.SetStateAction<PrescriptionItem[]>>;
+  investigationNotes: string;
+  setInvestigationNotes: React.Dispatch<React.SetStateAction<string>>;
 }
 
 // Mock data for related investigations
-const RELATED_INVESTIGATIONS: { [key: string]: string[] } = {
-  CBC: ["Hemoglobin", "WBC Count", "Platelet Count"],
-  "Thyroid Profile": ["TSH", "T3", "T4"],
+const TEST_CATEGORIES: { [key: string]: string[] } = {
+  Haematology: ["Total RBC Count", "Hemoglobin", "Platelet Count", "ESR"],
+  Biochemistry: ["Blood Sugar", "Liver Function Test", "Kidney Function Test"],
   "Liver Function Test": ["ALT", "AST", "Bilirubin"],
-  "Kidney Function Test": ["Creatinine", "BUN", "eGFR"],
-  "Blood Sugar": ["Fasting Blood Sugar", "HbA1c", "Postprandial Blood Sugar"],
-  "Lipid Profile": ["Total Cholesterol", "HDL", "LDL", "Triglycerides"],
-}
+  Microbiology: ["Culture Test", "Gram Stain", "KOH Test"],
+};
 
 export default function InvestigationsPage({
   investigations,
@@ -44,100 +33,146 @@ export default function InvestigationsPage({
   investigationNotes,
   setInvestigationNotes,
 }: InvestigationsPageProps) {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([])
-  const [selectedInvestigation, setSelectedInvestigation] = useState<string | null>(null)
-  const [relatedInvestigations, setRelatedInvestigations] = useState<string[]>([])
+  const [categorySearch, setCategorySearch] = useState("");
+  const [testSearch, setTestSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [filteredCategories, setFilteredCategories] = useState<string[]>([]);
+  const [filteredTests, setFilteredTests] = useState<string[]>([]);
 
-  const searchResults = useQuery(api.patientsearch.search, { searchTerm })
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setSearchTerm(value)
+  const handleCategorySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCategorySearch(value);
     if (value) {
-      const filtered = INVESTIGATION_NAMES.filter((name) =>
-        name.toLowerCase().includes(value.toLowerCase())
-      )
-      setFilteredSuggestions(filtered)
+      const filtered = Object.keys(TEST_CATEGORIES).filter((category) =>
+        category.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilteredCategories(filtered);
     } else {
-      setFilteredSuggestions([])
+      setFilteredCategories([]);
     }
-  }
+  };
 
-  const handleAddItem = (item: string) => {
-    const newItem: PrescriptionItem = { id: Date.now().toString(), name: item }
-    setInvestigations((prev) => [...prev, newItem])
-    setSelectedInvestigation(item)
-    setRelatedInvestigations(RELATED_INVESTIGATIONS[item] || [])
-    setSearchTerm("")
-    setFilteredSuggestions([])
-  }
+  const handleTestSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setTestSearch(value);
+    if (selectedCategory && value) {
+      const filtered = TEST_CATEGORIES[selectedCategory].filter((test) =>
+        test.toLowerCase().includes(value.toLowerCase())
+      );
+      setFilteredTests(filtered);
+    } else {
+      setFilteredTests([]);
+    }
+  };
+
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    setCategorySearch(category);
+    setFilteredCategories([]);
+  };
+
+  const handleTestSelect = (test: string) => {
+    if (selectedCategory) {
+      const combinedName = `${selectedCategory} - ${test}`;
+      addInvestigation(combinedName);
+    }
+  };
+
+  const handleAddCustom = () => {
+    if (categorySearch && testSearch) {
+      const combinedName = `${categorySearch} - ${testSearch}`;
+      addInvestigation(combinedName);
+    }
+  };
+
+  const addInvestigation = (name: string) => {
+    const newItem: PrescriptionItem = {
+      id: Date.now().toString(),
+      name: name,
+    };
+    setInvestigations((prev) => [...prev, newItem]);
+    setTestSearch("");
+    setFilteredTests([]);
+  };
 
   const handleRemoveItem = (id: string) => {
-    setInvestigations((prev) => prev.filter((item) => item.id !== id))
-  }
-
-  const handleRelatedInvestigationToggle = (relatedItem: string) => {
-    const isAlreadyAdded = investigations.some((item) => item.name === relatedItem)
-    if (isAlreadyAdded) {
-      setInvestigations((prev) => prev.filter((item) => item.name !== relatedItem))
-    } else {
-      const newItem: PrescriptionItem = { id: Date.now().toString(), name: relatedItem }
-      setInvestigations((prev) => [...prev, newItem])
-    }
-  }
-
-  useEffect(() => {
-    // Here you can handle data passing to the Prescription page dynamically
-    // Add any necessary data handling or state syncing here if needed.
-  }, [investigations])
+    setInvestigations((prev) => prev.filter((item) => item.id !== id));
+  };
 
   return (
     <div className="mb-8">
       <h3 className="text-xl font-semibold mb-4">Investigations</h3>
-      <div className="flex items-center space-x-4 mb-4">
-        <div className="relative flex-grow">
+      <div className="mb-4 flex space-x-4">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-2 h-5 w-5 text-muted-foreground" />
           <Input
             className="pl-10 py-3 text-lg"
-            placeholder="Search investigations (e.g., CBC, Thyroid Profile)"
-            value={searchTerm}
-            onChange={handleInputChange}
+            placeholder="Search categories (e.g., Haematology)"
+            value={categorySearch}
+            onChange={handleCategorySearch}
           />
+          {filteredCategories.length > 0 && (
+            <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+              {filteredCategories.map((category, index) => (
+                <li
+                  key={index}
+                  className="p-2 hover:bg-gray-200 cursor-pointer transition-colors"
+                  onClick={() => handleCategorySelect(category)}
+                >
+                  {category}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-2 h-5 w-5 text-muted-foreground" />
+          <Input
+            className="pl-10 py-3 text-lg"
+            placeholder={
+              selectedCategory
+                ? `Search tests in ${selectedCategory}`
+                : "Search tests"
+            }
+            value={testSearch}
+            onChange={handleTestSearch}
+          />
+          {filteredTests.length > 0 && (
+            <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+              {filteredTests.map((test, index) => (
+                <li
+                  key={index}
+                  className="p-2 hover:bg-gray-200 cursor-pointer transition-colors"
+                  onClick={() => handleTestSelect(test)}
+                >
+                  {test}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <Button
           variant="outline"
           size="icon"
           className="h-8 w-10"
-          onClick={() => {
-            if (searchTerm.trim()) {
-              handleAddItem(searchTerm.trim())
-            }
-          }}
+          onClick={handleAddCustom}
         >
           <Plus className="h-6 w-6" />
         </Button>
       </div>
-      {filteredSuggestions.length > 0 && (
-        <ul className="mt-4 space-y-2 border border-gray-300 rounded-md">
-          {filteredSuggestions.map((suggestion, index) => (
-            <li
-              key={index}
-              className="p-2 hover:bg-gray-200 cursor-pointer transition-colors"
-              onClick={() => handleAddItem(suggestion)}
-            >
-              {suggestion}
-            </li>
-          ))}
-        </ul>
-      )}
       <ScrollArea className="h-[150px] mt-4 border rounded-md">
         <div className="p-3">
-          <h4 className="text-lg font-semibold mb-2">Selected Investigations</h4>
+          <h4 className="text-lg font-semibold mb-2">
+            Selected Investigations
+          </h4>
           <div className="flex flex-wrap gap-3">
             {investigations.map((item) => (
               <div key={item.id} className="flex items-center">
-                <Button variant="secondary" size="lg" className="flex items-center gap-2 text-lg ">
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  className="flex items-center gap-2 text-lg"
+                >
                   {item.name}
                 </Button>
                 <X
@@ -149,26 +184,6 @@ export default function InvestigationsPage({
           </div>
         </div>
       </ScrollArea>
-      {selectedInvestigation && relatedInvestigations.length > 0 && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="mt-4">
-              Related to {selectedInvestigation} <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56">
-            {relatedInvestigations.map((relatedItem) => (
-              <DropdownMenuCheckboxItem
-                key={relatedItem}
-                checked={investigations.some((item) => item.name === relatedItem)}
-                onCheckedChange={() => handleRelatedInvestigationToggle(relatedItem)}
-              >
-                {relatedItem}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
       <Textarea
         placeholder="Investigation Notes"
         value={investigationNotes}
@@ -176,5 +191,5 @@ export default function InvestigationsPage({
         className="mt-4"
       />
     </div>
-  )
+  );
 }
