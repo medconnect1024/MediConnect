@@ -325,3 +325,29 @@ export const getPatientPhone = query({
     return patient?.phoneNumber;
   },
 });
+export const checkDuplicates = query({
+  args: {
+    email: v.string(),
+    phoneNumber: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { email, phoneNumber } = args;
+
+    // Check for duplicate email
+    const emailExists = await ctx.db
+      .query("patients")
+      .filter((q) => q.eq(q.field("email"), email))
+      .unique();
+
+    // Check for duplicate phone number
+    const phoneExists = await ctx.db
+      .query("patients")
+      .filter((q) => q.eq(q.field("phoneNumber"), phoneNumber))
+      .unique();
+
+    return {
+      emailExists: !!emailExists,
+      phoneExists: !!phoneExists,
+    };
+  },
+});

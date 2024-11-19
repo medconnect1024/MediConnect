@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Define the props interface to include patientId
@@ -11,7 +11,18 @@ interface MedicalHistoryPageProps {
 const MedicalHistoryPage: React.FC<MedicalHistoryPageProps> = ({
   patientId,
 }) => {
+  const [isClient, setIsClient] = useState(false);
+
+  // Ensure the component only renders after client-side hydration
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Handle the case where patientId is null or not provided
+  if (!isClient) {
+    return null; // Avoid rendering during hydration mismatch
+  }
+
   if (patientId === null) {
     return <div>Please select a patient</div>;
   }
