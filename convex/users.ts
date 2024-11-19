@@ -92,16 +92,16 @@ export async function userQuery(ctx: QueryCtx, clerkUserId: string) {
     .unique();
 }
 
-/** The current user, containing user preferences and Clerk user info. */
-export const currentUser = query((ctx: QueryCtx) => getCurrentUser(ctx));
+// /** The current user, containing user preferences and Clerk user info. */
+// export const currentUser = query((ctx: QueryCtx) => getCurrentUser(ctx));
 
-async function getCurrentUser(ctx: QueryCtx): Promise<Doc<"users"> | null> {
-  const identity = await ctx.auth.getUserIdentity();
-  if (identity === null) {
-    return null;
-  }
-  return await userQuery(ctx, identity.subject);
-}
+// async function getCurrentUser(ctx: QueryCtx): Promise<Doc<"users"> | null> {
+//   const identity = await ctx.auth.getUserIdentity();
+//   if (identity === null) {
+//     return null;
+//   }
+//   return await userQuery(ctx, identity.subject);
+// }
 
 export const checkUserEmail = query({
   args: { email: v.string() },
@@ -153,5 +153,73 @@ export const getUserDetails = query({
       zipCode: user.zipCode ?? undefined,
       website: user.website ?? undefined,
     };
+  },
+});
+
+
+export const getCurrentUser = query({
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("userId", identity.subject))
+      .unique();
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+    return user;
+  },
+});
+
+export const updateUser = mutation({
+  args: {
+    userId: v.string(),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    profileImageUrl: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    specialization: v.optional(v.string()),
+    licenseNumber: v.optional(v.string()),
+    yearsOfPractice: v.optional(v.number()),
+    practiceType: v.optional(v.union(v.literal("Private"), v.literal("Hospital"), v.literal("Clinic"))),
+    bio: v.optional(v.string()),
+    clinicName: v.optional(v.string()),
+    logo: v.optional(v.string()),
+    address: v.optional(v.string()),
+    city: v.optional(v.string()),
+    state: v.optional(v.string()),
+    zipCode: v.optional(v.string()),
+    website: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("Not authenticated");
+    }
+    const { userId, ...updateData } = args;
+    const existingUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("userId", userId))
+      .unique();
+
+    if (!existingUser) {
+      throw new ConvexError("User not found");
+    }
+
+    // Ensure the authenticated user is updating their own profile
+    if (existingUser.userId !== identity.subject) {
+      throw new ConvexError("Not authorized to update this profile");
+    }
+
+    // Remove any fields that are undefined
+    const cleanedUpdateData = Object.fromEntries(
+      Object.entries(updateData).filter(([_, v]) => v !== undefined)
+    );
+
+    await ctx.db.patch(existingUser._id, cleanedUpdateData);
+    return "User updated successfully";
   },
 });

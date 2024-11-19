@@ -207,7 +207,7 @@ export default function FixedNavigation() {
               </Button>
             </Link>
           )}
-          <Link href="/settings" passHref>
+          <Link href="/docprofile" passHref>
             <Button
               variant="ghost"
               className="text-gray-600 hover:text-gray-800 flex items-center"

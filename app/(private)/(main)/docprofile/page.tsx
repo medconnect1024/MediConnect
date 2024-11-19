@@ -1,16 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import {
   Check,
   ChevronRight,
   Hospital,
-  Image,
-  Stethoscope,
   Upload,
   UserCircle,
+  Stethoscope,
 } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,138 +31,135 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 
-interface FormData {
-  step: number;
-  personalInfo: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
-    profilePicture: File | null;
-  };
-  professionalInfo: {
-    specialization: string;
-    licenseNumber: string;
-    yearsOfPractice: string;
-    practiceType: string;
-    bio: string;
-  };
-  practiceInfo: {
-    clinicName: string;
-    logo: File | null;
-    address: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    website: string;
-  };
+interface UserData {
+  _id?: string; // Add this line
+  _creationTime?: number; // Add this line
+  userId: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  profileImageUrl?: string;
+  role?: "Doctor" | "Patient" | "Desk";
+  phone?: string;
+  specialization?: string;
+  licenseNumber?: string;
+  yearsOfPractice?: number;
+  practiceType?: "Private" | "Hospital" | "Clinic";
+  bio?: string;
+  clinicName?: string;
+  logo?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  website?: string;
 }
+export default function DoctorProfileUpdate() {
+  const [step, setStep] = useState(1);
+  const { toast } = useToast();
 
-export default function Component() {
-  const [formData, setFormData] = useState<FormData>({
-    step: 1,
-    personalInfo: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      profilePicture: null,
-    },
-    professionalInfo: {
-      specialization: "",
-      licenseNumber: "",
-      yearsOfPractice: "",
-      practiceType: "",
-      bio: "",
-    },
-    practiceInfo: {
-      clinicName: "",
-      logo: null,
-      address: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      website: "",
-    },
-  });
+  const user = useQuery(api.users.getCurrentUser);
+  const updateUser = useMutation(api.users.updateUser);
 
-  const updateFormData = (
-    section: keyof FormData,
-    field: string,
-    value: string | File | null
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setUserData(user);
+    }
+  }, [user]);
+
+  const handleInputChange = (
+    field: keyof UserData,
+    value: string | number | undefined
   ) => {
-    // setFormData((prev) => ({
-    //   ...prev,
-    //   [section]: {
-    //     ...prev[section as keyof typeof prev],
-    //     [field]: value,
-    //   },
-    // }));
+    setUserData((prev) => {
+      if (!prev) return null;
+      if (field === "practiceType") {
+        const practiceType = value as UserData["practiceType"];
+        return practiceType ? { ...prev, [field]: practiceType } : prev;
+      }
+      return { ...prev, [field]: value };
+    });
   };
 
-  const handleFileUpload = (
-    section: keyof FormData,
-    field: string,
-    file: File | null
+  const handleFileUpload = async (
+    field: "profileImageUrl" | "logo",
+    file: File
   ) => {
-    updateFormData(section, field, file);
+    // Simulated file upload - in a real scenario, you'd upload to a file storage service
+    const fakeUrl = URL.createObjectURL(file);
+    handleInputChange(field, fakeUrl);
   };
 
-  const nextStep = () => {
-    setFormData((prev) => ({
-      ...prev,
-      step: prev.step + 1,
-    }));
+  const handleSubmit = async () => {
+    if (!userData) return;
+
+    setIsLoading(true);
+    try {
+      // Remove fields that are not in the mutation args
+      const { _id, _creationTime, email, role, ...updateData } = userData;
+
+      // Remove any undefined values
+      const cleanedUpdateData = Object.fromEntries(
+        Object.entries(updateData).filter(([_, v]) => v !== undefined)
+      );
+
+      await updateUser(cleanedUpdateData as unknown as UserData);
+      toast({
+        title: "Success",
+        description: "Your profile has been updated successfully.",
+      });
+      setStep(4); // Move to completion step
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update your profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const prevStep = () => {
-    setFormData((prev) => ({
-      ...prev,
-      step: prev.step - 1,
-    }));
-  };
+  if (!userData) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Loading...
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white p-4 md:p-8">
-      <div className="mx-auto max-w-3xl">
+    <div className="w-full p-4 md:p-8">
+      <div className="w-full mx-auto max-w-3xl">
         <div className="mb-8">
           <div className="flex justify-center space-x-8">
-            <div className="flex flex-col items-center">
-              <div
-                className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                  formData.step >= 1 ? "bg-blue-600 text-white" : "bg-gray-200"
-                }`}
-              >
-                <UserCircle className="h-5 w-5" />
+            {[
+              { icon: UserCircle, label: "Personal Info" },
+              { icon: Stethoscope, label: "Professional Info" },
+              { icon: Hospital, label: "Practice Info" },
+            ].map((item, index) => (
+              <div key={index} className="flex flex-col items-center">
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                    step > index ? "bg-blue-600 text-white" : "bg-gray-200"
+                  }`}
+                >
+                  <item.icon className="h-5 w-5" />
+                </div>
+                <span className="mt-2 text-sm">{item.label}</span>
               </div>
-              <span className="mt-2 text-sm">Personal Info</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <div
-                className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                  formData.step >= 2 ? "bg-blue-600 text-white" : "bg-gray-200"
-                }`}
-              >
-                <Stethoscope className="h-5 w-5" />
-              </div>
-              <span className="mt-2 text-sm">Professional Info</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <div
-                className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                  formData.step >= 3 ? "bg-blue-600 text-white" : "bg-gray-200"
-                }`}
-              >
-                <Hospital className="h-5 w-5" />
-              </div>
-              <span className="mt-2 text-sm">Practice Info</span>
-            </div>
+            ))}
           </div>
         </div>
 
         <Card className="border-0 shadow-lg">
-          {formData.step === 1 && (
+          {step === 1 && (
             <>
               <CardHeader>
                 <CardTitle>Personal Information</CardTitle>
@@ -176,13 +173,9 @@ export default function Component() {
                     <Label htmlFor="firstName">First Name</Label>
                     <Input
                       id="firstName"
-                      value={formData.personalInfo.firstName}
+                      value={userData.firstName || ""}
                       onChange={(e) =>
-                        updateFormData(
-                          "personalInfo",
-                          "firstName",
-                          e.target.value
-                        )
+                        handleInputChange("firstName", e.target.value)
                       }
                     />
                   </div>
@@ -190,13 +183,9 @@ export default function Component() {
                     <Label htmlFor="lastName">Last Name</Label>
                     <Input
                       id="lastName"
-                      value={formData.personalInfo.lastName}
+                      value={userData.lastName || ""}
                       onChange={(e) =>
-                        updateFormData(
-                          "personalInfo",
-                          "lastName",
-                          e.target.value
-                        )
+                        handleInputChange("lastName", e.target.value)
                       }
                     />
                   </div>
@@ -206,10 +195,8 @@ export default function Component() {
                   <Input
                     id="email"
                     type="email"
-                    value={formData.personalInfo.email}
-                    onChange={(e) =>
-                      updateFormData("personalInfo", "email", e.target.value)
-                    }
+                    value={userData.email}
+                    disabled
                   />
                 </div>
                 <div className="space-y-2">
@@ -217,41 +204,34 @@ export default function Component() {
                   <Input
                     id="phone"
                     type="tel"
-                    value={formData.personalInfo.phone}
-                    onChange={(e) =>
-                      updateFormData("personalInfo", "phone", e.target.value)
-                    }
+                    value={userData.phone || ""}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="profilePicture">Profile Picture</Label>
+                  <Label htmlFor="profileImageUrl">Profile Picture</Label>
                   <div className="flex items-center space-x-4">
-                    {formData.personalInfo.profilePicture && (
-                      <Image
-                        // src={URL.createObjectURL(
-                        //   formData.personalInfo.profilePicture
-                        // )}
-                        // alt="Profile"
+                    {userData.profileImageUrl && (
+                      <img
+                        src={userData.profileImageUrl}
+                        alt="Profile"
                         className="h-16 w-16 rounded-full object-cover"
                       />
                     )}
                     <Label
-                      htmlFor="profilePicture"
+                      htmlFor="profileImageUrl"
                       className="flex cursor-pointer items-center space-x-2 rounded-md border border-dashed border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
                     >
                       <Upload className="h-4 w-4" />
                       <span>Upload Picture</span>
                       <Input
-                        id="profilePicture"
+                        id="profileImageUrl"
                         type="file"
                         className="hidden"
                         accept="image/*"
                         onChange={(e) =>
-                          handleFileUpload(
-                            "personalInfo",
-                            "profilePicture",
-                            e.target.files?.[0] || null
-                          )
+                          e.target.files &&
+                          handleFileUpload("profileImageUrl", e.target.files[0])
                         }
                       />
                     </Label>
@@ -261,7 +241,7 @@ export default function Component() {
             </>
           )}
 
-          {formData.step === 2 && (
+          {step === 2 && (
             <>
               <CardHeader>
                 <CardTitle>Professional Information</CardTitle>
@@ -272,39 +252,21 @@ export default function Component() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="specialization">Specialization</Label>
-                  <Select
-                    value={formData.professionalInfo.specialization}
-                    onValueChange={(value) =>
-                      updateFormData(
-                        "professionalInfo",
-                        "specialization",
-                        value
-                      )
+                  <Input
+                    id="specialization"
+                    value={userData.specialization || ""}
+                    onChange={(e) =>
+                      handleInputChange("specialization", e.target.value)
                     }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your specialization" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cardiology">Cardiology</SelectItem>
-                      <SelectItem value="dermatology">Dermatology</SelectItem>
-                      <SelectItem value="neurology">Neurology</SelectItem>
-                      <SelectItem value="pediatrics">Pediatrics</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="licenseNumber">Medical License Number</Label>
                   <Input
                     id="licenseNumber"
-                    value={formData.professionalInfo.licenseNumber}
+                    value={userData.licenseNumber || ""}
                     onChange={(e) =>
-                      updateFormData(
-                        "professionalInfo",
-                        "licenseNumber",
-                        e.target.value
-                      )
+                      handleInputChange("licenseNumber", e.target.value)
                     }
                   />
                 </div>
@@ -313,12 +275,11 @@ export default function Component() {
                   <Input
                     id="yearsOfPractice"
                     type="number"
-                    value={formData.professionalInfo.yearsOfPractice}
+                    value={userData.yearsOfPractice || ""}
                     onChange={(e) =>
-                      updateFormData(
-                        "professionalInfo",
+                      handleInputChange(
                         "yearsOfPractice",
-                        e.target.value
+                        parseInt(e.target.value)
                       )
                     }
                   />
@@ -326,23 +287,20 @@ export default function Component() {
                 <div className="space-y-2">
                   <Label>Practice Type</Label>
                   <RadioGroup
-                    value={formData.professionalInfo.practiceType}
+                    value={userData.practiceType || ""}
                     onValueChange={(value) =>
-                      updateFormData("professionalInfo", "practiceType", value)
+                      handleInputChange(
+                        "practiceType",
+                        value as UserData["practiceType"]
+                      )
                     }
                   >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="private" id="private" />
-                      <Label htmlFor="private">Private Practice</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="hospital" id="hospital" />
-                      <Label htmlFor="hospital">Hospital</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="clinic" id="clinic" />
-                      <Label htmlFor="clinic">Clinic</Label>
-                    </div>
+                    {["Private", "Hospital", "Clinic"].map((type) => (
+                      <div key={type} className="flex items-center space-x-2">
+                        <RadioGroupItem value={type} id={type.toLowerCase()} />
+                        <Label htmlFor={type.toLowerCase()}>{type}</Label>
+                      </div>
+                    ))}
                   </RadioGroup>
                 </div>
                 <div className="space-y-2">
@@ -350,10 +308,8 @@ export default function Component() {
                   <Textarea
                     id="bio"
                     placeholder="Tell us about your experience and expertise..."
-                    value={formData.professionalInfo.bio}
-                    onChange={(e) =>
-                      updateFormData("professionalInfo", "bio", e.target.value)
-                    }
+                    value={userData.bio || ""}
+                    onChange={(e) => handleInputChange("bio", e.target.value)}
                     className="h-32"
                   />
                 </div>
@@ -361,7 +317,7 @@ export default function Component() {
             </>
           )}
 
-          {formData.step === 3 && (
+          {step === 3 && (
             <>
               <CardHeader>
                 <CardTitle>Practice Information</CardTitle>
@@ -374,23 +330,19 @@ export default function Component() {
                   <Label htmlFor="clinicName">Clinic/Hospital Name</Label>
                   <Input
                     id="clinicName"
-                    value={formData.practiceInfo.clinicName}
+                    value={userData.clinicName || ""}
                     onChange={(e) =>
-                      updateFormData(
-                        "practiceInfo",
-                        "clinicName",
-                        e.target.value
-                      )
+                      handleInputChange("clinicName", e.target.value)
                     }
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="logo">Practice Logo</Label>
                   <div className="flex items-center space-x-4">
-                    {formData.practiceInfo.logo && (
-                      <Image
-                        // src={URL.createObjectURL(formData.practiceInfo.logo)}
-                        // alt="Logo"
+                    {userData.logo && (
+                      <img
+                        src={userData.logo}
+                        alt="Logo"
                         className="h-16 w-16 rounded object-contain"
                       />
                     )}
@@ -406,11 +358,8 @@ export default function Component() {
                         className="hidden"
                         accept="image/*"
                         onChange={(e) =>
-                          handleFileUpload(
-                            "practiceInfo",
-                            "logo",
-                            e.target.files?.[0] || null
-                          )
+                          e.target.files &&
+                          handleFileUpload("logo", e.target.files[0])
                         }
                       />
                     </Label>
@@ -420,9 +369,9 @@ export default function Component() {
                   <Label htmlFor="address">Street Address</Label>
                   <Input
                     id="address"
-                    value={formData.practiceInfo.address}
+                    value={userData.address || ""}
                     onChange={(e) =>
-                      updateFormData("practiceInfo", "address", e.target.value)
+                      handleInputChange("address", e.target.value)
                     }
                   />
                 </div>
@@ -431,9 +380,9 @@ export default function Component() {
                     <Label htmlFor="city">City</Label>
                     <Input
                       id="city"
-                      value={formData.practiceInfo.city}
+                      value={userData.city || ""}
                       onChange={(e) =>
-                        updateFormData("practiceInfo", "city", e.target.value)
+                        handleInputChange("city", e.target.value)
                       }
                     />
                   </div>
@@ -441,9 +390,9 @@ export default function Component() {
                     <Label htmlFor="state">State</Label>
                     <Input
                       id="state"
-                      value={formData.practiceInfo.state}
+                      value={userData.state || ""}
                       onChange={(e) =>
-                        updateFormData("practiceInfo", "state", e.target.value)
+                        handleInputChange("state", e.target.value)
                       }
                     />
                   </div>
@@ -452,9 +401,9 @@ export default function Component() {
                   <Label htmlFor="zipCode">ZIP Code</Label>
                   <Input
                     id="zipCode"
-                    value={formData.practiceInfo.zipCode}
+                    value={userData.zipCode || ""}
                     onChange={(e) =>
-                      updateFormData("practiceInfo", "zipCode", e.target.value)
+                      handleInputChange("zipCode", e.target.value)
                     }
                   />
                 </div>
@@ -464,9 +413,9 @@ export default function Component() {
                     id="website"
                     type="url"
                     placeholder="https://"
-                    value={formData.practiceInfo.website}
+                    value={userData.website || ""}
                     onChange={(e) =>
-                      updateFormData("practiceInfo", "website", e.target.value)
+                      handleInputChange("website", e.target.value)
                     }
                   />
                 </div>
@@ -474,44 +423,50 @@ export default function Component() {
             </>
           )}
 
-          {formData.step === 4 && (
+          {step === 4 && (
             <>
               <CardHeader>
                 <CardTitle>All Set!</CardTitle>
                 <CardDescription>
-                  Your account has been created successfully
+                  Your profile has been updated successfully
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col items-center justify-center py-8">
                 <div className="mb-4 rounded-full bg-green-100 p-3">
                   <Check className="h-8 w-8 text-green-600" />
                 </div>
-                <h3 className="mb-2 text-xl font-semibold">
-                  Welcome to MyMediRecords
-                </h3>
+                <h3 className="mb-2 text-xl font-semibold">Profile Updated</h3>
                 <p className="text-center text-muted-foreground">
-                  You can now access your dashboard and start using our
-                  AI-powered features to enhance your medical practice.
+                  Your profile information has been successfully updated.
                 </p>
               </CardContent>
             </>
           )}
 
           <CardFooter className="flex justify-between">
-            {formData.step > 1 && formData.step < 4 && (
-              <Button variant="outline" onClick={prevStep}>
+            {step > 1 && step < 4 && (
+              <Button variant="outline" onClick={() => setStep(step - 1)}>
                 Back
               </Button>
             )}
-            {formData.step < 4 ? (
-              <Button className="ml-auto" onClick={nextStep}>
-                {formData.step === 3 ? "Complete" : "Next"}
+            {step < 3 ? (
+              <Button className="ml-auto" onClick={() => setStep(step + 1)}>
+                Next
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </Button>
+            ) : step === 3 ? (
+              <Button
+                className="ml-auto"
+                onClick={handleSubmit}
+                disabled={isLoading}
+              >
+                {isLoading ? "Updating..." : "Update Profile"}
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             ) : (
               <Button
-              // className="ml-auto"
-              // onClick={() => (window.location.href = "/dashboard")}
+                className="ml-auto"
+                onClick={() => (window.location.href = "/dashboard")}
               >
                 Go to Dashboard
               </Button>

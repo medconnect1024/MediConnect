@@ -52,7 +52,7 @@ export default function LoadingScreen() {
         // If role is not found, fallback to a default route
         router.push("/login");
       }
-    }, 15000); // 15 seconds delay to show all messages
+    }, 3000); // 15 seconds delay to show all messages
 
     return () => {
       clearInterval(messageTimer);
