@@ -91,16 +91,12 @@ interface Transaction {
 }
 
 export default function TeaVendingDashboard() {
-  const [selectedMachine, setSelectedMachine] = useState<string>("all");
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-  const [activeTab, setActiveTab] = useState<"dashboard" | "vendors">(
-    "dashboard"
-  );
-
-  const [isAddMachineOpen, setIsAddMachineOpen] = useState(false);
-  const [isAddVendorOpen, setIsAddVendorOpen] = useState(false);
+  const [selectedMachine, setSelectedMachine] = useState<string>('all')
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  //const [activeTab, setActiveTab] = useState<'dashboard' | 'vendors'>('dashboard')
+  const [isAddMachineOpen, setIsAddMachineOpen] = useState(false)
+  const [isAddVendorOpen, setIsAddVendorOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<string>('dashboard')
   const [newMachine, setNewMachine] = useState({
     id: "",
     name: "",
