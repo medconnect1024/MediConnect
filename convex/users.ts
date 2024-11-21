@@ -92,16 +92,16 @@ export async function userQuery(ctx: QueryCtx, clerkUserId: string) {
     .unique();
 }
 
-// /** The current user, containing user preferences and Clerk user info. */
-// export const currentUser = query((ctx: QueryCtx) => getCurrentUser(ctx));
+/** The current user, containing user preferences and Clerk user info. */
+export const currentUser = query((ctx: QueryCtx) => getCurrentUser(ctx));
 
-// async function getCurrentUser(ctx: QueryCtx): Promise<Doc<"users"> | null> {
-//   const identity = await ctx.auth.getUserIdentity();
-//   if (identity === null) {
-//     return null;
-//   }
-//   return await userQuery(ctx, identity.subject);
-// }
+async function getCurrentUser(ctx: QueryCtx): Promise<Doc<"users"> | null> {
+  const identity = await ctx.auth.getUserIdentity();
+  if (identity === null) {
+    return null;
+  }
+  return await userQuery(ctx, identity.subject);
+}
 
 export const checkUserEmail = query({
   args: { email: v.string() },
@@ -157,22 +157,22 @@ export const getUserDetails = query({
 });
 
 
-export const getCurrentUser = query({
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError("Not authenticated");
-    }
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("userId", identity.subject))
-      .unique();
-    if (!user) {
-      throw new ConvexError("User not found");
-    }
-    return user;
-  },
-});
+// export const getCurrentUsers = query({
+//   handler: async (ctx) => {
+//     const identity = await ctx.auth.getUserIdentity();
+//     if (!identity) {
+//       throw new ConvexError("Not authenticated");
+//     }
+//     const user = await ctx.db
+//       .query("users")
+//       .withIndex("by_clerk_id", (q) => q.eq("userId", identity.subject))
+//       .unique();
+//     if (!user) {
+//       throw new ConvexError("User not found");
+//     }
+//     return user;
+//   },
+// });
 
 export const updateUser = mutation({
   args: {

@@ -60,7 +60,7 @@ export default function DoctorProfileUpdate() {
   const [step, setStep] = useState(1);
   const { toast } = useToast();
 
-  const user = useQuery(api.users.getCurrentUser);
+  const user = useQuery(api.users.currentUser);
   const updateUser = useMutation(api.users.updateUser);
 
   const [userData, setUserData] = useState<UserData | null>(null);

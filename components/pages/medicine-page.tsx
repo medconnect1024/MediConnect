@@ -111,10 +111,10 @@ export default function MedicinePage({
         id: Date.now().toString(),
       };
 
-      // Update the prescription page's state
+      // Update the medicines list
       setMedicines((prev) => [...prev, newMedicineItem]);
 
-      // Clear input fields after adding
+      // Clear all fields, including dropdowns
       setNewMedicine({
         name: "",
         dosage: "",
@@ -124,6 +124,7 @@ export default function MedicinePage({
         timing: "",
       });
       setSearchTerm("");
+      setShowSuggestions(false);
     }
   };
 
@@ -177,6 +178,7 @@ export default function MedicinePage({
           className="w-32"
         />
         <Select
+          value={newMedicine.route || ""} // Bind to state
           onValueChange={(value) =>
             setNewMedicine((prev) => ({ ...prev, route: value }))
           }
@@ -189,31 +191,52 @@ export default function MedicinePage({
             <SelectItem value="Intravenous">Intravenous</SelectItem>
             <SelectItem value="Intramuscular">Intramuscular</SelectItem>
             <SelectItem value="subcutaneous">subcutaneous</SelectItem>
-            <SelectItem value=" intra articular"> intra articular</SelectItem>
+            <SelectItem value="intra articular">intra articular</SelectItem>
             <SelectItem value="local application">local application</SelectItem>
-            <SelectItem value="per rectal ">per rectal </SelectItem>
+            <SelectItem value="per rectal">per rectal</SelectItem>
             <SelectItem value="in the eyes">in the eyes</SelectItem>
             <SelectItem value="in the ears">in the ears</SelectItem>
             <SelectItem value="sub lingual">sub lingual</SelectItem>
           </SelectContent>
         </Select>
+
         <Select
+          value={newMedicine.timesPerDay || ""} // Bind to state
           onValueChange={(value) =>
             setNewMedicine((prev) => ({ ...prev, timesPerDay: value }))
           }
         >
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Times per day" />
+            <SelectValue placeholder="Frequency" />
           </SelectTrigger>
           <SelectContent>
-            {["1", "2", "3", "4"].map((value) => (
+            {[
+              "QAM (6 HRS)",
+              "QDAILY (10 HRS)",
+              "Q24H (14 HRS)",
+              "QHS (22 HRS)",
+              "bd (8 & 20 HRS)",
+              "bd (10 & 22 HRS)",
+              "bd (06 & 18 HRS)",
+              "tds (6 AM - 2PM - 10 PM)",
+              "Q8H (6 AM - 2PM - 10 PM)",
+              "qid (6 AM - 12 PM , 6 PM , 12 AM)",
+              "every 4 hrs",
+              "Q6H (6 AM - 12 PM , 6 PM , 12 AM)",
+              "Q5M (EVERY 5MIN)",
+              "QAC (7, 12 & 18 HRS)",
+              "QOD (ALTERNATE DAY)",
+              "QPC (09, 14 & 21 HRS)",
+            ].map((value) => (
               <SelectItem key={value} value={value}>
                 {value}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+
         <Select
+          value={newMedicine.durationDays || ""} // Bind value to state
           onValueChange={(value) =>
             setNewMedicine((prev) => ({ ...prev, durationDays: value }))
           }
@@ -229,7 +252,9 @@ export default function MedicinePage({
             ))}
           </SelectContent>
         </Select>
+
         <Select
+          value={newMedicine.timing || ""} // Bind value to state
           onValueChange={(value) =>
             setNewMedicine((prev) => ({ ...prev, timing: value }))
           }
@@ -245,11 +270,12 @@ export default function MedicinePage({
               1 hour before food
             </SelectItem>
             <SelectItem value="Evening 5 pm">Evening 5 pm</SelectItem>
-            <SelectItem value="Early morning">Early morning </SelectItem>
-            <SelectItem value="With food ">With food </SelectItem>
+            <SelectItem value="Early morning">Early morning</SelectItem>
+            <SelectItem value="With food">With food</SelectItem>
             <SelectItem value="30 minutes">30 minutes before food</SelectItem>
           </SelectContent>
         </Select>
+
         <Button
           variant="outline"
           size="icon"
@@ -267,7 +293,7 @@ export default function MedicinePage({
               <TableHead>Medicine Name</TableHead>
               <TableHead>Dosage</TableHead>
               <TableHead>Route</TableHead>
-              <TableHead>Times per Day</TableHead>
+              <TableHead>Frequency</TableHead>
               <TableHead>Duration (Days)</TableHead>
               <TableHead>Timing</TableHead>
               <TableHead>Action</TableHead>
