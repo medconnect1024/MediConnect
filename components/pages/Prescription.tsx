@@ -208,11 +208,11 @@ export default function MultiStepPrescription({
 
   const generatePDF = async (prescriptionData: any) => {
     const doc = new jsPDF();
-    let yPos = 30;
-    const lineHeight = 7;
     const margin = 10;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
+    const lineHeight = 7;
+    let yPos = 30;
 
     // Fetch user (doctor) details
     // Use the fetched user details
@@ -230,50 +230,68 @@ export default function MultiStepPrescription({
     const doctorLicense = userDetails?.licenseNumber
       ? `License No: ${userDetails.licenseNumber}`
       : "License No: MD12345";
-    const addText = (text: string) => {
-      doc.text(text, margin, yPos);
-      yPos += lineHeight;
+    const addText = (text: string, indent = 0) => {
+      const lines = doc.splitTextToSize(text, pageWidth - margin * 2 - indent);
+      lines.forEach((line: string | string[]) => {
+        if (yPos > pageHeight - margin * 2) {
+          addNewPage();
+        }
+        doc.text(line, margin + indent, yPos);
+        yPos += lineHeight;
+      });
     };
 
     const addSection = (title: string, content: string) => {
       doc.setFontSize(14);
-      addText(title);
+      addText(title, 0);
       doc.setFontSize(12);
-      addText(content);
+      addText(content, 10);
       yPos += 5;
     };
 
     const addHeader = () => {
       doc.setFontSize(18);
       doc.setFont("undefined", "bold");
-      doc.text(clinicName, pageWidth / 2, 15, { align: "center" });
+      doc.text(clinicName, pageWidth / 2, margin, { align: "center" });
       doc.setFontSize(12);
-      doc.setFont("undefined", "normal");
-      doc.text(clinicAddress, pageWidth / 2, 22, { align: "center" });
+      doc.text(clinicAddress, pageWidth / 2, margin + 7, { align: "center" });
       doc.setFontSize(10);
       doc.text(
         `Phone: ${clinicPhone} | Email: ${clinicEmail}`,
         pageWidth / 2,
-        29,
-        { align: "center" }
+        margin + 14,
+        {
+          align: "center",
+        }
       );
-      doc.line(margin, 32, pageWidth - margin, 32);
+      doc.line(margin, margin + 18, pageWidth - margin, margin + 18);
+      yPos = margin + 25;
     };
 
     const addFooter = () => {
       doc.setFontSize(10);
-      doc.text(doctorName, margin, pageHeight - 20);
-      doc.text(doctorSpecialty, margin, pageHeight - 15);
-      doc.text(doctorLicense, margin, pageHeight - 10);
+      doc.text(doctorName, margin, pageHeight - margin - 15);
+      doc.text(doctorSpecialty, margin, pageHeight - margin - 10);
+      doc.text(doctorLicense, margin, pageHeight - margin - 5);
       doc.text(
         `Page ${doc.getNumberOfPages()}`,
         pageWidth - margin,
-        pageHeight - 10,
+        pageHeight - margin - 5,
         {
           align: "right",
         }
       );
-      doc.line(margin, pageHeight - 25, pageWidth - margin, pageHeight - 25);
+      doc.line(
+        margin,
+        pageHeight - margin - 20,
+        pageWidth - margin,
+        pageHeight - margin - 20
+      );
+    };
+    const addNewPage = () => {
+      doc.addPage();
+      yPos = margin + 10;
+      addHeader();
     };
 
     addHeader();
@@ -305,7 +323,7 @@ export default function MultiStepPrescription({
       prescriptionData.symptoms
         .map(
           (s: SymptomItem) =>
-            `${s.name} (Frequency: ${s.frequency}, Severity: ${s.severity}, Duration: ${s.duration})`
+            `${s.name} (,${s.frequency}, Severity: ${s.severity}, Duration: ${s.duration})`
         )
         .join(", ")
     );
@@ -316,13 +334,14 @@ export default function MultiStepPrescription({
     );
 
     addSection(
-      "Diagnoses",
+      "Diagnosis",
       prescriptionData.diagnoses.map((d: { name: string }) => d.name).join(", ")
     );
     addText(`Severity: ${prescriptionData.severity || "Not specified"}`);
     addText(
       `Chronic Condition: ${prescriptionData.chronicCondition ? "Yes" : "No"}`
     );
+    addText(`Critical Lab Values: ${prescriptionData.criticalLabValues}`);
 
     if (yPos > pageHeight - 60) {
       doc.addPage();
@@ -341,9 +360,6 @@ export default function MultiStepPrescription({
         .join("; ")
     );
     addText(`Instructions: ${prescriptionData.medicineInstructions || "None"}`);
-    addText(
-      `Reminders: ${prescriptionData.medicineReminder.message ? "Message" : ""}${prescriptionData.medicineReminder.message && prescriptionData.medicineReminder.call ? ", " : ""}${prescriptionData.medicineReminder.call ? "Call" : ""}`
-    );
 
     addSection(
       "Investigations",
@@ -360,6 +376,9 @@ export default function MultiStepPrescription({
       prescriptionData.followUpDate
         ? format(new Date(prescriptionData.followUpDate), "PPP")
         : "No follow-up date set"
+    );
+    addText(
+      `Reminders: ${prescriptionData.medicineReminder.message ? "Message" : ""}${prescriptionData.medicineReminder.message && prescriptionData.medicineReminder.call ? ", " : ""}${prescriptionData.medicineReminder.call ? "Call" : ""}`
     );
 
     const pageCount = doc.getNumberOfPages();
@@ -765,4 +784,7 @@ export default function MultiStepPrescription({
       </Dialog>
     </Card>
   );
+}
+function addNewPage() {
+  throw new Error("Function not implemented.");
 }

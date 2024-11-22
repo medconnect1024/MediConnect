@@ -310,8 +310,17 @@ export const getPatientByPhone = query({
     }
   },
 });
-export const getAllPatients = query(async (ctx) => {
-  return await ctx.db.query('patients').collect()
+// export const getAllPatients = query(async (ctx) => {
+//   return await ctx.db.query('patients').collect()
+// })
+export const getAllPatients = query({
+  handler: async (ctx) => {
+    const patients = await ctx.db.query("patients").collect()
+    return patients.map(patient => ({
+      ...patient,
+      patientId: patient._id.toString(),
+    }))
+  },
 })
 
 export const getPatientPhone = query({
@@ -351,3 +360,23 @@ export const checkDuplicates = query({
     };
   },
 });
+
+export const getPatientRetentionData = query({
+  args: { doctorId: v.string() },
+  handler: async (ctx, args) => {
+    const { doctorId } = args
+    const allPatients = await ctx.db
+      .query("patients")
+      .filter((q) => q.eq(q.field("doctorId"), doctorId))
+      .collect()
+
+    const totalPatients = allPatients.length
+    const returningPatients = allPatients.filter(patient => patient.patientId > 1).length
+    const newPatients = totalPatients - returningPatients
+
+    return [
+      { name: "New", value: (newPatients / totalPatients) * 100 },
+      { name: "Returning", value: (returningPatients / totalPatients) * 100 },
+    ]
+  },
+})

@@ -143,7 +143,9 @@ export default function MedicinePage({
       <h3 className="text-xl font-semibold mb-4">Medicine</h3>
       <div className="flex items-center space-x-4 mb-4">
         <div ref={searchRef} className="relative flex-grow w-48">
-          <Search className="absolute left-3 top-2 h-5 w-5 text-muted-foreground" />
+          <Search
+            className={`absolute left-3 top-2 h-5 w-5 text-muted-foreground ${searchTerm && filteredSuggestions.length === 0 ? "invisible" : ""}`}
+          />
           <Input
             className="pl-10 py-3 text-lg"
             placeholder="Search"

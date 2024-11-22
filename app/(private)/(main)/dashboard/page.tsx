@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
+import { UpcomingAppointments } from "@/components/UpcomingAppointments";
 import {
   Bell,
   Calendar,
@@ -89,89 +90,40 @@ export default function EnhancedDoctorDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const router = useRouter();
-  const { user } = useUser()
-  const doctorId = user?.id  
-  // Mock data (kept from original and extended)
-  const patientData1 = [
-    {
-      id: 1,
-      name: "John Doe",
-      age: 45,
-      lastVisit: "2023-10-15",
-      nextAppointment: "2023-11-05",
-      condition: "Hypertension",
-      lastFollowUpCall: "2023-10-20",
-      followUpStatus: "Completed",
-      followUpNotes:
-        "Patient reported improved blood pressure. Continuing current medication.",
-      appointmentType: "Regular Check-up",
-      criticality: "Low",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      age: 32,
-      lastVisit: "2023-10-18",
-      nextAppointment: "2023-11-10",
-      condition: "Pregnancy",
-      lastFollowUpCall: "2023-10-25",
-      followUpStatus: "Scheduled",
-      followUpNotes:
-        "Follow-up call scheduled for 2023-11-01 to discuss recent test results.",
-      appointmentType: "Prenatal Check-up",
-      criticality: "Medium",
-    },
-    {
-      id: 3,
-      name: "Bob Johnson",
-      age: 58,
-      lastVisit: "2023-10-10",
-      nextAppointment: "2023-11-01",
-      condition: "Diabetes",
-      lastFollowUpCall: "2023-10-17",
-      followUpStatus: "Completed",
-      followUpNotes:
-        "Blood sugar levels stabilizing. Discussed importance of diet adherence.",
-      appointmentType: "Urgent Care",
-      criticality: "High",
-    },
-    {
-      id: 4,
-      name: "Alice Brown",
-      age: 27,
-      lastVisit: "2023-10-20",
-      nextAppointment: "2023-11-15",
-      condition: "Asthma",
-      lastFollowUpCall: null,
-      followUpStatus: "Pending",
-      followUpNotes:
-        "Initial follow-up call needed to assess new inhaler effectiveness.",
-      appointmentType: "Follow-up",
-      criticality: "Medium",
-    },
-  ];
+  const { user } = useUser();
+  const doctorId = user?.id || "";
 
-  const patientData = useQuery(api.patients.getAppoitmentsByDoctor, { doctorId }) || [];
+  const patientData =
+    useQuery(api.patients.getAppoitmentsByDoctor, { doctorId }) || [];
+  // Call the query and pass the doctorId
+  const todayAppointments = useQuery(
+    api.appointment.getNumberOfAppointmentsTodayForDoctor,
+    {
+      doctorId,
+    }
+  );
 
+  const weeklyAppointments = useQuery(
+    api.appointment.getWeeklyAppointmentsForDoctor,
+    { doctorId }
+  );
 
-  const patientFlowData = [
-    { name: "Mon", patients: 20 },
-    { name: "Tue", patients: 25 },
-    { name: "Wed", patients: 30 },
-    { name: "Thu", patients: 22 },
-    { name: "Fri", patients: 28 },
-    { name: "Sat", patients: 15 },
-    { name: "Sun", patients: 10 },
-  ];
+  const patientFlowData = useQuery(api.appointment.getPatientFlowThisWeek, {
+    doctorId,
+  });
+  const patientSatisfactionData = useQuery(
+    api.appointment.getPatientSatisfactionData,
+    { doctorId }
+  );
 
-  const patientSatisfactionData = [
-    { subject: "Communication", A: 120, B: 110, fullMark: 150 },
-    { subject: "Treatment Effectiveness", A: 98, B: 130, fullMark: 150 },
-    { subject: "Wait Time", A: 86, B: 130, fullMark: 150 },
-    { subject: "Facility Cleanliness", A: 99, B: 100, fullMark: 150 },
-    { subject: "Staff Friendliness", A: 85, B: 90, fullMark: 150 },
-    { subject: "Follow-up Care", A: 65, B: 85, fullMark: 150 },
-  ];
+  // const patientSatisfactionData = [
+  //   { subject: "Communication", A: 120, B: 110, fullMark: 150 },
+  //   { subject: "Treatment Effectiveness", A: 98, B: 130, fullMark: 150 },
+  //   { subject: "Wait Time", A: 86, B: 130, fullMark: 150 },
+  //   { subject: "Facility Cleanliness", A: 99, B: 100, fullMark: 150 },
+  //   { subject: "Staff Friendliness", A: 85, B: 90, fullMark: 150 },
+  //   { subject: "Follow-up Care", A: 65, B: 85, fullMark: 150 },
+  // ];
 
   const patientRetentionData = [
     { name: "New", value: 30 },
@@ -245,21 +197,30 @@ export default function EnhancedDoctorDashboard() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="flex items-center space-x-4">
                   <CalendarDays className="h-10 w-10 text-blue-500" />
+
                   <div>
                     <p className="text-sm font-medium text-gray-500">
                       Appointments Today
                     </p>
-                    <h3 className="text-2xl font-bold text-gray-900">12</h3>
-                    <p className="text-xs text-gray-500">3 urgent</p>
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      {todayAppointments
+                        ? todayAppointments.count
+                        : "Loading..."}
+                    </h3>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
                   <Users className="h-10 w-10 text-green-500" />
+
                   <div>
                     <p className="text-sm font-medium text-gray-500">
                       Patients This Week
                     </p>
-                    <h3 className="text-2xl font-bold text-gray-900">78</h3>
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      {weeklyAppointments
+                        ? weeklyAppointments.count
+                        : "Loading..."}
+                    </h3>
                     <p className="text-xs text-gray-500">
                       ↑ 12% from last week
                     </p>
@@ -300,7 +261,7 @@ export default function EnhancedDoctorDashboard() {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={patientFlowData}>
+                  <LineChart data={patientFlowData || []}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="name" stroke="#6b7280" />
                     <YAxis stroke="#6b7280" />
@@ -315,6 +276,7 @@ export default function EnhancedDoctorDashboard() {
                 </ResponsiveContainer>
               </CardContent>
             </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-gray-800">
@@ -323,7 +285,10 @@ export default function EnhancedDoctorDashboard() {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <RadarChart outerRadius={90} data={patientSatisfactionData}>
+                  <RadarChart
+                    outerRadius={90}
+                    data={patientSatisfactionData || []}
+                  >
                     <PolarGrid />
                     <PolarAngleAxis dataKey="subject" />
                     <PolarRadiusAxis angle={30} domain={[0, 150]} />
@@ -348,121 +313,8 @@ export default function EnhancedDoctorDashboard() {
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <Card className="col-span-1 lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="text-gray-800">
-                  Upcoming Appointments
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-gray-600">Patient</TableHead>
-                      <TableHead className="text-gray-600">Date</TableHead>
-                      <TableHead className="text-gray-600">Type</TableHead>
-                      <TableHead className="text-gray-600">
-                        Criticality
-                      </TableHead>
-                      <TableHead className="text-gray-600">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {patientData.map((patient) => (
-                      <TableRow key={patient.id}>
-                        <TableCell className="font-medium text-gray-800">
-                          {patient.name}
-                        </TableCell>
-                        <TableCell className="text-gray-600">
-                          {patient.nextAppointment}
-                        </TableCell>
-                        <TableCell className="text-gray-600">
-                          {patient.appointmentType}
-                        </TableCell>
-                        <TableCell className="text-gray-600">
-                          <div className="flex items-center space-x-2">
-                            {getCriticalityIcon(patient.name)}
-                            <span>{patient.criticality}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="mr-2 text-blue-600 border-blue-300 hover:bg-blue-50"
-                            onClick={() =>
-                              handleNavigation(`/consultation?patientId=${encodeURIComponent(patient.id)}`)
-                            }
-                          >
-                            View
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-gray-600 border-gray-300 hover:bg-gray-50"
-                          >
-                            Reschedule
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-gray-800">
-                  Patient Retention
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie
-                      data={patientRetentionData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, percent }) =>
-                        `${name} ${(percent * 100).toFixed(0)}%`
-                      }
-                    >
-                      {patientRetentionData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="mt-4">
-                  <h4 className="font-semibold text-gray-700 mb-2">
-                    Key Insights
-                  </h4>
-                  <ul className="space-y-2 text-sm text-gray-600">
-                    <li>
-                      • 70% of your patients are returning, indicating high
-                      satisfaction
-                    </li>
-                    <li>
-                      • New patient acquisition rate is 30%, suggesting room for
-                      growth
-                    </li>
-                    <li>
-                      • Consider implementing a referral program to boost new
-                      patient numbers
-                    </li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="mb-8">
+            <UpcomingAppointments />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

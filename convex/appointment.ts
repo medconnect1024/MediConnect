@@ -112,3 +112,144 @@ export const checkDoctorAvailability = query({
     }
   },
 })
+
+
+
+export const getNumberOfAppointmentsTodayForDoctor = query({
+  args: { doctorId: v.string() },
+  handler: async (ctx, args) => {
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString();
+
+    const appointmentsToday = await ctx.db
+      .query('appointments')
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('doctorId'), args.doctorId),
+          q.gte(q.field('appointmentDate'), startOfDay),
+          q.lt(q.field('appointmentDate'), endOfDay)
+        )
+      )
+      .collect();
+
+    return { count: appointmentsToday.length, message: 'Number of appointments today for doctor' };
+  },
+});
+export const getWeeklyAppointmentsForDoctor = query({
+  args: {
+    doctorId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { doctorId } = args;
+
+    // Get the start and end of the current week
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - dayOfWeek);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
+
+    // Query for appointments within this range
+    const weeklyAppointments = await ctx.db
+      .query('appointments')
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('doctorId'), doctorId),
+          q.gte(q.field('appointmentDate'), startOfWeek.toISOString()),
+          q.lt(q.field('appointmentDate'), endOfWeek.toISOString())
+        )
+      )
+      .collect();
+
+    return {
+      count: weeklyAppointments.length,
+      message: 'Weekly appointments fetched successfully',
+    };
+  },
+});
+
+export const getPatientFlowThisWeek = query({
+  args: {
+    doctorId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { doctorId } = args;
+
+    // Get the start of the week
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - dayOfWeek);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
+
+    // Fetch all appointments for the doctor this week
+    const appointments = await ctx.db
+      .query('appointments')
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('doctorId'), doctorId),
+          q.gte(q.field('appointmentDate'), startOfWeek.toISOString()),
+          q.lt(q.field('appointmentDate'), endOfWeek.toISOString())
+        )
+      )
+      .collect();
+
+    // Group by day of the week
+    const patientFlowData = Array(7).fill(0).map((_, i) => ({
+      name: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][i],
+      patients: 0,
+    }));
+
+    appointments.forEach((appointment) => {
+      const appointmentDate = new Date(appointment.appointmentDate);
+      const dayIndex = appointmentDate.getDay(); // 0 = Sunday, 6 = Saturday
+      patientFlowData[dayIndex].patients += 1;
+    });
+
+    return patientFlowData;
+  },
+});
+
+export const getPatientSatisfactionData = query({
+  args: {
+    doctorId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { doctorId } = args;
+
+    // You can replace this with actual calculations based on your data
+    const patientSatisfactionData = [
+      { subject: 'Communication', A: 120, B: 110 },
+      { subject: 'Care', A: 98, B: 130 },
+      { subject: 'Facilities', A: 86, B: 100 },
+      { subject: 'Wait Time', A: 99, B: 90 },
+      { subject: 'Follow-Up', A: 85, B: 95 },
+    ];
+
+    return patientSatisfactionData;
+  },
+});
+
+export const getAppointmentsByDoctorAndDate = query({
+  args: { doctorId: v.string(), date: v.string() },
+  handler: async (ctx, args) => {
+    const { doctorId, date } = args;
+    const appointments = await ctx.db
+      .query("appointments")
+      .filter((q) => q.eq(q.field("doctorId"), doctorId))
+      .filter((q) => q.eq(q.field("appointmentDate"), date))
+      .collect();
+    
+    return appointments.map(appointment => ({
+      ...appointment,
+      appointmentId: appointment._id.toString(),
+    }));
+  },
+})

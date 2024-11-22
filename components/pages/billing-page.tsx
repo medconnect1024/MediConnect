@@ -1,18 +1,12 @@
 "use client";
-import React, { useState, useEffect } from "react";
+
+import React, { useState } from "react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -22,215 +16,251 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Eye, Download, Plus, X, Search } from "lucide-react";
+import { Eye, Plus, X, FileText } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { format } from "date-fns";
+import { Id } from "@/convex/_generated/dataModel";
+import { jsPDF } from "jspdf";
 
-type BillItem = {
-  id: string;
+interface BillingPageProps {
+  patientId: number;
+}
+
+interface BillItem {
   name: string;
   cost: number;
-};
+}
 
-type Bill = {
-  id: string;
+interface Bill {
+  _id: Id<"bills">;
   billNumber: string;
   date: string;
   items: BillItem[];
   total: number;
-};
-
-interface BillingPageProps {
-  patientId: number | null;
+  pdfStorageId?: string;
 }
 
-const BillingPage: React.FC<BillingPageProps> = ({ patientId }) => {
-  const [bills, setBills] = useState<Bill[]>([
-    {
-      id: "1",
-      billNumber: "BILL001",
-      date: "2023-10-15",
-      items: [
-        { id: "1", name: "Consultation", cost: 100 },
-        { id: "2", name: "X-Ray", cost: 150 },
-      ],
-      total: 250,
-    },
-    {
-      id: "2",
-      billNumber: "BILL002",
-      date: "2023-11-20",
-      items: [
-        { id: "1", name: "Consultation", cost: 100 },
-        { id: "3", name: "Blood Test", cost: 200 },
-      ],
-      total: 300,
-    },
-  ]);
+export default function BillingPage({ patientId }: BillingPageProps) {
+  const { user } = useUser();
+  const doctorId = user?.id;
 
-  const [newBillItems, setNewBillItems] = useState<BillItem[]>([
-    { id: "1", name: "Consultation Charges", cost: 100 },
-    { id: "2", name: "Bed Charges", cost: 500 },
-    { id: "3", name: "ECG", cost: 150 },
-    { id: "4", name: "ICU", cost: 1000 },
-  ]);
+  const bills = useQuery(api.bills.getBillsForPatient, {
+    patientId: patientId.toString(),
+  });
+  const createBill = useMutation(api.bills.createBill);
+  const updateBillPdf = useMutation(api.bills.updateBillPdf);
+  const generateUploadUrl = useMutation(api.bills.generateUploadUrl);
+  const getFileUrl = useMutation(api.bills.getFileUrl);
 
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [newItems, setNewItems] = useState<BillItem[]>([]);
   const [newItemName, setNewItemName] = useState("");
   const [newItemCost, setNewItemCost] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filteredItems, setFilteredItems] = useState<BillItem[]>(newBillItems);
+  const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
-  useEffect(() => {
-    const filtered = newBillItems.filter((item) =>
-      item.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredItems(filtered);
-  }, [searchTerm, newBillItems]);
-
-  const handleItemSelect = (itemId: string) => {
-    setSelectedItems((prev) =>
-      prev.includes(itemId)
-        ? prev.filter((id) => id !== itemId)
-        : [...prev, itemId]
-    );
-  };
-
-  const handleCostEdit = (itemId: string, newCost: number) => {
-    setNewBillItems((prev) =>
-      prev.map((item) =>
-        item.id === itemId ? { ...item, cost: newCost } : item
-      )
-    );
-  };
-
-  const handleAddNewItem = () => {
+  const handleAddItem = () => {
     if (newItemName && newItemCost) {
-      const newItem: BillItem = {
-        id: Date.now().toString(),
-        name: newItemName,
-        cost: parseFloat(newItemCost),
-      };
-      setNewBillItems((prev) => [...prev, newItem]);
+      setNewItems([
+        ...newItems,
+        { name: newItemName, cost: parseFloat(newItemCost) },
+      ]);
       setNewItemName("");
       setNewItemCost("");
     }
   };
 
-  const handleCreateBill = () => {
-    const selectedBillItems = newBillItems.filter((item) =>
-      selectedItems.includes(item.id)
-    );
-    const total = selectedBillItems.reduce((sum, item) => sum + item.cost, 0);
-    const newBill: Bill = {
-      id: Date.now().toString(),
-      billNumber: `BILL${bills.length + 1}`.padStart(7, "0"),
-      date: new Date().toISOString().split("T")[0],
-      items: selectedBillItems,
-      total,
-    };
-    setBills((prev) => [...prev, newBill]);
-    setSelectedItems([]);
+  const handleRemoveItem = (index: number) => {
+    setNewItems(newItems.filter((_, i) => i !== index));
   };
 
-  const BillDetails = ({ bill }: { bill: Bill }) => (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <Eye className="mr-2 h-4 w-4" />
-          View
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Bill Details</DialogTitle>
-          <DialogDescription>
-            Bill Number: {bill.billNumber} | Date: {bill.date}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Item</TableHead>
-                <TableHead className="text-right">Cost</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {bill.items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.name}</TableCell>
-                  <TableCell className="text-right">
-                    ₹{item.cost.toFixed(2)}
-                  </TableCell>
-                </TableRow>
-              ))}
-              <TableRow>
-                <TableCell className="font-bold">Total</TableCell>
-                <TableCell className="text-right font-bold">
-                  ₹{bill.total.toFixed(2)}
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+  const generatePDF = async (bill: Bill) => {
+    const doc = new jsPDF();
+    let yPos = 30;
+    const lineHeight = 7;
+    const margin = 10;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    const addText = (text: string) => {
+      const textLines = doc.splitTextToSize(text, pageWidth - 2 * margin);
+      textLines.forEach((line: string) => {
+        if (yPos > pageHeight - 40) {
+          doc.addPage();
+          yPos = 20;
+        }
+        doc.text(line, margin, yPos);
+        yPos += lineHeight;
+      });
+    };
+
+    const addSection = (title: string, content: string) => {
+      doc.setFontSize(14);
+      addText(title);
+      doc.setFontSize(12);
+      addText(content);
+      yPos += 5;
+    };
+
+    const addHeader = () => {
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      doc.text("Clinic Name", pageWidth / 2, 15, { align: "center" });
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text("Clinic Address", pageWidth / 2, 22, { align: "center" });
+      doc.setFontSize(10);
+      doc.text(
+        `Phone: 123-456-7890 | Email: clinic@example.com`,
+        pageWidth / 2,
+        29,
+        { align: "center" }
+      );
+      doc.line(margin, 32, pageWidth - margin, 32);
+    };
+
+    const addFooter = () => {
+      doc.setFontSize(10);
+      doc.text("Doctor Name", margin, pageHeight - 20);
+      doc.text("Doctor Specialty", margin, pageHeight - 15);
+      doc.text("License Number", margin, pageHeight - 10);
+      doc.text(
+        `Page ${doc.getNumberOfPages()}`,
+        pageWidth - margin,
+        pageHeight - 10,
+        {
+          align: "right",
+        }
+      );
+      doc.line(margin, pageHeight - 25, pageWidth - margin, pageHeight - 25);
+    };
+
+    addHeader();
+
+    addSection(
+      "Bill Details",
+      `Bill Number: ${bill.billNumber}\nDate: ${format(new Date(bill.date), "PPP")}`
+    );
+
+    doc.setFontSize(12);
+    doc.text("Items:", margin, yPos);
+    yPos += lineHeight * 2;
+
+    bill.items.forEach((item) => {
+      doc.text(`${item.name}: ₹${item.cost.toFixed(2)}`, margin, yPos);
+      yPos += lineHeight;
+    });
+
+    yPos += lineHeight;
+    doc.setFont("helvetica", "bold");
+    doc.text(`Total: ₹${bill.total.toFixed(2)}`, margin, yPos);
+
+    addFooter();
+
+    return doc.output("blob");
+  };
+
+  const handleCreateBill = async () => {
+    if (newItems.length > 0 && doctorId) {
+      const newBillId = await createBill({
+        userId: doctorId,
+        patientId: patientId.toString(),
+        items: newItems,
+      });
+
+      // Use useQuery to fetch the newly created bill
+      const newBill = useQuery(api.bills.getBillById, { billId: newBillId });
+
+      if (newBill) {
+        const pdfBlob = await generatePDF(newBill);
+
+        // Get upload URL from Convex
+        const uploadUrl = await generateUploadUrl();
+
+        // Upload file to Convex storage
+        const result = await fetch(uploadUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/pdf",
+          },
+          body: pdfBlob,
+        });
+
+        if (!result.ok) {
+          throw new Error("Failed to upload file");
+        }
+
+        // Get the storageId from the upload response
+        const { storageId } = await result.json();
+
+        // Update the bill with the PDF storage ID
+        await updateBillPdf({ billId: newBillId, pdfStorageId: storageId });
+
+        setNewItems([]);
+      }
+    }
+  };
+
+  const handleViewBill = async (bill: Bill) => {
+    setSelectedBill(bill);
+    if (bill.pdfStorageId) {
+      const url = await getFileUrl({ storageId: bill.pdfStorageId });
+      setPdfUrl(url);
+    } else {
+      setPdfUrl(null);
+    }
+  };
+
+  if (!user) {
+    return <div>Loading user information...</div>;
+  }
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-3xl">Billing</CardTitle>
+        <CardTitle className="text-2xl font-bold">Billing</CardTitle>
       </CardHeader>
       <CardContent>
-        <h3 className="text-lg font-semibold mb-4">Create New Bill</h3>
-        <div className="mb-4 relative">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search items..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <ScrollArea className="h-[300px] w-full rounded-md border mb-4">
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-2">Create New Bill</h3>
+          <div className="flex space-x-2 mb-2">
+            <Input
+              placeholder="Item name"
+              value={newItemName}
+              onChange={(e) => setNewItemName(e.target.value)}
+            />
+            <Input
+              type="number"
+              placeholder="Cost"
+              value={newItemCost}
+              onChange={(e) => setNewItemCost(e.target.value)}
+            />
+            <Button onClick={handleAddItem}>
+              <Plus className="mr-2 h-4 w-4" /> Add Item
+            </Button>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[50px]">Select</TableHead>
                 <TableHead>Item</TableHead>
                 <TableHead>Cost</TableHead>
-                <TableHead className="text-right">Action</TableHead>
+                <TableHead>Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredItems.map((item) => (
-                <TableRow key={item.id} className="h-10">
-                  <TableCell className="py-1">
-                    <Checkbox
-                      checked={selectedItems.includes(item.id)}
-                      onCheckedChange={() => handleItemSelect(item.id)}
-                    />
-                  </TableCell>
-                  <TableCell className="py-1">{item.name}</TableCell>
-                  <TableCell className="py-1">
-                    <Input
-                      type="number"
-                      value={item.cost}
-                      onChange={(e) =>
-                        handleCostEdit(item.id, parseFloat(e.target.value))
-                      }
-                      className="w-24 h-8"
-                    />
-                  </TableCell>
-                  <TableCell className="text-right py-1">
+              {newItems.map((item, index) => (
+                <TableRow key={index}>
+                  <TableCell>{item.name}</TableCell>
+                  <TableCell>₹{item.cost.toFixed(2)}</TableCell>
+                  <TableCell>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() =>
-                        setNewBillItems((prev) =>
-                          prev.filter((i) => i.id !== item.id)
-                        )
-                      }
+                      onClick={() => handleRemoveItem(index)}
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -239,58 +269,54 @@ const BillingPage: React.FC<BillingPageProps> = ({ patientId }) => {
               ))}
             </TableBody>
           </Table>
-        </ScrollArea>
-
-        <div className="flex items-center space-x-4 mb-4">
-          <Input
-            placeholder="New Item Name"
-            value={newItemName}
-            onChange={(e) => setNewItemName(e.target.value)}
-            className="h-8"
-          />
-          <Input
-            type="number"
-            placeholder="Cost"
-            value={newItemCost}
-            onChange={(e) => setNewItemCost(e.target.value)}
-            className="h-8"
-          />
           <Button
-            onClick={handleAddNewItem}
-            className="bg-blue-500 hover:bg-blue-600 text-white h-8"
+            onClick={handleCreateBill}
+            className="mt-2 bg-green-500 hover:bg-green-600 text-white"
           >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Item
+            Create Bill
           </Button>
         </div>
 
-        <Button
-          onClick={handleCreateBill}
-          className="bg-green-500 hover:bg-green-600 text-white"
-        >
-          Create Bill
-        </Button>
-
-        <div className="mt-6">
-          <h3 className="text-lg font-semibold mb-4">Existing Bills</h3>
-          <ScrollArea className="h-[300px] w-full rounded-md border">
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Previous Bills</h3>
+          <ScrollArea className="h-[300px]">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Bill Number</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Total</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {bills.map((bill) => (
-                  <TableRow key={bill.id}>
+                {bills?.map((bill) => (
+                  <TableRow key={bill._id}>
                     <TableCell>{bill.billNumber}</TableCell>
-                    <TableCell>{bill.date}</TableCell>
+                    <TableCell>{format(new Date(bill.date), "PPP")}</TableCell>
                     <TableCell>₹{bill.total.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">
-                      <BillDetails bill={bill} />
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewBill(bill)}
+                      >
+                        <Eye className="mr-2 h-4 w-4" /> View
+                      </Button>
+                      {bill.pdfStorageId && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={async () => {
+                            const url = await getFileUrl({
+                              storageId: bill.pdfStorageId!,
+                            });
+                            if (url) window.open(url, "_blank");
+                          }}
+                        >
+                          <FileText className="mr-2 h-4 w-4" /> PDF
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -298,9 +324,54 @@ const BillingPage: React.FC<BillingPageProps> = ({ patientId }) => {
             </Table>
           </ScrollArea>
         </div>
+
+        <Dialog
+          open={!!selectedBill}
+          onOpenChange={() => setSelectedBill(null)}
+        >
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Bill Details</DialogTitle>
+            </DialogHeader>
+            {selectedBill && (
+              <div>
+                <p>Bill Number: {selectedBill.billNumber}</p>
+                <p>Date: {format(new Date(selectedBill.date), "PPP")}</p>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Item</TableHead>
+                      <TableHead>Cost</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {selectedBill.items.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>₹{item.cost.toFixed(2)}</TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow>
+                      <TableCell className="font-bold">Total</TableCell>
+                      <TableCell className="font-bold">
+                        ₹{selectedBill.total.toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+                {pdfUrl && (
+                  <Button
+                    onClick={() => window.open(pdfUrl, "_blank")}
+                    className="mt-4"
+                  >
+                    <FileText className="mr-2 h-4 w-4" /> View PDF
+                  </Button>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
-};
-
-export default BillingPage;
+}

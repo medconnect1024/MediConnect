@@ -163,5 +163,20 @@ export default defineSchema({
         result: v.optional(v.string()), // To store any result or error message
         // Add any additional fields you might need for scheduled calls
       }),
-});
 
+      bills: defineTable({
+        userId: v.string(),
+        patientId: v.string(),
+        billNumber: v.string(),
+        date: v.string(),
+        items: v.array(
+          v.object({
+            name: v.string(),
+            cost: v.number(),
+          })
+        ),
+        total: v.number(),
+        pdfStorageId: v.optional(v.string()),
+      }),
+    });
+    
