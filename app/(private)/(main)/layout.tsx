@@ -41,16 +41,10 @@ export default function RootLayout({
   
 }) {
   return (
-    
-    <html lang="en">
-    <body>
+    <>
         <FixedNavigation/>
-          <main className="flex min-h-[calc(100dvh-4rem)] flex-col items-center p-2 mt-16">
-            {children}
-          </main>
-      <Toaster />
-    </body>
-  </html>
+          {children}
+        </>
   );
 }
 // import React from 'react'
