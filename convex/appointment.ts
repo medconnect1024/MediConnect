@@ -237,19 +237,53 @@ export const getPatientSatisfactionData = query({
   },
 });
 
-export const getAppointmentsByDoctorAndDate = query({
-  args: { doctorId: v.string(), date: v.string() },
-  handler: async (ctx, args) => {
-    const { doctorId, date } = args;
-    const appointments = await ctx.db
-      .query("appointments")
-      .filter((q) => q.eq(q.field("doctorId"), doctorId))
-      .filter((q) => q.eq(q.field("appointmentDate"), date))
-      .collect();
+// export const getAppointmentsByDoctorAndDate = query({
+//   args: { doctorId: v.string(), date: v.string() },
+//   handler: async (ctx, args) => {
+//     const { doctorId, date } = args;
+//     console.log("Query args:", { doctorId, date });
     
-    return appointments.map(appointment => ({
-      ...appointment,
-      appointmentId: appointment._id.toString(),
-    }));
+//     const appointments = await ctx.db
+//       .query("appointments")
+//       .filter((q) => q.eq(q.field("doctorId"), doctorId))
+//       .filter((q) => q.eq(q.field("appointmentDate"), date))
+//       .collect();
+    
+//     console.log("Found appointments:", appointments);
+    
+//     return appointments.map(appointment => ({
+//       ...appointment,
+//       appointmentId: appointment._id.toString(),
+//     }));
+//   },
+// })
+
+export const getAppointmentsByDoctorAndDate = query({
+  args: {
+    doctorId: v.string(),
+    date: v.string(), // Expecting 'YYYY-MM-DD' format
   },
-})
+  handler: async ({ db }, { doctorId, date }) => {
+    if (!doctorId || !date) {
+      console.warn("Missing doctorId or date");
+      return [];
+    }
+
+    const startOfDay = new Date(`${date}T00:00:00.000Z`);
+    const endOfDay = new Date(`${date}T23:59:59.999Z`);
+
+    const appointments = await db
+      .query("appointments")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("doctorId"), doctorId),
+          q.gte(q.field("appointmentDate"), startOfDay.toISOString()),
+          q.lte(q.field("appointmentDate"), endOfDay.toISOString())
+        )
+      )
+      .collect();
+
+    console.log("Fetched appointments:", appointments);
+    return appointments;
+  },
+});

@@ -199,7 +199,7 @@ export const getPatientById = query({
         .unique();
 
       if (!patient) {
-        return { error: "Patient not found." };  // Return a custom error object
+        return { error: " " };  // Return a custom error object
       }
 
     return {
@@ -310,10 +310,10 @@ export const getPatientByPhone = query({
     }
   },
 });
-// export const getAllPatients = query(async (ctx) => {
-//   return await ctx.db.query('patients').collect()
-// })
-export const getAllPatients = query({
+export const getAllPatients = query(async (ctx) => {
+  return await ctx.db.query('patients').collect()
+})
+export const getAllPatientsinfo = query({
   handler: async (ctx) => {
     const patients = await ctx.db.query("patients").collect()
     return patients.map(patient => ({
