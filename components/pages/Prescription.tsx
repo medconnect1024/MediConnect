@@ -179,6 +179,9 @@ export default function MultiStepPrescription({
     userId: user?.id ?? "",
   });
 
+  const [isDraftSaved, setIsDraftSaved] = useState(false);
+  const [isLeavingPage, setIsLeavingPage] = useState(false);
+
   useEffect(() => {
     if (getLastPrescriptionForPatient) {
       const apiPrescription = getLastPrescriptionForPatient as ApiPrescription;
@@ -395,7 +398,11 @@ export default function MultiStepPrescription({
       console.error("User not signed in");
       return;
     }
-
+    // Check if vitals are filled
+    if (!vitals.temperature || !vitals.bloodPressure || !vitals.pulse) {
+      alert("Vitals are mandatory fields. Please fill them before submitting.");
+      return;
+    }
     const doctorId = user.id;
     const patientIdString = patientId.toString();
 
