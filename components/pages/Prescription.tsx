@@ -217,8 +217,6 @@ export default function MultiStepPrescription({
     const lineHeight = 7;
     let yPos = 30;
 
-    // Fetch user (doctor) details
-    // Use the fetched user details
     const clinicName = userDetails?.clinicName || "HealthCare Clinic";
     const clinicAddress =
       userDetails?.address || "123 Medical Street, Healthville, HC 12345";
@@ -233,10 +231,11 @@ export default function MultiStepPrescription({
     const doctorLicense = userDetails?.licenseNumber
       ? `License No: ${userDetails.licenseNumber}`
       : "License No: MD12345";
+
     const addText = (text: string, indent = 0) => {
       const lines = doc.splitTextToSize(text, pageWidth - margin * 2 - indent);
-      lines.forEach((line: string | string[]) => {
-        if (yPos > pageHeight - margin * 2) {
+      lines.forEach((line: string) => {
+        if (yPos > pageHeight - margin * 2 - 25) {
           addNewPage();
         }
         doc.text(line, margin + indent, yPos);
@@ -245,6 +244,9 @@ export default function MultiStepPrescription({
     };
 
     const addSection = (title: string, content: string) => {
+      if (yPos + lineHeight * 3 > pageHeight - margin * 2 - 25) {
+        addNewPage();
+      }
       doc.setFontSize(14);
       addText(title, 0);
       doc.setFontSize(12);
@@ -254,7 +256,7 @@ export default function MultiStepPrescription({
 
     const addHeader = () => {
       doc.setFontSize(18);
-      doc.setFont("undefined", "bold");
+      doc.setFont("helvetica", "bold");
       doc.text(clinicName, pageWidth / 2, margin, { align: "center" });
       doc.setFontSize(12);
       doc.text(clinicAddress, pageWidth / 2, margin + 7, { align: "center" });
@@ -263,55 +265,158 @@ export default function MultiStepPrescription({
         `Phone: ${clinicPhone} | Email: ${clinicEmail}`,
         pageWidth / 2,
         margin + 14,
-        {
-          align: "center",
-        }
+        { align: "center" }
       );
       doc.line(margin, margin + 18, pageWidth - margin, margin + 18);
       yPos = margin + 25;
     };
 
     const addFooter = () => {
+      const footerY = pageHeight - margin - 20;
       doc.setFontSize(10);
-      doc.text(doctorName, margin, pageHeight - margin - 15);
-      doc.text(doctorSpecialty, margin, pageHeight - margin - 10);
-      doc.text(doctorLicense, margin, pageHeight - margin - 5);
+      doc.text(doctorName, margin, footerY);
+      doc.text(doctorSpecialty, margin, footerY + 5);
+      doc.text(doctorLicense, margin, footerY + 10);
       doc.text(
         `Page ${doc.getNumberOfPages()}`,
         pageWidth - margin,
-        pageHeight - margin - 5,
-        {
-          align: "right",
-        }
+        footerY + 10,
+        { align: "right" }
       );
-      doc.line(
-        margin,
-        pageHeight - margin - 20,
-        pageWidth - margin,
-        pageHeight - margin - 20
-      );
+      doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
     };
+
     const addNewPage = () => {
       doc.addPage();
       yPos = margin + 10;
       addHeader();
     };
 
+    const addTable = (headers: string[], rows: string[][], startY: number) => {
+      const cellPadding = 2;
+      const cellWidths = headers.map((_, index) =>
+        index === 0 ? 50 : (pageWidth - margin * 2 - 50) / (headers.length - 1)
+      );
+      let cellHeight = 10;
+
+      if (startY + cellHeight > pageHeight - margin * 2 - 25) {
+        addNewPage();
+        startY = yPos;
+      }
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+
+      headers.forEach((header, i) => {
+        doc.rect(
+          margin + cellWidths.slice(0, i).reduce((a, b) => a + b, 0),
+          startY,
+          cellWidths[i],
+          cellHeight
+        );
+        doc.text(
+          header,
+          margin +
+            cellWidths.slice(0, i).reduce((a, b) => a + b, 0) +
+            cellWidths[i] / 2,
+          startY + cellHeight / 2,
+          {
+            align: "center",
+            baseline: "middle",
+          }
+        );
+      });
+
+      doc.setFont("helvetica", "normal");
+      if (rows.length === 0) {
+        const emptyRowY = startY + cellHeight;
+        headers.forEach((_, i) => {
+          doc.rect(
+            margin + cellWidths.slice(0, i).reduce((a, b) => a + b, 0),
+            emptyRowY,
+            cellWidths[i],
+            cellHeight
+          );
+          doc.text(
+            "No data",
+            margin +
+              cellWidths.slice(0, i).reduce((a, b) => a + b, 0) +
+              cellWidths[i] / 2,
+            emptyRowY + cellHeight / 2,
+            {
+              align: "center",
+              baseline: "middle",
+            }
+          );
+        });
+        yPos = emptyRowY + cellHeight + 5;
+      } else {
+        rows.forEach((row, rowIndex) => {
+          let maxHeight = cellHeight;
+          const rowY = startY + rowIndex * cellHeight + cellHeight;
+
+          if (rowY > pageHeight - margin * 2 - 25) {
+            addNewPage();
+            startY = yPos - cellHeight * (rowIndex + 1);
+          }
+
+          row.forEach((cell, cellIndex) => {
+            const cellLines = doc.splitTextToSize(
+              cell,
+              cellWidths[cellIndex] - cellPadding * 2
+            );
+            const cellHeight = Math.max(
+              10,
+              cellLines.length * 5 + cellPadding * 2
+            );
+            maxHeight = Math.max(maxHeight, cellHeight);
+          });
+
+          row.forEach((cell, cellIndex) => {
+            const xPos =
+              margin +
+              cellWidths.slice(0, cellIndex).reduce((a, b) => a + b, 0);
+            doc.rect(xPos, rowY, cellWidths[cellIndex], maxHeight);
+            const cellLines = doc.splitTextToSize(
+              cell,
+              cellWidths[cellIndex] - cellPadding * 2
+            );
+            cellLines.forEach((line: string, lineIndex: number) => {
+              doc.text(
+                line,
+                xPos + cellWidths[cellIndex] / 2,
+                rowY + cellPadding + lineIndex * 5 + 2.5,
+                {
+                  align: "center",
+                  baseline: "middle",
+                }
+              );
+            });
+          });
+
+          yPos = rowY + maxHeight;
+          cellHeight = maxHeight;
+        });
+      }
+
+      yPos += 5;
+    };
+
     addHeader();
 
     doc.setFontSize(16);
-    doc.setFont("undefined", "bold");
-    yPos += lineHeight * 2;
-    doc.text("Prescription", pageWidth / 2, yPos, { align: "center" });
+    doc.setFont("helvetica", "bold");
+    doc.text("Prescription ℞", pageWidth / 2 - 5, yPos, { align: "right" });
+    doc.setFont("zapfdingbats", "normal");
+    doc.text("℞", pageWidth / 2 + 5, yPos, { align: "left" });
     yPos += lineHeight * 2;
 
     doc.setFontSize(12);
-    doc.setFont("undefined", "normal");
+    doc.setFont("helvetica", "normal");
 
     addText(`Patient ID: ${prescriptionData.patientId}`);
     addText(`Doctor: ${doctorName}`);
     addText(`Date: ${format(new Date(), "PPP")}`);
-    yPos += 5;
     yPos += 5;
 
     addSection(
@@ -321,54 +426,63 @@ export default function MultiStepPrescription({
         `BMI: ${prescriptionData.vitals.bmi}, Waist/Hip: ${prescriptionData.vitals.waistHip}, SPO2: ${prescriptionData.vitals.spo2}`
     );
 
-    addSection(
-      "Symptoms",
-      prescriptionData.symptoms
-        .map(
-          (s: SymptomItem) =>
-            `${s.name} (,${s.frequency}, Severity: ${s.severity}, Duration: ${s.duration})`
-        )
-        .join(", ")
-    );
+    // Symptoms Table
+    const symptomHeaders = ["Symptom", "Frequency", "Severity", "Duration"];
+    const symptomRows = prescriptionData.symptoms.map((s: SymptomItem) => [
+      s.name,
+      s.frequency,
+      s.severity,
+      s.duration,
+    ]);
+    addTable(symptomHeaders, symptomRows, yPos);
 
     addSection(
       "Findings",
-      prescriptionData.findings.map((f: FindingItem) => f.name).join(", ")
+      prescriptionData.findings
+        .map((f: { name: string }) => f.name)
+        .join(", ") || "No findings"
     );
 
     addSection(
       "Diagnosis",
-      prescriptionData.diagnoses.map((d: { name: string }) => d.name).join(", ")
+      prescriptionData.diagnoses
+        .map((d: { name: string }) => d.name)
+        .join(", ") || "No diagnosis"
     );
     addText(`Severity: ${prescriptionData.severity || "Not specified"}`);
     addText(
       `Chronic Condition: ${prescriptionData.chronicCondition ? "Yes" : "No"}`
     );
-    addText(`Critical Lab Values: ${prescriptionData.criticalLabValues}`);
-
-    if (yPos > pageHeight - 60) {
-      doc.addPage();
-      yPos = 30;
-      addHeader();
-    }
-
-    addSection(
-      "Medicines",
-      prescriptionData.medicines
-        .map(
-          (m: MedicineItem) =>
-            `${m.name} (Dosage: ${m.dosage}, Route: ${m.route}, Frequency: ${m.timesPerDay} times per day, ` +
-            `Duration: ${m.durationDays} days, Timing: ${m.timing})`
-        )
-        .join("; ")
+    addText(
+      `Critical Lab Values: ${prescriptionData.criticalLabValues || "None"}`
     );
+
+    // Medicines Table
+    const medicineHeaders = [
+      "Medicine",
+      "Dosage",
+      "Route",
+      "Frequency",
+      "Duration",
+      "Timing",
+    ];
+    const medicineRows = prescriptionData.medicines.map((m: MedicineItem) => [
+      m.name,
+      m.dosage,
+      m.route,
+      `${m.timesPerDay} times per day`,
+      `${m.durationDays} days`,
+      m.timing,
+    ]);
+    addTable(medicineHeaders, medicineRows, yPos);
+
     addText(`Instructions: ${prescriptionData.medicineInstructions || "None"}`);
 
     addSection(
       "Investigations",
       prescriptionData.investigations
         .map((i: { name: string }) => i.name)
-        .join(", ")
+        .join(", ") || "No investigations"
     );
     if (prescriptionData.investigationNotes) {
       addText(`Notes: ${prescriptionData.investigationNotes}`);
@@ -381,7 +495,8 @@ export default function MultiStepPrescription({
         : "No follow-up date set"
     );
     addText(
-      `Reminders: ${prescriptionData.medicineReminder.message ? "Message" : ""}${prescriptionData.medicineReminder.message && prescriptionData.medicineReminder.call ? ", " : ""}${prescriptionData.medicineReminder.call ? "Call" : ""}`
+      `Reminders: ${prescriptionData.medicineReminder.message ? "Message" : ""}${prescriptionData.medicineReminder.message && prescriptionData.medicineReminder.call ? ", " : ""}${prescriptionData.medicineReminder.call ? "Call" : ""}` ||
+        "No reminders set"
     );
 
     const pageCount = doc.getNumberOfPages();

@@ -268,3 +268,24 @@ export const getAppointmentsByDoctorAndDate = query({
     return appointments;
   },
 });
+
+export const getLastAppointmentForPatient = query({
+  args: {
+    doctorId: v.string(),
+    patientId: v.string(),
+  },
+  handler: async ({ db }, { doctorId, patientId }) => {
+    const appointments = await db
+      .query("appointments")
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("doctorId"), doctorId),
+          q.eq(q.field("patientId"), patientId)
+        )
+      )
+      .order("desc")
+      .first();
+
+    return appointments;
+  },
+});

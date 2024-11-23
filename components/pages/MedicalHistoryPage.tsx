@@ -2,25 +2,37 @@
 
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
 
-// Define the props interface to include patientId
 interface MedicalHistoryPageProps {
-  patientId: number | null;
+  patientId: string | number | null;
 }
 
 const MedicalHistoryPage: React.FC<MedicalHistoryPageProps> = ({
   patientId,
 }) => {
   const [isClient, setIsClient] = useState(false);
+  const { user } = useUser();
+  const userId = user?.id;
 
-  // Ensure the component only renders after client-side hydration
+  const lastAppointment = useQuery(
+    api.appointment.getLastAppointmentForPatient,
+    patientId && userId
+      ? {
+          doctorId: userId,
+          patientId: String(patientId), // Convert to string
+        }
+      : "skip" // Skip the query if patientId or userId is not available
+  );
+
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Handle the case where patientId is null or not provided
   if (!isClient) {
-    return null; // Avoid rendering during hydration mismatch
+    return null;
   }
 
   if (patientId === null) {
@@ -34,17 +46,34 @@ const MedicalHistoryPage: React.FC<MedicalHistoryPageProps> = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {/* Print the patientId */}
           <div>
             <p className="text-sm text-muted-foreground">Patient ID</p>
             <p>{patientId}</p>
           </div>
 
           {[
-            { label: "Medical problems", value: "Diabetes" },
-            { label: "Diabetes since", value: "1-2 years" },
-            { label: "Diabetes medication", value: "Yes" },
-            { label: "Medication", value: "Insulin (80 iu) - 7 daily" },
+            {
+              label: "Appointment Date",
+              value: lastAppointment?.appointmentDate
+                ? new Date(lastAppointment.appointmentDate).toLocaleDateString()
+                : "No data",
+            },
+            // {
+            //   label: "Last Appointment Time",
+            //   value: lastAppointment?.appointmentTime || "No data",
+            // },
+
+            {
+              label: "Medical problems",
+              value: lastAppointment?.reasonForVisit || "No data",
+            },
+            {
+              label: "Insurance Details",
+              value: lastAppointment?.insuranceDetails || "No data",
+            },
+            { label: "Notes", value: lastAppointment?.notes || "No data" },
+            { label: " since", value: "No data" },
+            { label: "Medication", value: "No data" },
           ].map(({ label, value }) => (
             <div key={label}>
               <p className="text-sm text-muted-foreground">{label}</p>

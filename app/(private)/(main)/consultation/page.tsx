@@ -8,16 +8,22 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import PrescriptionPage from "@/components/pages/Prescription";
-import LabReportPage from "@/components/pages/lab-report-page";
-import BillingPage from "@/components/pages/billing-page";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import VaccinationPage from "@/components/pages/VaccinationPage";
-import MedicalHistoryPage from "@/components/pages/MedicalHistoryPage";
-import { ChevronDown, ChevronUp, UserCheck, CheckCircle } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  UserCheck,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "@/hooks/use-toast";
+import MedicalHistoryPage from "@/components/pages/MedicalHistoryPage";
+import LabReportPage from "@/components/pages/lab-report-page";
+import BillingPage from "@/components/pages/billing-page";
+import VaccinationPage from "@/components/pages/VaccinationPage";
+import PrescriptionPage from "@/components/pages/Prescription";
 
 type AppointmentStatus =
   | "Scheduled"
@@ -34,6 +40,7 @@ interface PatientCardProps {
   onOpenChange: (open: boolean) => void;
   appointmentStatus: AppointmentStatus;
   onStatusChange: (newStatus: AppointmentStatus) => void;
+  isAttendingDisabled: boolean;
 }
 
 const PatientCard: React.FC<PatientCardProps> = ({
@@ -44,6 +51,7 @@ const PatientCard: React.FC<PatientCardProps> = ({
   onOpenChange,
   appointmentStatus,
   onStatusChange,
+  isAttendingDisabled,
 }) => {
   const patientInfo = useQuery(api.patients.getPatientById, { patientId });
 
@@ -129,45 +137,55 @@ const PatientCard: React.FC<PatientCardProps> = ({
             <strong>Date of Birth:</strong>{" "}
             {new Date(dateOfBirth).toLocaleDateString()}
           </p>
-          <div className="mt-2 flex justify-between items-center">
-            <p className="text-sm">
-              <strong>Status:</strong>{" "}
-              <span
-                className={
-                  appointmentStatus === "attending"
-                    ? "text-blue-500"
-                    : appointmentStatus === "completed"
-                      ? "text-green-500"
-                      : "text-yellow-500"
-                }
-              >
-                {appointmentStatus}
-              </span>
-            </p>
-            <div className="flex gap-2">
-              {appointmentStatus === "Scheduled" && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex items-center bg-blue-500 text-white hover:bg-blue-600"
-                  onClick={() => onStatusChange("attending")}
+          <div className="mt-2 flex flex-col gap-2">
+            <div className="flex justify-between items-center">
+              <p className="text-sm">
+                <strong>Status:</strong>{" "}
+                <span
+                  className={
+                    appointmentStatus === "attending"
+                      ? "text-blue-500"
+                      : appointmentStatus === "completed"
+                        ? "text-green-500"
+                        : "text-yellow-500"
+                  }
                 >
-                  <UserCheck className="w-4 h-4 mr-1" />
-                  Attending
-                </Button>
-              )}
-              {appointmentStatus === "attending" && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex items-center bg-blue-500 text-white hover:bg-blue-600"
-                  onClick={() => onStatusChange("completed")}
-                >
-                  <CheckCircle className="w-4 h-4 mr-1" />
-                  Complete
-                </Button>
-              )}
+                  {appointmentStatus}
+                </span>
+              </p>
+              <div className="flex gap-2">
+                {appointmentStatus === "Scheduled" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex items-center bg-blue-500 text-white hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    onClick={() => onStatusChange("attending")}
+                    disabled={isAttendingDisabled}
+                  >
+                    <UserCheck className="w-4 h-4 mr-1" />
+                    Attending
+                  </Button>
+                )}
+                {appointmentStatus === "attending" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex items-center bg-blue-500 text-white hover:bg-blue-600"
+                    onClick={() => onStatusChange("completed")}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                    Complete
+                  </Button>
+                )}
+              </div>
             </div>
+            {isAttendingDisabled && appointmentStatus === "Scheduled" && (
+              <div className="flex items-center text-sm text-yellow-600 bg-yellow-100 p-2 rounded">
+                <AlertCircle className="w-4 h-4 mr-2" />
+                Please complete the current appointment before attending to
+                another patient.
+              </div>
+            )}
           </div>
         </div>
       </CollapsibleContent>
@@ -197,6 +215,10 @@ const Sidebar: React.FC<{
     api.patients.updateAppointmentStatus
   );
 
+  const [attendingPatientId, setAttendingPatientId] = useState<number | null>(
+    null
+  );
+
   useEffect(() => {
     if (appointments && appointments.length > 0 && !selectedPatientId) {
       const scheduledAppointments = appointments.filter(
@@ -205,6 +227,15 @@ const Sidebar: React.FC<{
       if (scheduledAppointments.length > 0) {
         onPatientSelect(Number(scheduledAppointments[0].patientId));
       }
+    }
+
+    const attendingAppointment = appointments?.find(
+      (appointment) => appointment.status === "attending"
+    );
+    if (attendingAppointment) {
+      setAttendingPatientId(Number(attendingAppointment.patientId));
+    } else {
+      setAttendingPatientId(null);
     }
   }, [appointments, selectedPatientId, onPatientSelect]);
 
@@ -248,10 +279,25 @@ const Sidebar: React.FC<{
 
   const handleStatusChange = async (
     appointmentId: string,
-    newStatus: AppointmentStatus
+    newStatus: AppointmentStatus,
+    patientId: number
   ) => {
     try {
-      console.log("appointmentId", appointmentId, newStatus);
+      if (newStatus === "attending") {
+        if (attendingPatientId !== null) {
+          toast({
+            title: "Cannot attend to multiple patients",
+            description:
+              "Please complete the current patient's appointment first.",
+            variant: "destructive",
+          });
+          return;
+        }
+        setAttendingPatientId(patientId);
+      } else if (newStatus === "completed") {
+        setAttendingPatientId(null);
+      }
+
       await updateAppointmentStatus({ appointmentId, status: newStatus });
       toast({
         title: "Appointment status updated",
@@ -291,8 +337,13 @@ const Sidebar: React.FC<{
                 }
                 appointmentStatus={appointment.status as AppointmentStatus}
                 onStatusChange={(newStatus) =>
-                  handleStatusChange(appointment._id, newStatus)
+                  handleStatusChange(
+                    appointment._id,
+                    newStatus,
+                    Number(appointment.patientId)
+                  )
                 }
+                isAttendingDisabled={attendingPatientId !== null}
               />
             ))
           ) : (
@@ -323,8 +374,13 @@ const Sidebar: React.FC<{
                 }
                 appointmentStatus={appointment.status as AppointmentStatus}
                 onStatusChange={(newStatus) =>
-                  handleStatusChange(appointment._id, newStatus)
+                  handleStatusChange(
+                    appointment._id,
+                    newStatus,
+                    Number(appointment.patientId)
+                  )
                 }
+                isAttendingDisabled={false}
               />
             ))
           ) : (
@@ -355,8 +411,13 @@ const Sidebar: React.FC<{
                 }
                 appointmentStatus={appointment.status as AppointmentStatus}
                 onStatusChange={(newStatus) =>
-                  handleStatusChange(appointment._id, newStatus)
+                  handleStatusChange(
+                    appointment._id,
+                    newStatus,
+                    Number(appointment.patientId)
+                  )
                 }
+                isAttendingDisabled={true}
               />
             ))
           ) : (
@@ -395,7 +456,6 @@ const ActionButtons: React.FC<{
     </div>
   );
 };
-
 export default function DoctorDashboard() {
   const [selectedSection, setSelectedSection] = useState("overview");
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(
