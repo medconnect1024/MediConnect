@@ -33,34 +33,17 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({
-
   children,
-
 }: {
   children: React.ReactNode;
-  
 }) {
   return (
     <>
-        <FixedNavigation/>
-          {children}
-        </>
+      <FixedNavigation />
+      <main className="flex min-h-[calc(100dvh-4rem)] flex-col items-center p-2 mt-16">
+        {children}
+      </main>
+      <Toaster />
+    </>
   );
 }
-// import React from 'react'
-// import FixedNavigation from "./navigation";
-
-// export default function RootLayout({
-//   children,
-// }: {
-//   children: React.ReactNode
-// }) {
-//   return (
-//     <html lang="en">
-//       <body>
-//         <FixedNavigation />
-//         <main className="pt-16">{children}</main>
-//       </body>
-//     </html>
-//   )
-// }
