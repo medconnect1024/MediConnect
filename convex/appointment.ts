@@ -237,26 +237,7 @@ export const getPatientSatisfactionData = query({
   },
 });
 
-// export const getAppointmentsByDoctorAndDate = query({
-//   args: { doctorId: v.string(), date: v.string() },
-//   handler: async (ctx, args) => {
-//     const { doctorId, date } = args;
-//     console.log("Query args:", { doctorId, date });
-    
-//     const appointments = await ctx.db
-//       .query("appointments")
-//       .filter((q) => q.eq(q.field("doctorId"), doctorId))
-//       .filter((q) => q.eq(q.field("appointmentDate"), date))
-//       .collect();
-    
-//     console.log("Found appointments:", appointments);
-    
-//     return appointments.map(appointment => ({
-//       ...appointment,
-//       appointmentId: appointment._id.toString(),
-//     }));
-//   },
-// })
+
 
 export const getAppointmentsByDoctorAndDate = query({
   args: {
