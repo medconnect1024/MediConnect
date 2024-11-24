@@ -141,16 +141,28 @@ export const getPatientsByDoctor = query({
 });
 
 
-export const getAppointmentsByDoctor = query({
+export const getTodaysAppointmentsByDoctor = query({
   args: { doctorId: v.string() },
   handler: async (ctx, args) => {
+    const today = new Date();
+    const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString(); // Start of today as ISO string
+    const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString(); // End of today as ISO string
+
     const appointments = await ctx.db
       .query("appointments")
-      .filter((q) => q.eq(q.field("doctorId"), args.doctorId))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("doctorId"), args.doctorId),
+          q.gte(q.field("appointmentDate"), startOfDay),
+          q.lte(q.field("appointmentDate"), endOfDay)
+        )
+      )
       .collect();
+
     return appointments;
   },
 });
+
 
 
 export const updateAppointmentStatus = mutation({

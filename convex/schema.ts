@@ -2,6 +2,29 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  hospitals: defineTable({
+    hospitalId: v.string(),
+    name: v.string(),
+    type: v.union(v.literal("General"), v.literal("Specialized"), v.literal("Clinic")),
+    address: v.string(),
+    city: v.string(),
+    state: v.string(),
+    zipCode: v.string(),
+    phoneNumber: v.string(),
+    email: v.optional(v.string()),
+    website: v.optional(v.string()),
+    capacity: v.optional(v.number()),
+    emergencyServices: v.boolean(),
+    specialties: v.array(v.string()),
+    accreditation: v.optional(v.string()),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  })
+    .index("by_hospital_id", ["hospitalId"])
+    .index("by_name", ["name"])
+    .index("by_city", ["city"])
+    .index("by_state", ["state"]),
+
   users: defineTable({
     userId: v.string(),
     email: v.string(),
@@ -22,9 +45,12 @@ export default defineSchema({
     state: v.optional(v.string()),
     zipCode: v.optional(v.string()),
     website: v.optional(v.string()),
+    hospitalId: v.optional(v.string()),
   })
     .index("by_clerk_id", ["userId"])
-    .index("by_email", ["email"]),
+    .index("by_email", ["email"])
+    .index("by_hospital", ["hospitalId"]),
+
     patients: defineTable({
       patientId: v.number(),
       email: v.string(),
@@ -46,10 +72,12 @@ export default defineSchema({
       temperature: v.optional(v.string()),
       oxygenSaturation: v.optional(v.string()),
       doctorId:v.optional(v.string()), // New field to store the ID of the doctor who registered the patient
+      hospitalId: v.optional(v.string()),
     })
       .index("by_patient_id", ["patientId"])
       .index("by_email", ["email"])
-      .index("by_phoneNumber", ["phoneNumber"]),
+      .index("by_phoneNumber", ["phoneNumber"])
+      .index("by_hospital", ["hospitalId"]),
      
   
         appointments: defineTable({

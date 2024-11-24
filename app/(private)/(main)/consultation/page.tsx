@@ -208,7 +208,7 @@ const Sidebar: React.FC<{
   const doctorId = user?.id;
 
   const appointments = useQuery(
-    api.patients.getAppointmentsByDoctor,
+    api.patients.getTodaysAppointmentsByDoctor,
     doctorId ? { doctorId } : "skip"
   );
   const updateAppointmentStatus = useMutation(
