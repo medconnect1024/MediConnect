@@ -39,6 +39,11 @@ const patientMenuItems = [
   { name: "Medical Records", icon: FileText, path: "/medicalrecords" },
 ];
 
+const adminMenuItems = [
+  { name: "Create Hospital", icon: LayoutDashboard, path: "/hospitals" },
+  { name: "Create User", icon: Calendar, path: "/users" },
+];
+
 const deskMenuItems = [
   {
     name: "Registration Desk",
@@ -86,6 +91,7 @@ export default function FixedNavigation() {
         Doctor: "dashboard",
         Desk: "registrationdesk",
         Patient: "patientdashboard",
+        Admin:"hospitals"
       };
 
       const userRole = userExists.role as keyof typeof roleDashboards;
