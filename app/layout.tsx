@@ -1,4 +1,4 @@
-import type {Metadata} from "next";
+import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import ConvexClientProvider from "@/app/ConvexClientProvider";
@@ -19,8 +19,8 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   metadataBase: new URL("https://write_your_prod_website_url"),
   title: {
-    default: "Product Title - tag Line(optional)",
-    template: "%s | Product Title - tag Line(optional)",
+    default: "Your AI doctor ",
+    template: "%s | MyMediRecords ",
   },
   description: "write description for seo",
   keywords: "write keywords for seo",
@@ -48,10 +48,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased px-5`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased px-5`}
+      >
         <ConvexClientProvider>{children}</ConvexClientProvider>
         <Toaster />
-
       </body>
     </html>
   );

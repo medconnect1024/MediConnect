@@ -8,15 +8,15 @@ import { Toaster } from "@/components/ui/toaster";
 
 //TODO: change content
 export const metadata: Metadata = {
-  metadataBase: new URL("https://write_your_prod_website_url"),
+  metadataBase: new URL("https://www.mymedirecords.com/"),
   title: {
-    default: "Write content",
-    template: "%s | Product title - subtitle/tagline(optional)",
+    default: "Your AI Doctor",
+    template: " ",
   },
   description: "write description",
   keywords: "write keywords",
   openGraph: {
-    title: "Product title - subtitle/tagline(optional)",
+    title: "",
     description: "write desc",
     url: "write prod website url for seo",
     type: "website",
