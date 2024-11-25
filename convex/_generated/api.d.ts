@@ -20,6 +20,7 @@ import type * as bills from "../bills.js";
 import type * as contacts from "../contacts.js";
 import type * as crons from "../crons.js";
 import type * as getdoctorslots from "../getdoctorslots.js";
+import type * as hospitals from "../hospitals.js";
 import type * as http from "../http.js";
 import type * as labReports from "../labReports.js";
 import type * as lib_mockapi from "../lib/mockapi.js";
@@ -50,6 +51,7 @@ declare const fullApi: ApiFromModules<{
   contacts: typeof contacts;
   crons: typeof crons;
   getdoctorslots: typeof getdoctorslots;
+  hospitals: typeof hospitals;
   http: typeof http;
   labReports: typeof labReports;
   "lib/mockapi": typeof lib_mockapi;
