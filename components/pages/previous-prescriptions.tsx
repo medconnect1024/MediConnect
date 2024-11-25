@@ -44,7 +44,7 @@ interface User {
   email: string;
   firstName?: string;
   lastName?: string;
-  role?: "Doctor" | "Patient" | "Desk";
+  role?: "Doctor" | "Patient" | "Desk" | "Admin";
 }
 
 export default function EnhancedPreviousPrescriptions({

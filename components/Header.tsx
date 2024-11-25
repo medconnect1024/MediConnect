@@ -35,6 +35,7 @@ export default function Header() {
         Doctor: "/dashboard",
         Desk: "/registrationdesk",
         Patient: "/patientdashboard",
+        Admin: "/hospitals",
       };
       const rolePath = roleDashboards[userExists.role] || "/";
       router.push(rolePath);

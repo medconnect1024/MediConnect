@@ -41,7 +41,7 @@ interface UserData {
   firstName?: string;
   lastName?: string;
   profileImageUrl?: string;
-  role?: "Doctor" | "Patient" | "Desk";
+  role?: "Doctor" | "Patient" | "Desk" | "Admin";
   phone?: string;
   specialization?: string;
   licenseNumber?: string;
