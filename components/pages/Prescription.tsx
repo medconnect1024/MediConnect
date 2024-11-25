@@ -166,6 +166,8 @@ export default function MultiStepPrescription({
   const getPatientPhone = useQuery(api.patients.getPatientPhone, {
     patientId: patientId.toString(),
   });
+  const generateFileUrl = useMutation(api.prescriptions.generateFileUrl);
+
   const savePrescription = useMutation(api.prescriptions.savePrescription);
   const generateUploadUrl = useMutation(api.labReports.generateUploadUrl);
   const getLastPrescriptionForPatient = useQuery(
@@ -575,16 +577,23 @@ export default function MultiStepPrescription({
 
       // Get the storageId from the upload response
       const { storageId } = await result.json();
-
+      console.log(result);
       // Save prescription with storageId
       const savedPrescription = await savePrescription({
         ...newPrescription,
         storageId,
       });
+
       // Send to WhatsApp if checkbox is checked
       if (sendToWhatsApp && getPatientPhone) {
         try {
-          await sendPrescriptionToWhatsApp(getPatientPhone, pdfBlob);
+          const pdfUrl = await generateFileUrl({ storageId: storageId });
+          await sendPrescriptionToWhatsApp(
+            getPatientPhone,
+            userDetails?.firstName + " " + userDetails?.lastName || "Doctor",
+            pdfUrl,
+            "Patient" // You may want to fetch the patient's name from your database
+          );
           console.log("Prescription sent to WhatsApp successfully");
         } catch (error) {
           console.error("Error sending prescription to WhatsApp:", error);

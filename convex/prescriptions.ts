@@ -121,7 +121,7 @@ export const generateFileUrl = mutation({
   args: { storageId: v.string() },
   handler: async (ctx, args) => {
     const url = await ctx.storage.getUrl(args.storageId);
-    return url;
+    return url ?? 'NA';
   },
 });
 
