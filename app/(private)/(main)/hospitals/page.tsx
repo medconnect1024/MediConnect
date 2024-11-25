@@ -1,15 +1,29 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { toast } from "@/components/ui/use-toast"
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -34,17 +48,23 @@ const formSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  website: z.string().url({
-    message: "Please enter a valid URL.",
-  }).optional(),
-  capacity: z.number().min(1, {
-    message: "Capacity must be at least 1.",
-  }).optional(),
+  website: z
+    .string()
+    .url({
+      message: "Please enter a valid URL.",
+    })
+    .optional(),
+  capacity: z
+    .number()
+    .min(1, {
+      message: "Capacity must be at least 1.",
+    })
+    .optional(),
   emergencyServices: z.boolean(),
-})
+});
 
 export default function HospitalCreation() {
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -61,20 +81,20 @@ export default function HospitalCreation() {
       capacity: undefined,
       emergencyServices: false,
     },
-  })
+  });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true)
+    setIsLoading(true);
     // Here you would typically send the data to your backend
-    console.log(values)
+    console.log(values);
     setTimeout(() => {
-      setIsLoading(false)
+      setIsLoading(false);
       toast({
         title: "Hospital Created",
         description: "The hospital has been successfully added to the system.",
-      })
-      form.reset()
-    }, 2000)
+      });
+      form.reset();
+    }, 2000);
   }
 
   return (
@@ -101,7 +121,10 @@ export default function HospitalCreation() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Hospital Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select hospital type" />
@@ -206,7 +229,10 @@ export default function HospitalCreation() {
               <FormItem>
                 <FormLabel>Website</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter website URL (optional)" {...field} />
+                  <Input
+                    placeholder="Enter website URL (optional)"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -219,7 +245,12 @@ export default function HospitalCreation() {
               <FormItem>
                 <FormLabel>Capacity</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="Enter hospital capacity (optional)" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} />
+                  <Input
+                    type="number"
+                    placeholder="Enter hospital capacity (optional)"
+                    {...field}
+                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -231,7 +262,9 @@ export default function HospitalCreation() {
             render={({ field }) => (
               <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                 <div className="space-y-0.5">
-                  <FormLabel className="text-base">Emergency Services</FormLabel>
+                  <FormLabel className="text-base">
+                    Emergency Services
+                  </FormLabel>
                   <FormDescription>
                     Does this hospital provide emergency services?
                   </FormDescription>
@@ -251,6 +284,5 @@ export default function HospitalCreation() {
         </form>
       </Form>
     </div>
-  )
+  );
 }
-

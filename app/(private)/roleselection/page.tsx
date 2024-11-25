@@ -43,6 +43,7 @@ export default function LoadingScreen() {
           Doctor: "/dashboard",
           Desk: "/registrationdesk",
           Patient: "/patientdashboard",
+          Admin: "/hospitals",
         };
 
         // Get the role path or fallback to "/"

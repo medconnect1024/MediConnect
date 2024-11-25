@@ -1,14 +1,28 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { toast } from "@/components/ui/use-toast"
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   email: z.string().email({
@@ -23,10 +37,10 @@ const formSchema = z.object({
   role: z.enum(["Doctor", "Desk"]),
   specialization: z.string().optional(),
   licenseNumber: z.string().optional(),
-})
+});
 
 export default function UserManagement() {
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -38,20 +52,20 @@ export default function UserManagement() {
       specialization: "",
       licenseNumber: "",
     },
-  })
+  });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true)
+    setIsLoading(true);
     // Here you would typically send the data to your backend
-    console.log(values)
+    console.log(values);
     setTimeout(() => {
-      setIsLoading(false)
+      setIsLoading(false);
       toast({
         title: "User Created",
         description: "The user has been successfully added to the system.",
-      })
-      form.reset()
-    }, 2000)
+      });
+      form.reset();
+    }, 2000);
   }
 
   return (
@@ -72,8 +86,10 @@ export default function UserManagement() {
               </FormItem>
             )}
           />
-          <div className="grid grid-
-cols-2 gap-4">
+          <div
+            className="grid grid-
+cols-2 gap-4"
+          >
             <FormField
               control={form.control}
               name="firstName"
@@ -107,7 +123,10 @@ cols-2 gap-4">
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Role</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select user role" />
@@ -158,6 +177,5 @@ cols-2 gap-4">
         </form>
       </Form>
     </div>
-  )
+  );
 }
-

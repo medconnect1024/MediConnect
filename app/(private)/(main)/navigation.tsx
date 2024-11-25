@@ -91,7 +91,7 @@ export default function FixedNavigation() {
         Doctor: "dashboard",
         Desk: "registrationdesk",
         Patient: "patientdashboard",
-        Admin:"hospitals"
+        Admin: "hospitals",
       };
 
       const userRole = userExists.role as keyof typeof roleDashboards;
@@ -131,6 +131,8 @@ export default function FixedNavigation() {
         return deskMenuItems;
       case "Patient":
         return patientMenuItems;
+      case "Admin":
+        return adminMenuItems; // Include the admin menu
       default:
         return [];
     }
