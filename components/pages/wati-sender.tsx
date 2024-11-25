@@ -1,64 +1,72 @@
 "use client";
 
 const WATI_API_URL = "https://live-mt-server.wati.io/320742";
-const WATI_API_TOKEN =
-  "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0MWE5NTVhZS02YmM4LTRjMGQtYTljZS00OTU3MzIxZTI0ZGEiLCJ1bmlxdWVfbmFtZSI6Im15bWVkaXJlY29yZHNAZ21haWwuY29tIiwibmFtZWlkIjoibXltZWRpcmVjb3Jkc0BnbWFpbC5jb20iLCJlbWFpbCI6Im15bWVkaXJlY29yZHNAZ21haWwuY29tIiwiYXV0aF90aW1lIjoiMDYvMjkvMjAyNCAxMDoxMToyMiIsImRiX25hbWUiOiJtdC1wcm9kLVRlbmFudHMiLCJ0ZW5hbnRfaWQiOiIzMjA3NDIiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBRE1JTklTVFJBVE9SIiwiZXhwIjoyNTM0MDIzMDA4MDAsImlzcyI6IkNsYXJlX0FJIiwiYXVkIjoiQ2xhcmVfQUkifQ.Nw-6g96C67FmE0qw0Up6f2Bl4W-x_WsEusImImV_7IU";
+const WATI_API_TOKEN = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIwYmI2NTg2Yi1lYmFjLTQzMzctOWU4ZS04ZjE1YjY1MTRjM2UiLCJ1bmlxdWVfbmFtZSI6Im15bWVkaXJlY29yZHNAZ21haWwuY29tIiwibmFtZWlkIjoibXltZWRpcmVjb3Jkc0BnbWFpbC5jb20iLCJlbWFpbCI6Im15bWVkaXJlY29yZHNAZ21haWwuY29tIiwiYXV0aF90aW1lIjoiMTAvMjUvMjAyNCAxNDowMzo0OSIsInRlbmFudF9pZCI6IjMyMDc0MiIsImRiX25hbWUiOiJtdC1wcm9kLVRlbmFudHMiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBRE1JTklTVFJBVE9SIiwiZXhwIjoyNTM0MDIzMDA4MDAsImlzcyI6IkNsYXJlX0FJIiwiYXVkIjoiQ2xhcmVfQUkifQ.zr5Gq6X8SQLxG3uZ3356m6P5bKwpd-zG_9Dx8nQUCyo";
 
-interface SendFileResponse {
+interface SendTemplateMessageResponse {
   result: boolean;
   messageId: string;
 }
 
-async function sendFile(
+interface TemplateParameter {
+  name: string;
+  value: string;
+}
+
+async function sendTemplateMessage(
   phoneNumber: string,
-  fileBlob: Blob,
-  fileName: string,
-  caption: string = ""
-): Promise<SendFileResponse> {
-  console.log(`Attempting to send file to ${phoneNumber}: ${fileName}`);
-  const url = `${WATI_API_URL}/api/v1/sendSessionFile/${phoneNumber}`;
+  templateName: string,
+  parameters: TemplateParameter[]
+): Promise<SendTemplateMessageResponse> {
+  console.log(`Attempting to send template message to ${phoneNumber}`);
+  const url = `${WATI_API_URL}/api/v1/sendTemplateMessage?whatsappNumber=${phoneNumber}`;
 
   try {
-    const formData = new FormData();
-    formData.append("file", fileBlob, fileName);
-    formData.append("caption", caption);
-
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        Authorization: WATI_API_TOKEN,
+        "Content-Type": "application/json",
+        "Authorization": WATI_API_TOKEN,
       },
-      body: formData,
+      body: JSON.stringify({
+        template_name: templateName,
+        broadcast_name: "prescription_broadcast",
+        parameters: parameters,
+      }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Failed to send file: ${response.status}, ${errorText}`);
-      throw new Error(`Failed to send file: ${response.status}, ${errorText}`);
+      console.error(`Failed to send template message: ${response.status}, ${errorText}`);
+      throw new Error(`Failed to send template message: ${response.status}, ${errorText}`);
     }
 
-    console.log(`File sent successfully to ${phoneNumber}`);
-    return (await response.json()) as SendFileResponse;
+    console.log(`Template message sent successfully to ${phoneNumber}`);
+    return await response.json() as SendTemplateMessageResponse;
   } catch (error) {
-    console.error(`Error in sendFile: ${error}`);
+    console.error(`Error in sendTemplateMessage: ${error}`);
     throw error;
   }
 }
 
 export async function sendPrescriptionToWhatsApp(
   phoneNumber: string,
-  pdfBlob: Blob
+  doctorName: string,
+  pdfLink: string,
+  patientName: string
 ): Promise<void> {
   try {
-    const result = await sendFile(
-      phoneNumber,
-      pdfBlob,
-      "prescription.pdf",
-      "Your Prescription"
-    );
+    const parameters: TemplateParameter[] = [
+      { name: "doctor", value: doctorName },
+      { name: "pdflink", value: pdfLink },
+      { name: "patientname", value: patientName },
+    ];
+
+    const result = await sendTemplateMessage(phoneNumber, "prescription", parameters);
     console.log("WhatsApp send result:", result);
   } catch (error) {
     console.error("Error sending to WhatsApp:", error);
     throw error;
   }
 }
+
