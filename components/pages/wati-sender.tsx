@@ -62,7 +62,7 @@ export async function sendPrescriptionToWhatsApp(
       { name: "patientname", value: patientName },
     ];
 
-    const result = await sendTemplateMessage(phoneNumber, "prescription", parameters);
+    const result = await sendTemplateMessage(phoneNumber, "enhanced_prescription", parameters);
     console.log("WhatsApp send result:", result);
   } catch (error) {
     console.error("Error sending to WhatsApp:", error);
