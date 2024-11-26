@@ -25,6 +25,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 
 const formSchema = z.object({
   email: z.string().email({
@@ -40,6 +41,9 @@ const formSchema = z.object({
   specialization: z.string().optional(),
   licenseNumber: z.string().optional(),
   phone: z.string().optional(),
+  hospitalId: z.string({
+    required_error: "Please select a hospital.",
+  }),
 });
 
 export default function UserManagement() {
@@ -50,6 +54,7 @@ export default function UserManagement() {
   const checkUserEmail = useQuery(api.hospitals.checkUserEmail, {
     email: "", // Pass the actual email here
   });
+  const hospitals = useQuery(api.hospitals.listHospitals) || [];
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -61,6 +66,7 @@ export default function UserManagement() {
       specialization: "",
       licenseNumber: "",
       phone: "",
+      hospitalId: "",
     },
   });
 
@@ -99,6 +105,7 @@ export default function UserManagement() {
       await createUser({
         ...values,
         userId: Math.random().toString(36).substr(2, 9), // This is a placeholder. In a real app, you'd use a proper ID generation method.
+        hospitalId: values.hospitalId, // This is now a string
       });
       toast({
         title: "User Created",
@@ -254,6 +261,36 @@ export default function UserManagement() {
                       className="w-full"
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="hospitalId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Hospital</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a hospital" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {hospitals.map((hospital) => (
+                        <SelectItem
+                          key={hospital.id}
+                          value={hospital.hospitalId}
+                        >
+                          {hospital.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

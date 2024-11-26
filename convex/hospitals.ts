@@ -80,9 +80,10 @@ export const createUser = mutation({
     specialization: v.optional(v.string()),
     licenseNumber: v.optional(v.string()),
     phone: v.optional(v.string()),
+    hospitalId: v.string(), // Change this to v.string()
   },
   async handler(ctx, args) {
-    const { userId, email, firstName, lastName, role, specialization, licenseNumber, phone } = args;
+    const { userId, email, firstName, lastName, role, specialization, licenseNumber, phone, hospitalId } = args;
     
     const existingUser = await ctx.db
       .query("users")
@@ -102,11 +103,13 @@ export const createUser = mutation({
       specialization,
       licenseNumber,
       phone,
+      hospitalId,
     });
 
     return newUser;
   },
 });
+
 
 export const checkUserEmail = query({
   args: { email: v.string() },
@@ -122,3 +125,13 @@ export const checkUserEmail = query({
 });
 
 
+export const listHospitals = query({
+  handler: async (ctx) => {
+    const hospitals = await ctx.db.query("hospitals").collect();
+    return hospitals.map(hospital => ({
+      id: hospital._id,
+      name: hospital.name,
+      hospitalId: hospital.hospitalId // Include the hospitalId field
+    }));
+  },
+});
