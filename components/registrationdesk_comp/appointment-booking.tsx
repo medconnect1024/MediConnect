@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -25,12 +25,14 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { Id } from "@/convex/_generated/dataModel";
 
 const formSchema = z.object({
   patientId: z.string().min(1, "Patient is required"),
@@ -50,6 +52,8 @@ const formSchema = z.object({
   slotId: z.string().optional(),
 });
 
+type FormSchema = z.infer<typeof formSchema>;
+
 export default function AppointmentBooking() {
   const { toast } = useToast();
   const addAppointment = useMutation(api.appointment.addAppointment);
@@ -57,7 +61,13 @@ export default function AppointmentBooking() {
   const doctors = useQuery(api.users.getDoctors);
   const router = useRouter();
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const [selectedDoctor, setSelectedDoctor] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<
+    { id: Id<"slots">; startTime: string; endTime: string }[]
+  >([]);
+
+  const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       appointmentType: "regular",
@@ -66,7 +76,23 @@ export default function AppointmentBooking() {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const getAvailableSlots = useQuery(
+    api.slots.getAvailableSlots,
+    selectedDoctor && selectedDate
+      ? {
+          doctorId: selectedDoctor,
+          date: selectedDate.toISOString().split("T")[0],
+        }
+      : "skip"
+  );
+
+  useEffect(() => {
+    if (getAvailableSlots) {
+      setAvailableSlots(getAvailableSlots);
+    }
+  }, [getAvailableSlots]);
+
+  const onSubmit = async (values: FormSchema) => {
     try {
       const appointmentId = `APT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       await addAppointment({
@@ -89,7 +115,10 @@ export default function AppointmentBooking() {
       });
     }
   };
-
+  const formatToIST = (date: Date) => {
+    const istDate = toZonedTime(date, "Asia/Kolkata");
+    return format(istDate, "yyyy-MM-dd");
+  };
   return (
     <div className="min-h-screen bg-gray-50 p-4 space-y-8">
       <Card className="max-w-4xl mx-auto">
@@ -138,7 +167,10 @@ export default function AppointmentBooking() {
                     <FormItem>
                       <FormLabel>Doctor*</FormLabel>
                       <Select
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setSelectedDoctor(value);
+                        }}
                         defaultValue={field.value}
                       >
                         <FormControl>
@@ -152,7 +184,7 @@ export default function AppointmentBooking() {
                               key={doctor.userId}
                               value={doctor.userId}
                             >
-                              {doctor.firstName}
+                              {doctor.firstName} {doctor.lastName}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -161,7 +193,6 @@ export default function AppointmentBooking() {
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="speciality"
@@ -185,6 +216,30 @@ export default function AppointmentBooking() {
                           <SelectItem value="neurology">Neurology</SelectItem>
                           <SelectItem value="orthopedics">
                             Orthopedics
+                          </SelectItem>
+                          <SelectItem value="generalsurgery">
+                            General surgery
+                          </SelectItem>
+                          <SelectItem value="Urology">Urology</SelectItem>
+                          <SelectItem value="Nephrology">Nephrology</SelectItem>
+                          <SelectItem value="Endocrinology">
+                            Endocrinology
+                          </SelectItem>
+                          <SelectItem value="Transplant medicine">
+                            Transplant medicine
+                          </SelectItem>
+                          <SelectItem value="Neurosurgery">
+                            Neurosurgery
+                          </SelectItem>
+                          <SelectItem value="Internal Medicine">
+                            Internal Medicine
+                          </SelectItem>
+                          <SelectItem value="Psychiatry">Psychiatry</SelectItem>
+                          <SelectItem value="Pediatrics">Pediatrics</SelectItem>
+                          <SelectItem value="OGyn">OGyn</SelectItem>
+                          <SelectItem value="Oncology">Oncology</SelectItem>
+                          <SelectItem value="Gastroenterology">
+                            Gastroenterology
                           </SelectItem>
                         </SelectContent>
                       </Select>
@@ -296,7 +351,7 @@ export default function AppointmentBooking() {
                           }}
                         >
                           {field.value
-                            ? format(field.value, "PPP")
+                            ? formatToIST(field.value)
                             : "Pick a date"}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
@@ -310,16 +365,23 @@ export default function AppointmentBooking() {
                           mode="single"
                           selected={field.value}
                           onSelect={(date) => {
-                            field.onChange(date);
+                            if (date) {
+                              const istDate = toZonedTime(date, "Asia/Kolkata");
+                              field.onChange(istDate);
+                              setSelectedDate(istDate);
+                              form.setValue("appointmentDate", istDate);
+                            }
                             const calendar =
                               document.getElementById("date-calendar");
                             if (calendar) {
                               calendar.style.display = "none";
                             }
                           }}
-                          disabled={(date) =>
-                            date < new Date() || date < new Date("1900-01-01")
-                          }
+                          disabled={(date) => {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            return date < today;
+                          }}
                           initialFocus
                         />
                       </div>
@@ -334,14 +396,33 @@ export default function AppointmentBooking() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Appointment Time*</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="time"
-                          className="bg-white"
-                          placeholder="Select time"
-                        />
-                      </FormControl>
+                      <Select
+                        onValueChange={(value) => {
+                          const selectedSlot = availableSlots.find(
+                            (slot) => slot.id === value
+                          );
+                          if (selectedSlot) {
+                            field.onChange(
+                              `${selectedSlot.startTime} - ${selectedSlot.endTime}`
+                            );
+                            form.setValue("slotId", selectedSlot.id);
+                          }
+                        }}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="bg-white">
+                            <SelectValue placeholder="Select time" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableSlots.map((slot) => (
+                            <SelectItem key={slot.id} value={slot.id}>
+                              {slot.startTime} - {slot.endTime}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

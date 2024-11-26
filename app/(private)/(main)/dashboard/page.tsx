@@ -196,19 +196,19 @@ export default function EnhancedDoctorDashboard() {
     <div className="min-h-screen bg-gray-50">
       <div className="flex pt-16 justify-center items-center w-full">
         <div className="w-full max-w-7xl px-4">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-800">
-            Welcome, Dr {user?.username || user?.firstName || "User"}!
-          </h2>
-          <Modal>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-3xl font-bold text-gray-800">
+              Welcome, Dr {user?.username || user?.firstName || "User"}!
+            </h2>
+            <Modal>
               <ModalTrigger asChild>
                 <Button>Create Slots</Button>
               </ModalTrigger>
               <ModalContent>
-                <SlotCreationForm doctorId={loggedInEmail} />
+                <SlotCreationForm doctorId={doctorId} />
               </ModalContent>
             </Modal>
-            </div>
+          </div>
           <Card className="mb-8">
             <CardContent className="p-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

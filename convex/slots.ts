@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { mutation,query } from "./_generated/server";
 import { v } from "convex/values";
 
 export const createSlot = mutation({
@@ -93,4 +93,30 @@ export const createSlot = mutation({
     },
   });
   
+  export const getAvailableSlots = query({
+    args: {
+      doctorId: v.string(),
+      date: v.string(),
+    },
+    handler: async (ctx, args) => {
+      const startOfDay = new Date(args.date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(args.date);
+      endOfDay.setHours(23, 59, 59, 999);
+  
+      const slots = await ctx.db
+        .query("slots")
+        .filter((q) => q.eq(q.field("doctorId"), args.doctorId))
+        .filter((q) => q.gte(q.field("startTime"), startOfDay.getTime()))
+        .filter((q) => q.lte(q.field("endTime"), endOfDay.getTime()))
+        .filter((q) => q.eq(q.field("isBooked"), false))
+        .collect();
+  
+      return slots.map((slot) => ({
+        id: slot._id,
+        startTime: new Date(slot.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        endTime: new Date(slot.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      }));
+    },
+  });
   
