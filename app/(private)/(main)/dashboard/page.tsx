@@ -85,6 +85,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { SlotCreationForm } from "@/components/slot-creation-form";
+import { Modal, ModalContent, ModalTrigger } from "@/components/ui/modal";
 
 export default function EnhancedDoctorDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -92,6 +94,7 @@ export default function EnhancedDoctorDashboard() {
   const router = useRouter();
   const { user } = useUser();
   const doctorId = user?.id || "";
+  const [showSlotCreationForm, setShowSlotCreationForm] = useState(false);
 
   const patientData =
     useQuery(api.patients.getAppoitmentsByDoctor, { doctorId }) || [];
@@ -164,7 +167,12 @@ export default function EnhancedDoctorDashboard() {
     { name: "Health Tips", value: 80 },
     { name: "Quick Queries", value: 50 },
   ];
+  const loggedInEmail = user?.emailAddresses[0]?.emailAddress || "";
 
+  // Query to fetch user role from the database
+  const userExists = useQuery(api.users.checkUserEmail, {
+    email: loggedInEmail,
+  });
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
   const handleNavigation = (path: string) => {
@@ -188,10 +196,19 @@ export default function EnhancedDoctorDashboard() {
     <div className="min-h-screen bg-gray-50">
       <div className="flex pt-16 justify-center items-center w-full">
         <div className="w-full max-w-7xl px-4">
-          <h1></h1>
-          <h2 className="text-3xl font-bold text-gray-800 mb-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl font-bold text-gray-800">
             Welcome, Dr {user?.username || user?.firstName || "User"}!
           </h2>
+          <Modal>
+              <ModalTrigger asChild>
+                <Button>Create Slots</Button>
+              </ModalTrigger>
+              <ModalContent>
+                <SlotCreationForm doctorId={loggedInEmail} />
+              </ModalContent>
+            </Modal>
+            </div>
           <Card className="mb-8">
             <CardContent className="p-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

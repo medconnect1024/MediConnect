@@ -78,8 +78,14 @@ export default defineSchema({
       .index("by_email", ["email"])
       .index("by_phoneNumber", ["phoneNumber"])
       .index("by_hospital", ["hospitalId"]),
-     
-  
+      
+    slots: defineTable({
+        doctorId: v.string(),
+        startTime: v.number(), // Unix timestamp
+        endTime: v.number(), // Unix timestamp
+        isBooked: v.boolean(),
+      }).index("by_doctor", ["doctorId", "startTime"]),
+
         appointments: defineTable({
           patientId: v.string(),
           doctorId: v.string(),
@@ -98,10 +104,12 @@ export default defineSchema({
           insuranceDetails: v.optional(v.string()),
           createdAt: v.optional(v.string()),  // Make createdAt optional
           updatedAt: v.optional(v.string()),
+          slotId: v.optional(v.string()),
         })
     .index("by_doctor_id", ["doctorId"])
     .index("by_patient_id", ["patientId"]),
   
+
     prescriptions: defineTable({
       prescriptionId: v.string(),
       doctorId: v.string(),

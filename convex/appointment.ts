@@ -19,6 +19,8 @@ export const addAppointment = mutation({
     notes: v.optional(v.string()),
     reasonForVisit: v.optional(v.string()),
     insuranceDetails: v.optional(v.string()),
+    slotId: v.optional(v.string()),
+
   },
   handler: async (ctx, args) => {
     const appointmentId = await ctx.db.insert('appointments', {
@@ -38,6 +40,7 @@ export const addAppointment = mutation({
       reasonForVisit: args.reasonForVisit,
       insuranceDetails: args.insuranceDetails,
       createdAt: new Date().toISOString(),
+      slotId: args.slotId
     })
     return appointmentId
   },
@@ -287,5 +290,27 @@ export const getLastAppointmentForPatient = query({
       .first();
 
     return appointments;
+  },
+});
+
+
+export const getAvailableSlots = query({
+  args: {
+    doctorId: v.string(),
+    startDate: v.number(),
+    endDate: v.number(),
+  },
+  handler: async (ctx, args) => {
+
+    return await ctx.db
+      .query("slots")
+      .withIndex("by_doctor", (q) => 
+        q
+          .eq("doctorId", args.doctorId)
+          .gte("startTime", args.startDate)
+          .lte("startTime", args.endDate)
+      )
+      .filter((q) => q.eq(q.field("isBooked"), false))
+      .collect();
   },
 });

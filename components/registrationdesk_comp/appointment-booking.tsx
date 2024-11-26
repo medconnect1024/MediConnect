@@ -47,6 +47,7 @@ const formSchema = z.object({
   notes: z.string().optional(),
   reasonForVisit: z.string().optional(),
   insuranceDetails: z.string().optional(),
+  slotId: z.string().optional(),
 });
 
 export default function AppointmentBooking() {

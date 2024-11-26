@@ -33,6 +33,7 @@ import type * as patientsearch from "../patientsearch.js";
 import type * as prescriptions from "../prescriptions.js";
 import type * as scheduledCalls from "../scheduledCalls.js";
 import type * as service_openai from "../service/openai.js";
+import type * as slots from "../slots.js";
 import type * as users from "../users.js";
 import type * as watiWebhook from "../watiWebhook.js";
 import type * as watsappapi from "../watsappapi.js";
@@ -64,6 +65,7 @@ declare const fullApi: ApiFromModules<{
   prescriptions: typeof prescriptions;
   scheduledCalls: typeof scheduledCalls;
   "service/openai": typeof service_openai;
+  slots: typeof slots;
   users: typeof users;
   watiWebhook: typeof watiWebhook;
   watsappapi: typeof watsappapi;
