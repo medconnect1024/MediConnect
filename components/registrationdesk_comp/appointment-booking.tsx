@@ -23,7 +23,6 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -50,8 +49,19 @@ const formSchema = z.object({
 });
 
 type FormSchema = z.infer<typeof formSchema>;
+type AppointmentBookingProps = {
+  onClose: () => void;
+};
 
-export default function AppointmentBooking() {
+export default function AppointmentBooking({
+  onClose,
+}: AppointmentBookingProps) {
+  const formatDate = (date: Date): string => {
+    const offset = date.getTimezoneOffset();
+    const adjustedDate = new Date(date.getTime() - offset * 60 * 1000);
+    return adjustedDate.toISOString();
+  };
+
   const { toast } = useToast();
   const addAppointment = useMutation(api.appointment.addAppointment);
   const patients = useQuery(api.patients.getAllPatients);
@@ -63,6 +73,7 @@ export default function AppointmentBooking() {
   const [availableSlots, setAvailableSlots] = useState<
     { id: Id<"slots">; startTime: string; endTime: string }[]
   >([]);
+  const [isFormVisible, setIsFormVisible] = useState(true);
 
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
@@ -78,20 +89,10 @@ export default function AppointmentBooking() {
     selectedDoctor && selectedDate
       ? {
           doctorId: selectedDoctor,
-          date: format(selectedDate, "yyyy-MM-dd"),
+          date: formatDate(selectedDate),
         }
       : "skip"
   );
-
-  // Print selectedDate whenever it changes
-  useEffect(() => {
-    if (selectedDate) {
-      console.log(
-        "Selected Date line no 89:",
-        format(selectedDate, "yyyy-MM-dd")
-      );
-    }
-  }, [selectedDate]); // This will log whenever selectedDate changes
 
   useEffect(() => {
     if (getAvailableSlots) {
@@ -102,7 +103,7 @@ export default function AppointmentBooking() {
   const onSubmit = async (values: FormSchema) => {
     try {
       const appointmentId = `APT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const formattedDate = format(values.appointmentDate, "yyyy-MM-dd");
+      const formattedDate = formatDate(values.appointmentDate);
       await addAppointment({
         ...values,
         appointmentId,
@@ -114,6 +115,11 @@ export default function AppointmentBooking() {
         variant: "default",
       });
       form.reset();
+      setSelectedDoctor(null);
+      setSelectedDate(null);
+      setAvailableSlots([]);
+      onClose();
+      setIsFormVisible(false);
       router.push("/appointmment");
     } catch (error) {
       toast({
@@ -124,9 +130,9 @@ export default function AppointmentBooking() {
     }
   };
 
-  const formatDate = (date: Date) => {
-    return format(date, "yyyy-MM-dd");
-  };
+  if (!isFormVisible) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 space-y-8">
@@ -202,6 +208,7 @@ export default function AppointmentBooking() {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="speciality"
@@ -375,16 +382,14 @@ export default function AppointmentBooking() {
                           selected={field.value}
                           onSelect={(date) => {
                             if (date) {
-                              console.log("line no 375", date);
                               field.onChange(date);
                               setSelectedDate(date);
                               form.setValue("appointmentDate", date);
-                              console.log("line no 382", date);
-                            }
-                            const calendar =
-                              document.getElementById("date-calendar");
-                            if (calendar) {
-                              calendar.style.display = "none";
+                              const calendar =
+                                document.getElementById("date-calendar");
+                              if (calendar) {
+                                calendar.style.display = "none";
+                              }
                             }
                           }}
                           disabled={(date) => {
@@ -503,7 +508,6 @@ export default function AppointmentBooking() {
                       <FormControl>
                         <RadioGroup
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
                           className="flex space-x-4"
                         >
                           <FormItem className="flex items-center space-x-2">

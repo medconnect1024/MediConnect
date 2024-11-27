@@ -64,6 +64,9 @@ export default function AppointmentPage() {
   const doctors = useQuery(api.users.getDoctors) || [];
   const appointments = useQuery(api.appointment.getAppointments) || [];
 
+  const handleBookingClose = () => {
+    setIsBookingOpen(false);
+  };
   const handleSelect = (range: DateRange | undefined) => {
     setDateRange(range);
     if (range?.from) {
@@ -103,10 +106,6 @@ export default function AppointmentPage() {
   const sortedDates = Object.keys(groupedAppointments).sort(
     (a, b) => parseISO(a).getTime() - parseISO(b).getTime()
   );
-
-  const handleBookingClose = () => {
-    setIsBookingOpen(false);
-  };
 
   return (
     <div className="min-h-screen w-full bg-background flex flex-col">
@@ -213,7 +212,7 @@ export default function AppointmentPage() {
                       Fill in the details to book a new appointment.
                     </DialogDescription>
                   </DialogHeader>
-                  <AppointmentBooking />
+                  <AppointmentBooking onClose={handleBookingClose} />
                 </DialogContent>
               </Dialog>
               <DropdownMenu>
