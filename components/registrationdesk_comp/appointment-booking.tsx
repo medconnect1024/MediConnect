@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -25,8 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CalendarIcon } from "lucide-react";
-import { format, addDays } from "date-fns";
-import { toZonedTime } from "date-fns-tz";
+import { format } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -95,10 +92,11 @@ export default function AppointmentBooking() {
   const onSubmit = async (values: FormSchema) => {
     try {
       const appointmentId = `APT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const formattedDate = format(values.appointmentDate, "yyyy-MM-dd");
       await addAppointment({
         ...values,
         appointmentId,
-        appointmentDate: values.appointmentDate.toISOString(),
+        appointmentDate: formattedDate,
       });
       toast({
         title: "Success",
@@ -115,10 +113,11 @@ export default function AppointmentBooking() {
       });
     }
   };
-  const formatToIST = (date: Date) => {
-    const istDate = toZonedTime(date, "Asia/Kolkata");
-    return format(istDate, "yyyy-MM-dd");
+
+  const formatDate = (date: Date) => {
+    return format(date, "yyyy-MM-dd");
   };
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 space-y-8">
       <Card className="max-w-4xl mx-auto">
@@ -351,7 +350,7 @@ export default function AppointmentBooking() {
                           }}
                         >
                           {field.value
-                            ? formatToIST(field.value)
+                            ? formatDate(field.value)
                             : "Pick a date"}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
@@ -366,10 +365,11 @@ export default function AppointmentBooking() {
                           selected={field.value}
                           onSelect={(date) => {
                             if (date) {
-                              const istDate = toZonedTime(date, "Asia/Kolkata");
-                              field.onChange(istDate);
-                              setSelectedDate(istDate);
-                              form.setValue("appointmentDate", istDate);
+                              const selectedDate = new Date(date);
+                              selectedDate.setHours(0, 0, 0, 0);
+                              field.onChange(selectedDate);
+                              setSelectedDate(selectedDate);
+                              form.setValue("appointmentDate", selectedDate);
                             }
                             const calendar =
                               document.getElementById("date-calendar");

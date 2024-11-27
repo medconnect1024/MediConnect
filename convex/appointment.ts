@@ -314,3 +314,22 @@ export const getAvailableSlots = query({
       .collect();
   },
 });
+
+export const rescheduleAppointment = mutation({
+  args: {
+    appointmentId: v.id("appointments"),
+    appointmentDate: v.string(),
+    appointmentTime: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { appointmentId, appointmentDate, appointmentTime } = args;
+
+    // Update the appointment in the database
+    await ctx.db.patch(appointmentId, {
+      appointmentDate,
+      appointmentTime,
+    });
+
+    return { success: true };
+  },
+});

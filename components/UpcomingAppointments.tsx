@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -29,6 +29,9 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { useRouter } from "next/navigation";
+import { RescheduleModal } from "./reschedule-modal";
+import { Id } from "@/convex/_generated/dataModel";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
@@ -37,7 +40,10 @@ export function UpcomingAppointments() {
   const doctorId = user?.id || "";
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-
+  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<Id<"appointments"> | null>(null);
+  const router = useRouter();
   const appointments = useQuery(
     api.appointment.getAppointmentsByDoctorAndDate,
     {
@@ -49,6 +55,10 @@ export function UpcomingAppointments() {
   const patientRetentionData =
     useQuery(api.patients.getPatientRetentionData, { doctorId }) || [];
 
+  const rescheduleAppointment = useMutation(
+    api.appointment.rescheduleAppointment
+  );
+
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       setSelectedDate(date);
@@ -56,11 +66,36 @@ export function UpcomingAppointments() {
     }
   };
 
+  const handleNavigation = (path: string) => {
+    router.push(path);
+  };
+
+  const handleRescheduleClick = (appointmentId: Id<"appointments">) => {
+    setSelectedAppointment(appointmentId);
+    setIsRescheduleModalOpen(true);
+  };
+
+  const handleReschedule = async (date: string, time: string) => {
+    if (selectedAppointment) {
+      try {
+        await rescheduleAppointment({
+          appointmentId: selectedAppointment,
+          appointmentDate: date,
+          appointmentTime: time,
+        });
+        setIsRescheduleModalOpen(false);
+        setSelectedAppointment(null);
+        // Refetch appointments or update the local state
+      } catch (error) {
+        console.error("Error rescheduling appointment:", error);
+        // Handle error (e.g., show an error message to the user)
+      }
+    }
+  };
+
   useEffect(() => {
     console.log("Doctor ID:", doctorId);
     console.log("Selected Date:", format(selectedDate, "yyyy-MM-dd"));
-
-    // console.log("Appointments:", appointments);
   }, [appointments]);
 
   if (!appointments) {
@@ -110,7 +145,7 @@ export function UpcomingAppointments() {
             <TableBody>
               {appointments && appointments.length > 0 ? (
                 appointments.map((appointment) => (
-                  <TableRow key={appointment.appointmentId}>
+                  <TableRow key={appointment._id}>
                     <TableCell className="font-medium text-gray-800">
                       {appointment.patientId}
                     </TableCell>
@@ -128,12 +163,7 @@ export function UpcomingAppointments() {
                         variant="outline"
                         size="sm"
                         className="mr-2 text-blue-600 border-blue-300 hover:bg-blue-50"
-                        onClick={() => {
-                          console.log(
-                            "View appointment",
-                            appointment.appointmentId
-                          );
-                        }}
+                        onClick={() => handleNavigation(`/consultation`)}
                       >
                         View
                       </Button>
@@ -141,12 +171,7 @@ export function UpcomingAppointments() {
                         variant="outline"
                         size="sm"
                         className="text-gray-600 border-gray-300 hover:bg-gray-50"
-                        onClick={() => {
-                          console.log(
-                            "Reschedule appointment",
-                            appointment.appointmentId
-                          );
-                        }}
+                        onClick={() => handleRescheduleClick(appointment._id)}
                       >
                         Reschedule
                       </Button>
@@ -214,6 +239,12 @@ export function UpcomingAppointments() {
           </div>
         </CardContent>
       </Card>
+      <RescheduleModal
+        isOpen={isRescheduleModalOpen}
+        onClose={() => setIsRescheduleModalOpen(false)}
+        onReschedule={handleReschedule}
+        //doctorId="doctor-id-123"
+      />
     </div>
   );
 }
