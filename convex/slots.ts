@@ -3,55 +3,18 @@ import { v } from "convex/values";
 
 // Helper function to convert IST to UTC
 function istToUtc(date: string, time: string): number {
-  try {
-    // Parse the date and time inputs
-    const [year, month, day] = date.split('-').map(Number);
-    const [hours, minutes] = time.split(':').map(Number);
-
-    // Validate the parsed inputs
-    if (
-      isNaN(year) || isNaN(month) || isNaN(day) ||
-      isNaN(hours) || isNaN(minutes) ||
-      month < 1 || month > 12 || day < 1 || day > 31 ||
-      hours < 0 || hours > 23 || minutes < 0 || minutes > 59
-    ) {
-      throw new Error("Invalid date or time format");
-    }
-
-    // Create IST date object
-    const istDate = new Date(year, month - 1, day, hours, minutes);
-
-    // Convert IST to UTC timestamp
-    return istDate.getTime() - 5.5 * 60 * 60 * 1000;
-  } catch (error) {
-    console.error("Error converting IST to UTC:", error instanceof Error ? error.message : "Unknown error");
-    throw new Error("Invalid date or time provided");
-  }
+  const [year, month, day] = date.split('-').map(Number);
+  const [hours, minutes] = time.split(':').map(Number);
+  const istDate = new Date(year, month - 1, day, hours, minutes);
+  return istDate.getTime() - (5.5 * 60 * 60 * 1000); // Subtract 5 hours and 30 minutes
 }
 
 // Helper function to convert UTC to IST string
 function utcToIstString(utcTimestamp: number): string {
-  try {
-    // Validate the UTC timestamp
-    if (isNaN(utcTimestamp) || utcTimestamp <= 0) {
-      throw new Error("Invalid UTC timestamp provided.");
-    }
-
-    // Convert to IST
-    const istDate = new Date(utcTimestamp + 5.5 * 60 * 60 * 1000);
-
-    // Format the date using Intl.DateTimeFormat
-    return istDate.toLocaleString('en-IN', {
-      timeZone: 'Asia/Kolkata',
-      hour12: false, // Use 24-hour format
-    });
-  } catch (error) {
-    console.error("Error converting UTC to IST:", error instanceof Error ? error.message : "Unknown error");
-    throw new Error("Invalid UTC timestamp provided");
-  }
+  const istDate = new Date(utcTimestamp + (5.5 * 60 * 60 * 1000));
+  return istDate.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
 }
 
-// Mutation to create a single slot
 export const createSlot = mutation({
   args: {
     doctorId: v.string(),
@@ -73,62 +36,73 @@ export const createSlot = mutation({
   },
 });
 
-// Mutation to create bulk slots
 export const createBulkSlots = mutation({
   args: {
     doctorId: v.string(),
-    startDate: v.string(),
-    endDate: v.string(),
-    dailyStartTime: v.string(),
-    dailyEndTime: v.string(),
-    slotDuration: v.number(),
-    breakStartTime: v.optional(v.string()),
-    breakEndTime: v.optional(v.string()),
+    startDate: v.string(), // Format: "YYYY-MM-DD"
+    endDate: v.string(), // Format: "YYYY-MM-DD"
+    dailyStartTime: v.string(), // Format: "HH:mm"
+    dailyEndTime: v.string(), // Format: "HH:mm"
+    slotDuration: v.number(), // Duration in minutes
+    breakStartTime: v.optional(v.string()), // Format: "HH:mm"
+    breakEndTime: v.optional(v.string()), // Format: "HH:mm"
     includeWeekends: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const slotIds: any[] | PromiseLike<any[]> = [];
+    const slotIds = [];
+
     const startDate = new Date(args.startDate);
     const endDate = new Date(args.endDate);
 
     for (let date = startDate; date <= endDate; date.setDate(date.getDate() + 1)) {
+      // Skip weekends if not included
       if (!args.includeWeekends && (date.getDay() === 0 || date.getDay() === 6)) {
         continue;
       }
 
       const dateString = date.toISOString().split('T')[0];
-      const dailyStartTimeUtc = istToUtc(dateString, args.dailyStartTime);
-      const dailyEndTimeUtc = istToUtc(dateString, args.dailyEndTime);
-      let currentTimeUtc = dailyStartTimeUtc;
+      const [startHour, startMinute] = args.dailyStartTime.split(':').map(Number);
+      const [endHour, endMinute] = args.dailyEndTime.split(':').map(Number);
 
-      let breakStartTimeUtc, breakEndTimeUtc;
+      let currentTime = new Date(date);
+      currentTime.setHours(startHour, startMinute, 0, 0);
+      const dailyEndTime = new Date(date);
+      dailyEndTime.setHours(endHour, endMinute, 0, 0);
+
+      let breakStartTime, breakEndTime;
       if (args.breakStartTime && args.breakEndTime) {
-        breakStartTimeUtc = istToUtc(dateString, args.breakStartTime);
-        breakEndTimeUtc = istToUtc(dateString, args.breakEndTime);
+        const [breakStartHour, breakStartMinute] = args.breakStartTime.split(':').map(Number);
+        const [breakEndHour, breakEndMinute] = args.breakEndTime.split(':').map(Number);
+        breakStartTime = new Date(date);
+        breakStartTime.setHours(breakStartHour, breakStartMinute, 0, 0);
+        breakEndTime = new Date(date);
+        breakEndTime.setHours(breakEndHour, breakEndMinute, 0, 0);
       }
 
-      while (currentTimeUtc + args.slotDuration * 60 * 1000 <= dailyEndTimeUtc) {
-        if (
-          breakStartTimeUtc &&
-          breakEndTimeUtc &&
-          currentTimeUtc >= breakStartTimeUtc &&
-          currentTimeUtc < breakEndTimeUtc
-        ) {
-          currentTimeUtc = breakEndTimeUtc;
+      while (currentTime < dailyEndTime) {
+        // Skip break time
+        if (breakStartTime && breakEndTime && currentTime >= breakStartTime && currentTime < breakEndTime) {
+          currentTime = new Date(breakEndTime);
           continue;
         }
 
-        const slot = {
-          doctorId: args.doctorId,
-          startTime: currentTimeUtc,
-          endTime: currentTimeUtc + args.slotDuration * 60 * 1000,
-          isBooked: false,
-        };
+        const startTime = istToUtc(dateString, currentTime.toTimeString().slice(0, 5));
+        const endTime = startTime + args.slotDuration * 60 * 1000;
 
-        const slotId = await ctx.db.insert("slots", slot);
-        slotIds.push(slotId);
+        // Ensure the slot doesn't extend past the daily end time
+        if (endTime <= istToUtc(dateString, dailyEndTime.toTimeString().slice(0, 5))) {
+          const slot = {
+            doctorId: args.doctorId,
+            startTime,
+            endTime,
+            isBooked: false
+          };
 
-        currentTimeUtc += args.slotDuration * 60 * 1000;
+          const slotId = await ctx.db.insert("slots", slot);
+          slotIds.push(slotId);
+        }
+
+        currentTime.setTime(currentTime.getTime() + args.slotDuration * 60 * 1000);
       }
     }
 
@@ -139,29 +113,26 @@ export const createBulkSlots = mutation({
 export const getAvailableSlots = query({
   args: {
     doctorId: v.string(),
-    date: v.string(), // Receive the date as string in local time (IST)
+    date: v.string(),
   },
   handler: async (ctx, args) => {
-    console.log("Received doctorId:", args.doctorId);
-    console.log("Received date:", args.date);
-    // Convert the local date to UTC
-    const localDate = new Date(args.date);  // The date comes in as local time (IST)
-    const startOfDayUtc = new Date(localDate.setHours(0, 0, 0, 0)).getTime(); // Convert start of day to UTC
-    const endOfDayUtc = new Date(localDate.setHours(23, 59, 59, 999)).getTime(); // Convert end of day to UTC
+    const startOfDay = new Date(args.date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(args.date);
+    endOfDay.setHours(23, 59, 59, 999);
 
     const slots = await ctx.db
       .query("slots")
       .filter((q) => q.eq(q.field("doctorId"), args.doctorId))
-      .filter((q) => q.gte(q.field("startTime"), startOfDayUtc))
-      .filter((q) => q.lte(q.field("endTime"), endOfDayUtc))
+      .filter((q) => q.gte(q.field("startTime"), startOfDay.getTime()))
+      .filter((q) => q.lte(q.field("endTime"), endOfDay.getTime()))
       .filter((q) => q.eq(q.field("isBooked"), false))
       .collect();
 
-    // Map the UTC time back to IST for frontend
     return slots.map((slot) => ({
       id: slot._id,
-      startTime: utcToIstString(slot.startTime),
-      endTime: utcToIstString(slot.endTime),
+      startTime: new Date(slot.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      endTime: new Date(slot.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }));
   },
 });

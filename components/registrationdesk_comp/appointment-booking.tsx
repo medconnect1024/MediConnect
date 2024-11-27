@@ -78,10 +78,20 @@ export default function AppointmentBooking() {
     selectedDoctor && selectedDate
       ? {
           doctorId: selectedDoctor,
-          date: selectedDate.toISOString().split("T")[0],
+          date: format(selectedDate, "yyyy-MM-dd"),
         }
       : "skip"
   );
+
+  // Print selectedDate whenever it changes
+  useEffect(() => {
+    if (selectedDate) {
+      console.log(
+        "Selected Date line no 89:",
+        format(selectedDate, "yyyy-MM-dd")
+      );
+    }
+  }, [selectedDate]); // This will log whenever selectedDate changes
 
   useEffect(() => {
     if (getAvailableSlots) {
@@ -360,30 +370,30 @@ export default function AppointmentBooking() {
                         className="absolute mt-2 bg-white p-2 rounded-md shadow-md z-50"
                         style={{ display: "none" }}
                       >
-                  <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={(date) => {
-                          if (date) {
-                            const selectedDate = new Date(date);
-                            // Remove the time zone offset
-                            selectedDate.setMinutes(selectedDate.getMinutes() + selectedDate.getTimezoneOffset());
-                            field.onChange(selectedDate);
-                            setSelectedDate(selectedDate);
-                            form.setValue("appointmentDate", selectedDate);
-                          }
-                          const calendar = document.getElementById("date-calendar");
-                          if (calendar) {
-                            calendar.style.display = "none";
-                          }
-                        }}
-                        disabled={(date) => {
-                          const today = new Date();
-                          today.setHours(0, 0, 0, 0);
-                          return date < today;
-                        }}
-                        initialFocus
-                      />
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={(date) => {
+                            if (date) {
+                              console.log("line no 375", date);
+                              field.onChange(date);
+                              setSelectedDate(date);
+                              form.setValue("appointmentDate", date);
+                              console.log("line no 382", date);
+                            }
+                            const calendar =
+                              document.getElementById("date-calendar");
+                            if (calendar) {
+                              calendar.style.display = "none";
+                            }
+                          }}
+                          disabled={(date) => {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            return date < today;
+                          }}
+                          initialFocus
+                        />
                       </div>
                       <FormMessage />
                     </FormItem>
