@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Plus, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-
+import { TEST_CATEGORIES } from "@/components/data/investigations";
 type PrescriptionItem = {
   id: string;
   name: string;
@@ -20,12 +20,12 @@ interface InvestigationsPageProps {
 }
 
 // Mock data for related investigations
-const TEST_CATEGORIES: { [key: string]: string[] } = {
-  Haematology: ["Total RBC Count", "Hemoglobin", "Platelet Count", "ESR"],
-  Biochemistry: ["Blood Sugar", "Liver Function Test", "Kidney Function Test"],
-  "Liver Function Test": ["ALT", "AST", "Bilirubin"],
-  Microbiology: ["Culture Test", "Gram Stain", "KOH Test"],
-};
+// const TEST_CATEGORIES: { [key: string]: string[] } = {
+//   Haematology: ["Total RBC Count", "Hemoglobin", "Platelet Count", "ESR"],
+//   Biochemistry: ["Blood Sugar", "Liver Function Test", "Kidney Function Test"],
+//   "Liver Function Test": ["ALT", "AST", "Bilirubin"],
+//   Microbiology: ["Culture Test", "Gram Stain", "KOH Test"],
+// };
 
 export default function InvestigationsPage({
   investigations,

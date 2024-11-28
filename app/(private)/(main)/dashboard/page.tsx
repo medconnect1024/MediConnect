@@ -202,7 +202,7 @@ export default function EnhancedDoctorDashboard() {
             </h2>
             <Modal>
               <ModalTrigger asChild>
-                <Button>Create Slots</Button>
+                <Button className=" bg-blue-500 ">Create Slots</Button>
               </ModalTrigger>
               <ModalContent>
                 <SlotCreationForm doctorId={doctorId} />

@@ -22,20 +22,8 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { MEDICINE_NAMES } from "@/components/data/medicineNames";
 
-// Predefined constant array of medicine names
-const MEDICINE_NAMES = [
-  "Paracetamol",
-  "Ibuprofen",
-  "Amoxicillin",
-  "Metformin",
-  "Aspirin",
-  "Lisinopril",
-  "Atorvastatin",
-  "Simvastatin",
-  "Levothyroxine",
-  "Omeprazole",
-];
 
 type MedicineItem = {
   id: string;

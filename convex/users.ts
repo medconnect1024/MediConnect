@@ -193,6 +193,11 @@ export const updateUser = mutation({
     state: v.optional(v.string()),
     zipCode: v.optional(v.string()),
     website: v.optional(v.string()),
+    // New fields
+    stateRegistrationNumber: v.optional(v.string()),
+    nmcRegistrationId: v.optional(v.string()),
+    licenseExpiryDate: v.optional(v.string()),
+    certificateStorageId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();

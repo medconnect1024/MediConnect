@@ -10,6 +10,7 @@ import {
   Upload,
   UserCircle,
   Stethoscope,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,19 +24,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
 interface UserData {
-  _id?: string; // Add this line
-  _creationTime?: number; // Add this line
+  _id?: string;
+  _creationTime?: number;
   userId: string;
   email: string;
   firstName?: string;
@@ -55,22 +49,51 @@ interface UserData {
   state?: string;
   zipCode?: string;
   website?: string;
+  stateRegistrationNumber?: string;
+  nmcRegistrationId?: string;
+  licenseExpiryDate?: string;
+  certificateStorageId?: string;
 }
+
 export default function DoctorProfileUpdate() {
   const [step, setStep] = useState(1);
   const { toast } = useToast();
 
   const user = useQuery(api.users.currentUser);
   const updateUser = useMutation(api.users.updateUser);
+  const generateUploadUrl = useMutation(api.labReports.generateUploadUrl);
+  const generateFileUrl = useMutation(api.prescriptions.generateFileUrl);
 
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [fileUrls, setFileUrls] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (user) {
       setUserData(user);
+      fetchFileUrls(user);
     }
   }, [user]);
+
+  const fetchFileUrls = async (userData: UserData) => {
+    const urlPromises = [
+      userData.profileImageUrl &&
+        generateFileUrl({ storageId: userData.profileImageUrl }),
+      userData.logo && generateFileUrl({ storageId: userData.logo }),
+      userData.certificateStorageId &&
+        generateFileUrl({ storageId: userData.certificateStorageId }),
+    ];
+
+    const [profileImageUrl, logoUrl, certificateUrl] =
+      await Promise.all(urlPromises);
+
+    setFileUrls({
+      profileImageUrl: profileImageUrl || "",
+      logo: logoUrl || "",
+      certificateStorageId: certificateUrl || "",
+    });
+  };
 
   const handleInputChange = (
     field: keyof UserData,
@@ -87,12 +110,53 @@ export default function DoctorProfileUpdate() {
   };
 
   const handleFileUpload = async (
-    field: "profileImageUrl" | "logo",
+    field: "profileImageUrl" | "logo" | "certificateStorageId",
     file: File
   ) => {
-    // Simulated file upload - in a real scenario, you'd upload to a file storage service
-    const fakeUrl = URL.createObjectURL(file);
-    handleInputChange(field, fakeUrl);
+    setIsUploading(true);
+    try {
+      const fileType = file.type.startsWith("image/") ? "image" : "pdf";
+
+      // Get upload URL from Convex
+      const uploadUrl = await generateUploadUrl();
+
+      // Upload file to Convex storage
+      const result = await fetch(uploadUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": file.type,
+        },
+        body: file,
+      });
+
+      if (!result.ok) {
+        throw new Error("Failed to upload file");
+      }
+
+      // Get the storage ID from the response
+      const { storageId } = await result.json();
+
+      // Update the userData state with the new storageId
+      handleInputChange(field, storageId);
+
+      // Fetch and update the file URL
+      const fileUrl = await generateFileUrl({ storageId });
+      setFileUrls((prev) => ({ ...prev, [field]: fileUrl }));
+
+      toast({
+        title: "Success",
+        description: `${fileType === "image" ? "Image" : "Certificate"} uploaded successfully.`,
+      });
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      toast({
+        title: "Error",
+        description: "Failed to upload file. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -135,8 +199,8 @@ export default function DoctorProfileUpdate() {
   }
 
   return (
-    <div className="w-full p-4 md:p-8">
-      <div className="w-full mx-auto max-w-3xl">
+    <div className="relative min-h-screen top-10">
+      <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <div className="flex justify-center space-x-8">
             {[
@@ -167,8 +231,8 @@ export default function DoctorProfileUpdate() {
                   Please provide your basic contact information
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First Name</Label>
                     <Input
@@ -189,52 +253,57 @@ export default function DoctorProfileUpdate() {
                       }
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={userData.email}
-                    disabled
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={userData.phone || ""}
-                    onChange={(e) => handleInputChange("phone", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="profileImageUrl">Profile Picture</Label>
-                  <div className="flex items-center space-x-4">
-                    {userData.profileImageUrl && (
-                      <img
-                        src={userData.profileImageUrl}
-                        alt="Profile"
-                        className="h-16 w-16 rounded-full object-cover"
-                      />
-                    )}
-                    <Label
-                      htmlFor="profileImageUrl"
-                      className="flex cursor-pointer items-center space-x-2 rounded-md border border-dashed border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
-                    >
-                      <Upload className="h-4 w-4" />
-                      <span>Upload Picture</span>
-                      <Input
-                        id="profileImageUrl"
-                        type="file"
-                        className="hidden"
-                        accept="image/*"
-                        onChange={(e) =>
-                          e.target.files &&
-                          handleFileUpload("profileImageUrl", e.target.files[0])
-                        }
-                      />
-                    </Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={userData.email}
+                      disabled
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={userData.phone || ""}
+                      onChange={(e) =>
+                        handleInputChange("phone", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-3">
+                    <Label htmlFor="profileImageUrl">Profile Picture</Label>
+                    <div className="flex items-center space-x-4">
+                      {fileUrls.profileImageUrl && (
+                        <img
+                          src={fileUrls.profileImageUrl}
+                          alt="Profile"
+                          className="h-16 w-16 rounded-full object-cover"
+                        />
+                      )}
+                      <Label
+                        htmlFor="profileImageUrl"
+                        className="flex cursor-pointer items-center space-x-2 rounded-md border border-dashed border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                      >
+                        <Upload className="h-4 w-4" />
+                        <span>Upload Picture</span>
+                        <Input
+                          id="profileImageUrl"
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={(e) =>
+                            e.target.files &&
+                            handleFileUpload(
+                              "profileImageUrl",
+                              e.target.files[0]
+                            )
+                          }
+                        />
+                      </Label>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -246,72 +315,166 @@ export default function DoctorProfileUpdate() {
               <CardHeader>
                 <CardTitle>Professional Information</CardTitle>
                 <CardDescription>
-                  Tell us about your medical practice
+                  Tell us about your medical practice and credentials
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="specialization">Specialization</Label>
-                  <Input
-                    id="specialization"
-                    value={userData.specialization || ""}
-                    onChange={(e) =>
-                      handleInputChange("specialization", e.target.value)
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="licenseNumber">Medical License Number</Label>
-                  <Input
-                    id="licenseNumber"
-                    value={userData.licenseNumber || ""}
-                    onChange={(e) =>
-                      handleInputChange("licenseNumber", e.target.value)
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="yearsOfPractice">Years of Practice</Label>
-                  <Input
-                    id="yearsOfPractice"
-                    type="number"
-                    value={userData.yearsOfPractice || ""}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "yearsOfPractice",
-                        parseInt(e.target.value)
-                      )
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Practice Type</Label>
-                  <RadioGroup
-                    value={userData.practiceType || ""}
-                    onValueChange={(value) =>
-                      handleInputChange(
-                        "practiceType",
-                        value as UserData["practiceType"]
-                      )
-                    }
-                  >
-                    {["Private", "Hospital", "Clinic"].map((type) => (
-                      <div key={type} className="flex items-center space-x-2">
-                        <RadioGroupItem value={type} id={type.toLowerCase()} />
-                        <Label htmlFor={type.toLowerCase()}>{type}</Label>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="specialization">Specialization</Label>
+                    <Input
+                      id="specialization"
+                      value={userData.specialization || ""}
+                      onChange={(e) =>
+                        handleInputChange("specialization", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="licenseNumber">
+                      Medical License Number
+                    </Label>
+                    <Input
+                      id="licenseNumber"
+                      value={userData.licenseNumber || ""}
+                      onChange={(e) =>
+                        handleInputChange("licenseNumber", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="yearsOfPractice">Years of Practice</Label>
+                    <Input
+                      id="yearsOfPractice"
+                      type="number"
+                      value={userData.yearsOfPractice || ""}
+                      onChange={(e) =>
+                        handleInputChange(
+                          "yearsOfPractice",
+                          parseInt(e.target.value)
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Practice Type</Label>
+                    <RadioGroup
+                      value={userData.practiceType || ""}
+                      onValueChange={(value) =>
+                        handleInputChange(
+                          "practiceType",
+                          value as UserData["practiceType"]
+                        )
+                      }
+                    >
+                      <div className="flex space-x-4">
+                        {["Private", "Hospital", "Clinic"].map((type) => (
+                          <div
+                            key={type}
+                            className="flex items-center space-x-2"
+                          >
+                            <RadioGroupItem
+                              value={type}
+                              id={type.toLowerCase()}
+                            />
+                            <Label htmlFor={type.toLowerCase()}>{type}</Label>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </RadioGroup>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Professional Bio</Label>
-                  <Textarea
-                    id="bio"
-                    placeholder="Tell us about your experience and expertise..."
-                    value={userData.bio || ""}
-                    onChange={(e) => handleInputChange("bio", e.target.value)}
-                    className="h-32"
-                  />
+                    </RadioGroup>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="stateRegistrationNumber">
+                      State Medical Council Registration No.
+                    </Label>
+                    <Input
+                      id="stateRegistrationNumber"
+                      value={userData.stateRegistrationNumber || ""}
+                      onChange={(e) =>
+                        handleInputChange(
+                          "stateRegistrationNumber",
+                          e.target.value
+                        )
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nmcRegistrationId">
+                      NMC Registration ID
+                    </Label>
+                    <Input
+                      id="nmcRegistrationId"
+                      value={userData.nmcRegistrationId || ""}
+                      onChange={(e) =>
+                        handleInputChange("nmcRegistrationId", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="licenseExpiryDate">
+                      License Expiry Date
+                    </Label>
+                    <Input
+                      id="licenseExpiryDate"
+                      type="date"
+                      value={userData.licenseExpiryDate || ""}
+                      onChange={(e) =>
+                        handleInputChange("licenseExpiryDate", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-3">
+                    <Label htmlFor="certificateStorageId">
+                      Upload Your Certificate
+                    </Label>
+                    <div className="flex items-center space-x-4">
+                      {fileUrls.certificateStorageId && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            window.open(fileUrls.certificateStorageId, "_blank")
+                          }
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          View Certificate
+                        </Button>
+                      )}
+                      <Label
+                        htmlFor="certificateStorageId"
+                        className="flex cursor-pointer items-center space-x-2 rounded-md border border-dashed border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                      >
+                        <Upload className="h-4 w-4" />
+                        <span>
+                          {isUploading ? "Uploading..." : "Upload Certificate"}
+                        </span>
+                        <Input
+                          id="certificateStorageId"
+                          type="file"
+                          className="hidden"
+                          accept=".pdf,image/*"
+                          onChange={(e) =>
+                            e.target.files &&
+                            handleFileUpload(
+                              "certificateStorageId",
+                              e.target.files[0]
+                            )
+                          }
+                          disabled={isUploading}
+                        />
+                      </Label>
+                    </div>
+                  </div>
+                  <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-3">
+                    <Label htmlFor="bio">Professional Bio</Label>
+                    <Textarea
+                      id="bio"
+                      placeholder="Tell us about your experience and expertise..."
+                      value={userData.bio || ""}
+                      onChange={(e) => handleInputChange("bio", e.target.value)}
+                      className="h-32"
+                    />
+                  </div>
                 </div>
               </CardContent>
             </>
@@ -325,57 +488,57 @@ export default function DoctorProfileUpdate() {
                   Enter your practice location details
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="clinicName">Clinic/Hospital Name</Label>
-                  <Input
-                    id="clinicName"
-                    value={userData.clinicName || ""}
-                    onChange={(e) =>
-                      handleInputChange("clinicName", e.target.value)
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="logo">Practice Logo</Label>
-                  <div className="flex items-center space-x-4">
-                    {userData.logo && (
-                      <img
-                        src={userData.logo}
-                        alt="Logo"
-                        className="h-16 w-16 rounded object-contain"
-                      />
-                    )}
-                    <Label
-                      htmlFor="logo"
-                      className="flex cursor-pointer items-center space-x-2 rounded-md border border-dashed border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
-                    >
-                      <Upload className="h-4 w-4" />
-                      <span>Upload Logo</span>
-                      <Input
-                        id="logo"
-                        type="file"
-                        className="hidden"
-                        accept="image/*"
-                        onChange={(e) =>
-                          e.target.files &&
-                          handleFileUpload("logo", e.target.files[0])
-                        }
-                      />
-                    </Label>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="clinicName">Clinic/Hospital Name</Label>
+                    <Input
+                      id="clinicName"
+                      value={userData.clinicName || ""}
+                      onChange={(e) =>
+                        handleInputChange("clinicName", e.target.value)
+                      }
+                    />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address">Street Address</Label>
-                  <Input
-                    id="address"
-                    value={userData.address || ""}
-                    onChange={(e) =>
-                      handleInputChange("address", e.target.value)
-                    }
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-3">
+                    <Label htmlFor="logo">Practice Logo</Label>
+                    <div className="flex items-center space-x-4">
+                      {fileUrls.logo && (
+                        <img
+                          src={fileUrls.logo}
+                          alt="Logo"
+                          className="h-16 w-16 rounded object-contain"
+                        />
+                      )}
+                      <Label
+                        htmlFor="logo"
+                        className="flex cursor-pointer items-center space-x-2 rounded-md border border-dashed border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                      >
+                        <Upload className="h-4 w-4" />
+                        <span>Upload Logo</span>
+                        <Input
+                          id="logo"
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={(e) =>
+                            e.target.files &&
+                            handleFileUpload("logo", e.target.files[0])
+                          }
+                        />
+                      </Label>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Street Address</Label>
+                    <Input
+                      id="address"
+                      value={userData.address || ""}
+                      onChange={(e) =>
+                        handleInputChange("address", e.target.value)
+                      }
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="city">City</Label>
                     <Input
@@ -396,28 +559,28 @@ export default function DoctorProfileUpdate() {
                       }
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="zipCode">ZIP Code</Label>
-                  <Input
-                    id="zipCode"
-                    value={userData.zipCode || ""}
-                    onChange={(e) =>
-                      handleInputChange("zipCode", e.target.value)
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="website">Practice Website</Label>
-                  <Input
-                    id="website"
-                    type="url"
-                    placeholder="https://"
-                    value={userData.website || ""}
-                    onChange={(e) =>
-                      handleInputChange("website", e.target.value)
-                    }
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="zipCode">ZIP Code</Label>
+                    <Input
+                      id="zipCode"
+                      value={userData.zipCode || ""}
+                      onChange={(e) =>
+                        handleInputChange("zipCode", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Practice Website</Label>
+                    <Input
+                      id="website"
+                      type="url"
+                      placeholder="https://"
+                      value={userData.website || ""}
+                      onChange={(e) =>
+                        handleInputChange("website", e.target.value)
+                      }
+                    />
+                  </div>
                 </div>
               </CardContent>
             </>

@@ -68,6 +68,10 @@ const MedicalHistoryPage: React.FC<MedicalHistoryPageProps> = ({
               value: lastAppointment?.reasonForVisit || "No data",
             },
             {
+              label: "Refered By",
+              value: lastAppointment?.referredBy || "No data",
+            },
+            {
               label: "Insurance Details",
               value: lastAppointment?.insuranceDetails || "No data",
             },

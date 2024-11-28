@@ -46,6 +46,11 @@ export default defineSchema({
     zipCode: v.optional(v.string()),
     website: v.optional(v.string()),
     hospitalId: v.optional(v.string()),
+
+    stateRegistrationNumber: v.optional(v.string()),
+    nmcRegistrationId: v.optional(v.string()),
+    licenseExpiryDate: v.optional(v.string()),
+    certificateStorageId: v.optional(v.string()),
   })
     .index("by_clerk_id", ["userId"])
     .index("by_email", ["email"])
