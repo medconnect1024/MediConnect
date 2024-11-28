@@ -234,53 +234,62 @@ export default function MultiStepPrescription({
       ? `License No: ${userDetails.licenseNumber}`
       : "License No: MD12345";
 
-    const addText = (text: string, indent = 0) => {
+    const addText = (text: string, indent = 0, bold = false, fontSize = 12) => {
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      doc.setFontSize(fontSize);
       const lines = doc.splitTextToSize(text, pageWidth - margin * 2 - indent);
-      lines.forEach((line: string) => {
-        if (yPos > pageHeight - margin * 2 - 25) {
-          addNewPage();
-        }
+      lines.forEach((line: string | string[]) => {
+        if (yPos > pageHeight - margin * 2 - 30) addNewPage();
         doc.text(line, margin + indent, yPos);
         yPos += lineHeight;
       });
     };
 
     const addSection = (title: string, content: string) => {
-      if (yPos + lineHeight * 3 > pageHeight - margin * 2 - 25) {
-        addNewPage();
-      }
+      if (yPos + lineHeight * 3 > pageHeight - margin * 2 - 30) addNewPage();
+      doc.setFont("helvetica", "bold");
       doc.setFontSize(14);
-      addText(title, 0);
+      doc.setTextColor(33, 150, 243); // Highlighted color
+      doc.text(`• ${title}`, margin, yPos);
+      yPos += lineHeight;
+      doc.setFont("helvetica", "normal");
       doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0); // Default color
       addText(content, 10);
       yPos += 5;
     };
 
     const addHeader = () => {
+      doc.setFillColor(240, 240, 240);
+      doc.rect(0, 0, pageWidth, 25, "F");
       doc.setFontSize(18);
       doc.setFont("helvetica", "bold");
+      doc.setTextColor(33, 150, 243);
       doc.text(clinicName, pageWidth / 2, margin, { align: "center" });
-      doc.setFontSize(12);
-      doc.text(clinicAddress, pageWidth / 2, margin + 7, { align: "center" });
       doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      doc.text(clinicAddress, pageWidth / 2, margin + 7, { align: "center" });
+      doc.setFontSize(9);
       doc.text(
         `Phone: ${clinicPhone} | Email: ${clinicEmail}`,
         pageWidth / 2,
-        margin + 14,
+        margin + 12,
         { align: "center" }
       );
       doc.line(margin, margin + 18, pageWidth - margin, margin + 18);
-      yPos = margin + 25;
+      yPos = margin + 30;
     };
 
-    const addFooter = () => {
+    const addFooter = (pageNo: number, totalPages: number) => {
       const footerY = pageHeight - margin - 20;
-      doc.setFontSize(10);
+      doc.setFillColor(240, 240, 240);
+      doc.rect(0, footerY - 5, pageWidth, 25, "F");
+      doc.setFontSize(9);
       doc.text(doctorName, margin, footerY);
       doc.text(doctorSpecialty, margin, footerY + 5);
       doc.text(doctorLicense, margin, footerY + 10);
       doc.text(
-        `Page ${doc.getNumberOfPages()}`,
+        `Page ${pageNo} of ${totalPages}`,
         pageWidth - margin,
         footerY + 10,
         { align: "right" }
@@ -290,127 +299,107 @@ export default function MultiStepPrescription({
 
     const addNewPage = () => {
       doc.addPage();
-      yPos = margin + 10;
+      yPos = 30;
       addHeader();
     };
 
     const addTable = (headers: string[], rows: string[][], startY: number) => {
       const cellPadding = 2;
       const cellWidths = headers.map((_, index) =>
-        index === 0 ? 50 : (pageWidth - margin * 2 - 50) / (headers.length - 1)
+        index === 0 ? 40 : (pageWidth - margin * 2 - 40) / (headers.length - 1)
       );
       let cellHeight = 10;
 
-      if (startY + cellHeight > pageHeight - margin * 2 - 25) {
-        addNewPage();
-        startY = yPos;
-      }
-
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-
-      headers.forEach((header, i) => {
-        doc.rect(
-          margin + cellWidths.slice(0, i).reduce((a, b) => a + b, 0),
-          startY,
-          cellWidths[i],
-          cellHeight
-        );
-        doc.text(
-          header,
-          margin +
-            cellWidths.slice(0, i).reduce((a, b) => a + b, 0) +
-            cellWidths[i] / 2,
-          startY + cellHeight / 2,
-          {
-            align: "center",
-            baseline: "middle",
-          }
-        );
-      });
-
-      doc.setFont("helvetica", "normal");
-      if (rows.length === 0) {
-        const emptyRowY = startY + cellHeight;
-        headers.forEach((_, i) => {
-          doc.rect(
-            margin + cellWidths.slice(0, i).reduce((a, b) => a + b, 0),
-            emptyRowY,
-            cellWidths[i],
-            cellHeight
-          );
+      const drawTableHeader = (yPos: number) => {
+        doc.setFillColor(240, 240, 240);
+        doc.rect(margin, yPos, pageWidth - margin * 2, cellHeight, "F");
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        headers.forEach((header, i) => {
           doc.text(
-            "No data",
+            header,
             margin +
               cellWidths.slice(0, i).reduce((a, b) => a + b, 0) +
               cellWidths[i] / 2,
-            emptyRowY + cellHeight / 2,
+            yPos + cellHeight / 2,
             {
               align: "center",
               baseline: "middle",
             }
           );
         });
-        yPos = emptyRowY + cellHeight + 5;
-      } else {
-        rows.forEach((row, rowIndex) => {
-          let maxHeight = cellHeight;
-          const rowY = startY + rowIndex * cellHeight + cellHeight;
+      };
 
-          if (rowY > pageHeight - margin * 2 - 25) {
-            addNewPage();
-            startY = yPos - cellHeight * (rowIndex + 1);
-          }
+      let currentY = startY;
 
-          row.forEach((cell, cellIndex) => {
-            const cellLines = doc.splitTextToSize(
-              cell,
-              cellWidths[cellIndex] - cellPadding * 2
-            );
-            const cellHeight = Math.max(
-              10,
-              cellLines.length * 5 + cellPadding * 2
-            );
-            maxHeight = Math.max(maxHeight, cellHeight);
-          });
+      // Draw the initial table header on the first page
+      drawTableHeader(currentY);
+      currentY += cellHeight;
 
-          row.forEach((cell, cellIndex) => {
-            const xPos =
-              margin +
-              cellWidths.slice(0, cellIndex).reduce((a, b) => a + b, 0);
-            doc.rect(xPos, rowY, cellWidths[cellIndex], maxHeight);
-            const cellLines = doc.splitTextToSize(
-              cell,
-              cellWidths[cellIndex] - cellPadding * 2
-            );
-            cellLines.forEach((line: string, lineIndex: number) => {
-              doc.text(
-                line,
-                xPos + cellWidths[cellIndex] / 2,
-                rowY + cellPadding + lineIndex * 5 + 2.5,
-                {
-                  align: "center",
-                  baseline: "middle",
-                }
-              );
-            });
-          });
+      doc.setFont("helvetica", "normal");
 
-          yPos = rowY + maxHeight;
-          cellHeight = maxHeight;
+      rows.forEach((row, rowIndex) => {
+        let maxHeight = cellHeight;
+
+        // Calculate the height of the current row
+        row.forEach((cell, cellIndex) => {
+          const cellLines = doc.splitTextToSize(
+            cell,
+            cellWidths[cellIndex] - cellPadding * 2
+          );
+          const cellHeight = Math.max(
+            10,
+            cellLines.length * 5 + cellPadding * 2
+          );
+          maxHeight = Math.max(maxHeight, cellHeight);
         });
-      }
 
-      yPos += 5;
+        // Check if the row fits in the current page
+        if (currentY + maxHeight > pageHeight - margin * 2 - 30) {
+          // If not, create a new page
+          addNewPage();
+
+          // Draw the table header again on the new page
+          drawTableHeader(yPos);
+          currentY = yPos + cellHeight; // Update currentY to account for the header
+        }
+
+        // Draw the current row
+        row.forEach((cell, cellIndex) => {
+          const xPos =
+            margin + cellWidths.slice(0, cellIndex).reduce((a, b) => a + b, 0);
+          doc.rect(xPos, currentY, cellWidths[cellIndex], maxHeight);
+          const cellLines = doc.splitTextToSize(
+            cell,
+            cellWidths[cellIndex] - cellPadding * 2
+          );
+          cellLines.forEach((line: string, lineIndex: number) => {
+            doc.text(
+              line,
+              xPos + cellWidths[cellIndex] / 2,
+              currentY + cellPadding + lineIndex * 5 + 2.5,
+              {
+                align: "center",
+                baseline: "middle",
+              }
+            );
+          });
+        });
+
+        currentY += maxHeight;
+      });
+
+      yPos = currentY + 5; // Update the global Y position for the next content
     };
 
     addHeader();
 
-    doc.setFontSize(16);
+    // Prescription Title with Rx symbol
     doc.setFont("helvetica", "bold");
-    doc.text("Prescription ℞", pageWidth / 2 - 5, yPos, { align: "right" });
+    doc.setFontSize(20);
+    doc.text("Prescription", pageWidth / 2 - 20, yPos);
     doc.setFont("zapfdingbats", "normal");
-    doc.text("℞", pageWidth / 2 + 5, yPos, { align: "left" });
+    doc.text("℞", pageWidth / 2 + 40, yPos);
     yPos += lineHeight * 2;
 
     doc.setFontSize(12);
@@ -441,7 +430,7 @@ export default function MultiStepPrescription({
     addSection(
       "Findings",
       prescriptionData.findings
-        .map((f: { name: string }) => f.name)
+        .map((f: { description: string }) => f.description)
         .join(", ") || "No findings"
     );
 
@@ -501,10 +490,11 @@ export default function MultiStepPrescription({
         "No reminders set"
     );
 
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
+    // Finalize and add footers for all pages
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
-      addFooter();
+      addFooter(i, totalPages);
     }
 
     return doc.output("blob");

@@ -170,14 +170,14 @@ export default function FindingsComponent({
                   className="w-16"
                   value={systolic}
                   onChange={(e) => handleBPChange(e.target.value, diastolic)}
-                  placeholder="120"
+                  placeholder=""
                 />
                 <span>/</span>
                 <Input
                   className="w-16"
                   value={diastolic}
                   onChange={(e) => handleBPChange(systolic, e.target.value)}
-                  placeholder="80"
+                  placeholder=""
                 />
                 <span className="text-sm text-muted-foreground">mmHg</span>
               </div>
@@ -191,7 +191,7 @@ export default function FindingsComponent({
                   onChange={(e) =>
                     setVitals({ ...vitals, pulse: e.target.value })
                   }
-                  placeholder="70"
+                  placeholder=""
                 />
                 <span className="text-sm text-muted-foreground">bpm</span>
               </div>
@@ -205,7 +205,7 @@ export default function FindingsComponent({
                   onChange={(e) =>
                     setVitals({ ...vitals, height: e.target.value })
                   }
-                  placeholder="170"
+                  placeholder=""
                 />
                 <span className="text-sm text-muted-foreground">cm</span>
               </div>
@@ -219,7 +219,7 @@ export default function FindingsComponent({
                   onChange={(e) =>
                     setVitals({ ...vitals, weight: e.target.value })
                   }
-                  placeholder="80"
+                  placeholder=""
                 />
                 <span className="text-sm text-muted-foreground">kg</span>
               </div>
@@ -233,7 +233,7 @@ export default function FindingsComponent({
                   onChange={(e) =>
                     setVitals({ ...vitals, temperature: e.target.value })
                   }
-                  placeholder="98"
+                  placeholder=""
                 />
                 <span className="text-sm text-muted-foreground">F</span>
               </div>
@@ -255,7 +255,7 @@ export default function FindingsComponent({
                   onChange={(e) =>
                     setVitals({ ...vitals, waistHip: e.target.value })
                   }
-                  placeholder="32/36"
+                  placeholder=""
                 />
               </div>
             </div>
@@ -268,7 +268,7 @@ export default function FindingsComponent({
                   onChange={(e) =>
                     setVitals({ ...vitals, spo2: e.target.value })
                   }
-                  placeholder="98"
+                  placeholder=""
                 />
                 <span className="text-sm text-muted-foreground">%</span>
               </div>
