@@ -233,6 +233,82 @@ export default function MultiStepPrescription({
     const doctorLicense = userDetails?.licenseNumber
       ? `License No: ${userDetails.licenseNumber}`
       : "License No: MD12345";
+    const addHeader = async () => {
+      // Add light gray background
+      doc.setFillColor(240, 240, 240);
+      doc.rect(0, 0, pageWidth, 25, "F");
+
+      let logoWidth = 0;
+      let logoHeight = 0;
+      let textStartX = margin;
+
+      // Add logo if available
+      if (userDetails?.logo) {
+        try {
+          const logoUrl = await generateFileUrl({
+            storageId: userDetails.logo,
+          });
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = logoUrl;
+          });
+
+          // Calculate logo dimensions (keeping aspect ratio)
+          const aspectRatio = img.width / img.height;
+          logoHeight = 20; // Fixed height
+          logoWidth = logoHeight * aspectRatio;
+
+          // Position logo in top left corner with some padding
+          doc.addImage(img, "PNG", margin, 2.5, logoWidth, logoHeight);
+
+          // Adjust text position to accommodate logo
+          textStartX = margin + logoWidth + 5;
+        } catch (error) {
+          console.error("Error loading logo:", error);
+          // If logo fails to load, text will start from the left margin
+        }
+      }
+
+      // Calculate available width for text
+      const availableWidth = pageWidth - textStartX - margin;
+
+      // Add clinic details
+      doc.setTextColor(0, 0, 0);
+
+      // Clinic name
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text(clinicName, textStartX + availableWidth / 2, 8, {
+        align: "center",
+      });
+
+      // Address
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(clinicAddress, textStartX + availableWidth / 2, 14, {
+        align: "center",
+      });
+
+      // Contact details
+      doc.setFontSize(8);
+      doc.text(
+        `Phone: ${clinicPhone} | Email: ${clinicEmail}`,
+        textStartX + availableWidth / 2,
+        20,
+        { align: "center" }
+      );
+
+      // Add separator line
+      doc.setDrawColor(0);
+      doc.line(margin, 25, pageWidth - margin, 25);
+      yPos = 35;
+    };
+
+    // Start PDF generation
+    await addHeader();
 
     const addText = (text: string, indent = 0, bold = false, fontSize = 12) => {
       doc.setFont("helvetica", bold ? "bold" : "normal");
@@ -257,27 +333,6 @@ export default function MultiStepPrescription({
       doc.setTextColor(0, 0, 0); // Default color
       addText(content, 10);
       yPos += 5;
-    };
-
-    const addHeader = () => {
-      doc.setFillColor(240, 240, 240);
-      doc.rect(0, 0, pageWidth, 25, "F");
-      doc.setFontSize(18);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(33, 150, 243);
-      doc.text(clinicName, pageWidth / 2, margin, { align: "center" });
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0);
-      doc.text(clinicAddress, pageWidth / 2, margin + 7, { align: "center" });
-      doc.setFontSize(9);
-      doc.text(
-        `Phone: ${clinicPhone} | Email: ${clinicEmail}`,
-        pageWidth / 2,
-        margin + 12,
-        { align: "center" }
-      );
-      doc.line(margin, margin + 18, pageWidth - margin, margin + 18);
-      yPos = margin + 30;
     };
 
     const addFooter = (pageNo: number, totalPages: number) => {
@@ -392,23 +447,21 @@ export default function MultiStepPrescription({
       yPos = currentY + 5; // Update the global Y position for the next content
     };
 
-    addHeader();
-
-    // Prescription Title with Rx symbol
+    // Add prescription title
+    doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    doc.text("Prescription", pageWidth / 2 - 20, yPos);
-    doc.setFont("zapfdingbats", "normal");
-    doc.text("℞", pageWidth / 2 + 40, yPos);
+    doc.text("Prescription", pageWidth / 2, yPos, { align: "center" });
     yPos += lineHeight * 2;
 
-    doc.setFontSize(12);
+    // Add patient details
+    doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-
-    addText(`Patient ID: ${prescriptionData.patientId}`);
-    addText(`Doctor: ${doctorName}`);
-    addText(`Date: ${format(new Date(), "PPP")}`);
-    yPos += 5;
+    doc.text(`Patient ID: ${prescriptionData.patientId}`, margin, yPos);
+    yPos += lineHeight;
+    doc.text(`Doctor: ${doctorName}`, margin, yPos);
+    yPos += lineHeight;
+    doc.text(`Date: ${format(new Date(), "PPP")}`, margin, yPos);
+    yPos += lineHeight * 2;
 
     addSection(
       "Vitals",
