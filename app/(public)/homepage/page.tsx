@@ -22,12 +22,14 @@ import {
 import { ExpertsSection } from "@/components/sections/experts-section";
 import CTASection from "@/components/sections/cta-section";
 import { motion } from "framer-motion";
+import { Menu } from "lucide-react";
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [isHovering, setIsHovering] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -63,7 +65,7 @@ export default function Home() {
             MyMedirecords
           </motion.span>
         </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
+        <nav className="hidden md:flex ml-auto gap-4 sm:gap-6">
           <Link
             className="text-sm font-medium hover:text-blue-600 transition-colors"
             href="#"
@@ -92,6 +94,47 @@ export default function Home() {
             Sign Up
           </Button>
         </nav>
+        <Button
+          className="md:hidden ml-auto"
+          variant="ghost"
+          size="icon"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          <Menu className="h-6 w-6" />
+        </Button>
+        {mobileMenuOpen && (
+          <div className="absolute top-16 left-0 right-0 bg-white border-b p-4 md:hidden">
+            <nav className="flex flex-col gap-4">
+              <Link
+                className="text-sm font-medium hover:text-blue-600 transition-colors"
+                href="#"
+              >
+                About
+              </Link>
+              <Link
+                className="text-sm font-medium hover:text-blue-600 transition-colors"
+                href="#"
+              >
+                Medical Team
+              </Link>
+              <Link
+                className="text-sm font-medium hover:text-blue-600 transition-colors"
+                href="#"
+              >
+                Blog
+              </Link>
+              <Link
+                className="text-sm font-medium hover:text-blue-600 transition-colors"
+                href="#"
+              >
+                Login
+              </Link>
+              <Button className="bg-gradient-to-r from-blue-600 to-sky-400 text-white hover:opacity-90 transition-opacity w-full">
+                Sign Up
+              </Button>
+            </nav>
+          </div>
+        )}
       </header>
       <main className="flex-1 pt-16">
         <section className="w-full min-h-[calc(100vh-4rem)] py-12 md:py-24 lg:py-32 bg-gradient-to-br from-blue-50 via-sky-50 to-indigo-50">
@@ -117,11 +160,11 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
               >
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-400" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-400" />
                     <Select>
-                      <SelectTrigger className="w-full bg-white/80 backdrop-blur-sm pl-10 pr-4 py-2 border-2 border-blue-200 focus:border-blue-500 focus:ring-blue-500 rounded-full">
+                      <SelectTrigger className="w-full bg-white/80 backdrop-blur-sm pl-12 pr-6 py-6 border-2 border-blue-200 focus:border-blue-500 focus:ring-blue-500 rounded-full text-xl">
                         <SelectValue placeholder="I am navigating..." />
                       </SelectTrigger>
                       <SelectContent>
@@ -144,9 +187,9 @@ export default function Home() {
                   </div>
                   <Button
                     size="icon"
-                    className="bg-gradient-to-r from-blue-600 to-sky-400 text-white rounded-full hover:opacity-90 transition-opacity"
+                    className="bg-gradient-to-r from-blue-600 to-sky-400 text-white rounded-full hover:opacity-90 transition-opacity h-15 "
                   >
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-5 w-5" />
                   </Button>
                 </div>
               </motion.div>

@@ -228,3 +228,37 @@ export const updateUser = mutation({
     return "User updated successfully";
   },
 });
+
+
+
+export const getAllDoctors = query({
+  handler: async (ctx) => {
+    const doctors = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("role"), "Doctor"))
+      .collect();
+
+    return doctors.map(doctor => ({
+      userId: doctor.userId,
+      email: doctor.email,
+      firstName: doctor.firstName ?? undefined,
+      lastName: doctor.lastName ?? undefined,
+      profileImageUrl: doctor.profileImageUrl ?? undefined,
+      role: doctor.role,
+      phone: doctor.phone ?? undefined,
+      specialization: doctor.specialization ?? undefined,
+      licenseNumber: doctor.licenseNumber ?? undefined,
+      yearsOfPractice: doctor.yearsOfPractice ?? undefined,
+      practiceType: doctor.practiceType ?? undefined,
+      bio: doctor.bio ?? undefined,
+      clinicName: doctor.clinicName ?? undefined,
+      logo: doctor.logo ?? undefined,
+      address: doctor.address ?? undefined,
+      city: doctor.city ?? undefined,
+      state: doctor.state ?? undefined,
+      zipCode: doctor.zipCode ?? undefined,
+      website: doctor.website ?? undefined,
+    }));
+  },
+});
+
