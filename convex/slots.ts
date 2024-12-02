@@ -131,8 +131,41 @@ export const getAvailableSlots = query({
 
     return slots.map((slot) => ({
       id: slot._id,
-      startTime: new Date(slot.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      endTime: new Date(slot.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      startTime: convertToIST(slot.startTime),
+      endTime: convertToIST(slot.endTime),
     }));
+  },
+});
+
+function convertToIST(utcTimestamp: number): string {
+  const date = new Date(utcTimestamp);
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  };
+  return date.toLocaleString('en-IN', options);
+}
+
+export const updateSlotStatus = mutation({
+  args: {
+    slotId: v.id("slots"),
+    isBooked: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const { slotId, isBooked } = args;
+
+    // Fetch the current slot to ensure it exists
+    const existingSlot = await ctx.db.get(slotId);
+    if (!existingSlot) {
+      throw new Error("Slot not found");
+    }
+
+    // Update the slot's isBooked status
+    await ctx.db.patch(slotId, { isBooked });
+
+    // Return the updated slot
+    return await ctx.db.get(slotId);
   },
 });

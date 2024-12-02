@@ -64,6 +64,7 @@ export default function AppointmentBooking({
 
   const { toast } = useToast();
   const addAppointment = useMutation(api.appointment.addAppointment);
+  const updateSlotStatus = useMutation(api.slots.updateSlotStatus);
   const patients = useQuery(api.patients.getAllPatients);
   const doctors = useQuery(api.users.getDoctors);
   const router = useRouter();
@@ -109,6 +110,13 @@ export default function AppointmentBooking({
         appointmentId,
         appointmentDate: formattedDate,
       });
+      // Update the slot status to booked
+      if (values.slotId) {
+        await updateSlotStatus({
+          slotId: values.slotId as Id<"slots">,
+          isBooked: true,
+        });
+      }
       toast({
         title: "Success",
         description: "Appointment booked successfully",

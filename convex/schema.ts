@@ -205,6 +205,14 @@ export default defineSchema({
         // Add any additional fields you might need for scheduled calls
       }),
 
+
+      vaccinations: defineTable({
+        patientId: v.string(),
+        userId: v.string(),
+        vaccineName: v.string(),
+        status: v.string(),
+      }).index("by_patient_and_user", ["patientId", "userId"]),
+
       bills: defineTable({
         userId: v.string(),
         patientId: v.string(),
@@ -220,4 +228,5 @@ export default defineSchema({
         pdfStorageId: v.optional(v.string()),
       }),
     });
+    
     
