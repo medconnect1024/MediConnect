@@ -262,3 +262,13 @@ export const getAllDoctors = query({
   },
 });
 
+export const getHospitalIdByUserId = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .first();
+    return user?.hospitalId;
+  },
+});
