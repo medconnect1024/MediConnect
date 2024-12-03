@@ -160,7 +160,7 @@ export default function EnhancedPreviousPrescriptions({
 }
 
 function PatientName({ patientId }: { patientId: string }) {
-  const patient = useQuery(api.patients.getPatientById, {
+  const patient = useQuery(api.patients.getPatientId, {
     patientId: parseInt(patientId),
   });
 
