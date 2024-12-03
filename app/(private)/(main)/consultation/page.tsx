@@ -53,7 +53,7 @@ const PatientCard: React.FC<PatientCardProps> = ({
   onStatusChange,
   isAttendingDisabled,
 }) => {
-  const patientInfo = useQuery(api.patients.getPatientById, { patientId });
+  const patientInfo = useQuery(api.patients.getPatientId, { patientId });
 
   if (patientInfo === undefined) {
     return (

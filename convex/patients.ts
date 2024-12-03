@@ -472,3 +472,52 @@ export const getPatientDetails = query({
     return patient;
   },
 });
+
+
+
+
+
+
+
+export const getPatientId = query({
+  args: {
+    patientId: v.number(),
+  },
+  handler: async (ctx, { patientId }) => {
+    try {
+      const patient = await ctx.db
+        .query("patients")
+        .withIndex("by_patient_id", (q) => q.eq("patientId", patientId))
+        .unique();
+
+      if (!patient) {
+        return { error: " " };  // Return a custom error object
+      }
+
+    return {
+      id: patient._id,
+      email: patient.email,
+      firstName: patient.firstName,
+      middleName: patient.middleName,
+      lastName: patient.lastName,
+      dateOfBirth: patient.dateOfBirth,
+      gender: patient.gender,
+      phoneNumber: patient.phoneNumber,
+      houseNo: patient.houseNo,
+      gramPanchayat: patient.gramPanchayat,
+      village: patient.village,
+      tehsil: patient.tehsil,
+      district: patient.district,
+      state: patient.state,
+      systolic: patient.systolic,
+      diastolic: patient.diastolic,
+      heartRate: patient.heartRate,
+      temperature: patient.temperature,
+      oxygenSaturation: patient.oxygenSaturation,
+    };
+  } catch (error) {
+    console.error("Error fetching patient:", error);
+    return { error: "An error occurred while fetching the patient data." };  // Generic error response
+  }
+  },
+});
