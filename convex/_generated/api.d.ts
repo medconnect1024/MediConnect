@@ -1,5 +1,3 @@
-/* prettier-ignore-start */
-
 /* eslint-disable */
 /**
  * Generated `api` utility.
@@ -36,6 +34,7 @@ import type * as service_openai from "../service/openai.js";
 import type * as slots from "../slots.js";
 import type * as users from "../users.js";
 import type * as vaccinations from "../vaccinations.js";
+import type * as videos from "../videos.js";
 import type * as watiWebhook from "../watiWebhook.js";
 import type * as watsappapi from "../watsappapi.js";
 
@@ -69,6 +68,7 @@ declare const fullApi: ApiFromModules<{
   slots: typeof slots;
   users: typeof users;
   vaccinations: typeof vaccinations;
+  videos: typeof videos;
   watiWebhook: typeof watiWebhook;
   watsappapi: typeof watsappapi;
 }>;
@@ -80,5 +80,3 @@ export declare const internal: FilterApi<
   typeof fullApi,
   FunctionReference<any, "internal">
 >;
-
-/* prettier-ignore-end */

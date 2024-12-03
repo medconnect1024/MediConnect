@@ -227,6 +227,15 @@ export default defineSchema({
         total: v.number(),
         pdfStorageId: v.optional(v.string()),
       }),
+
+      videos: defineTable({
+        userId: v.string(),
+        url: v.string(),
+        cloudflareId: v.string(),
+        status: v.string(),
+        metadata: v.any(),
+        createdAt: v.string(),
+      }),
     });
     
     
