@@ -14,6 +14,7 @@ import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -598,79 +599,101 @@ export default function MultiStepPrescription({
       severity,
     };
 
-    try {
-      // Generate PDF
-      const pdfBlob = await generatePDF(newPrescription);
-      setPdfBlob(pdfBlob);
-      // Get upload URL from Convex
-      const uploadUrl = await generateUploadUrl();
+    const maxRetries = 3;
+    let retries = 0;
 
-      // Upload file to Convex storage
-      const result = await fetch(uploadUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/pdf",
-        },
-        body: pdfBlob,
-      });
+    while (retries < maxRetries) {
+      try {
+        // Generate PDF
+        const pdfBlob = await generatePDF(newPrescription);
+        setPdfBlob(pdfBlob);
 
-      if (!result.ok) {
-        throw new Error("Failed to upload file");
-      }
+        // Get upload URL from Convex
+        const uploadUrl = await generateUploadUrl();
 
-      // Get the storageId from the upload response
-      const { storageId } = await result.json();
-      console.log(result);
-      // Save prescription with storageId
-      const savedPrescription = await savePrescription({
-        ...newPrescription,
-        storageId,
-      });
+        // Upload file to Convex storage
+        const result = await fetch(uploadUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/pdf",
+          },
+          body: pdfBlob,
+        });
 
-      // Send to WhatsApp if checkbox is checked
-      if (sendToWhatsApp && getPatientPhone) {
-        try {
-          const pdfUrl = await generateFileUrl({ storageId: storageId });
-          await sendPrescriptionToWhatsApp(
-            getPatientPhone,
-            userDetails?.firstName + " " + userDetails?.lastName || "Doctor",
-            pdfUrl,
-            "Patient" // You may want to fetch the patient's name from your database
+        if (!result.ok) {
+          throw new Error(`Failed to upload file: ${result.statusText}`);
+        }
+
+        // Get the storageId from the upload response
+        const { storageId } = await result.json();
+
+        // Save prescription with storageId
+        const savedPrescription = await savePrescription({
+          ...newPrescription,
+          storageId,
+        });
+
+        // Send to WhatsApp if checkbox is checked
+        if (sendToWhatsApp && getPatientPhone) {
+          try {
+            const pdfUrl = await generateFileUrl({ storageId: storageId });
+            await sendPrescriptionToWhatsApp(
+              getPatientPhone,
+              userDetails?.firstName + " " + userDetails?.lastName || "Doctor",
+              pdfUrl,
+              "Patient" // You may want to fetch the patient's name from your database
+            );
+            console.log("Prescription sent to WhatsApp successfully");
+          } catch (error) {
+            console.error("Error sending prescription to WhatsApp:", error);
+            // Don't throw here, as we don't want to prevent saving the prescription if WhatsApp fails
+          }
+        }
+
+        setSaveSuccess(true);
+        // Reset all state variables
+        setSymptoms([]);
+        setFindings([]);
+        setDiagnoses([]);
+        setMedicines([]);
+        setInvestigations([]);
+        setInvestigationNotes("");
+        setFollowUpDate(undefined);
+        setMedicineReminder({ message: false, call: false });
+        setMedicineInstructions("");
+        setChronicCondition(false);
+        setVitals({
+          temperature: "",
+          bloodPressure: "",
+          pulse: "",
+          height: "",
+          weight: "",
+          bmi: "",
+          waistHip: "",
+          spo2: "",
+        });
+        setSeverity("Mild");
+        setActiveStep(0);
+        setShowPreview(false);
+        setTimeout(() => setSaveSuccess(false), 3000);
+
+        // If we reach here, the operation was successful, so we break out of the retry loop
+        break;
+      } catch (error) {
+        console.error(
+          `Error saving prescription (attempt ${retries + 1}):`,
+          error
+        );
+        retries++;
+        if (retries >= maxRetries) {
+          alert(
+            `Failed to save prescription after ${maxRetries} attempts. Please try again later.`
           );
-          console.log("Prescription sent to WhatsApp successfully");
-        } catch (error) {
-          console.error("Error sending prescription to WhatsApp:", error);
+        } else {
+          // Wait for a short time before retrying
+          await new Promise((resolve) => setTimeout(resolve, 1000 * retries));
         }
       }
-
-      setSaveSuccess(true);
-      // Reset all state variables
-      setSymptoms([]);
-      setFindings([]);
-      setDiagnoses([]);
-      setMedicines([]);
-      setInvestigations([]);
-      setInvestigationNotes("");
-      setFollowUpDate(undefined);
-      setMedicineReminder({ message: false, call: false });
-      setMedicineInstructions("");
-      setChronicCondition(false);
-      setVitals({
-        temperature: "",
-        bloodPressure: "",
-        pulse: "",
-        height: "",
-        weight: "",
-        bmi: "",
-        waistHip: "",
-        spo2: "",
-      });
-      setSeverity("Mild");
-      setActiveStep(0);
-      setShowPreview(false);
-      setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (error) {
-      console.error("Error saving prescription:", error);
     }
   };
 

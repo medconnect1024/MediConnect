@@ -1,31 +1,46 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Plus, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useUser } from "@clerk/nextjs";
 import { TEST_CATEGORIES } from "@/components/data/investigations";
-type PrescriptionItem = {
+
+type InvestigationItem = {
   id: string;
   name: string;
+  //category: string;
 };
 
 interface InvestigationsPageProps {
-  investigations: PrescriptionItem[];
-  setInvestigations: React.Dispatch<React.SetStateAction<PrescriptionItem[]>>;
+  investigations: InvestigationItem[];
+  setInvestigations: React.Dispatch<React.SetStateAction<InvestigationItem[]>>;
   investigationNotes: string;
   setInvestigationNotes: React.Dispatch<React.SetStateAction<string>>;
 }
 
-// Mock data for related investigations
-// const TEST_CATEGORIES: { [key: string]: string[] } = {
-//   Haematology: ["Total RBC Count", "Hemoglobin", "Platelet Count", "ESR"],
-//   Biochemistry: ["Blood Sugar", "Liver Function Test", "Kidney Function Test"],
-//   "Liver Function Test": ["ALT", "AST", "Bilirubin"],
-//   Microbiology: ["Culture Test", "Gram Stain", "KOH Test"],
-// };
+// Utility function to merge predefined and custom data
+const mergeInvestigationData = (
+  customData: { name: string; category: string }[]
+) => {
+  const mergedData: Record<string, string[]> = { ...TEST_CATEGORIES };
+
+  customData.forEach((item) => {
+    if (!mergedData[item.category]) {
+      mergedData[item.category] = [];
+    }
+    if (!mergedData[item.category].includes(item.name)) {
+      mergedData[item.category].push(item.name);
+    }
+  });
+
+  return mergedData;
+};
 
 export default function InvestigationsPage({
   investigations,
@@ -36,68 +51,136 @@ export default function InvestigationsPage({
   const [categorySearch, setCategorySearch] = useState("");
   const [testSearch, setTestSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [filteredCategories, setFilteredCategories] = useState<string[]>([]);
-  const [filteredTests, setFilteredTests] = useState<string[]>([]);
+  const [customCategory, setCustomCategory] = useState("");
+  const [customTest, setCustomTest] = useState("");
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
 
-  const handleCategorySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setCategorySearch(value);
-    if (value) {
-      const filtered = Object.keys(TEST_CATEGORIES).filter((category) =>
-        category.toLowerCase().includes(value.toLowerCase())
-      );
-      setFilteredCategories(filtered);
-    } else {
-      setFilteredCategories([]);
-    }
-  };
+  const { user } = useUser();
+  const userId = user?.id || "";
 
-  const handleTestSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setTestSearch(value);
-    if (selectedCategory && value) {
-      const filtered = TEST_CATEGORIES[selectedCategory].filter((test) =>
-        test.toLowerCase().includes(value.toLowerCase())
-      );
-      setFilteredTests(filtered);
-    } else {
-      setFilteredTests([]);
-    }
-  };
+  const allInvestigations =
+    useQuery(api.investigations.listInvestigations, { userId }) || [];
+  const addInvestigation = useMutation(api.investigations.addInvestigation);
 
-  const handleCategorySelect = (category: string) => {
+  const mergedInvestigationData = useMemo(
+    () => mergeInvestigationData(allInvestigations),
+    [allInvestigations]
+  );
+
+  const filteredCategories = useMemo(() => {
+    if (!categorySearch) return [];
+    const categories = Object.keys(mergedInvestigationData);
+    return categories.filter((category) =>
+      category.toLowerCase().includes(categorySearch.toLowerCase())
+    );
+  }, [mergedInvestigationData, categorySearch]);
+
+  const filteredTests = useMemo(() => {
+    if (!selectedCategory || !testSearch) return [];
+    return (
+      mergedInvestigationData[selectedCategory]?.filter((test) =>
+        test.toLowerCase().includes(testSearch.toLowerCase())
+      ) || []
+    );
+  }, [mergedInvestigationData, selectedCategory, testSearch]);
+
+  const addInvestigationItem = useCallback(
+    (name: string, category: string) => {
+      const newItem: InvestigationItem = {
+        id: Date.now().toString(),
+        name: name,
+        // category: category,
+      };
+      setInvestigations((prev) => [...prev, newItem]);
+      setTestSearch("");
+    },
+    [setInvestigations]
+  );
+
+  const handleCategorySearch = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setCategorySearch(e.target.value);
+      setIsCategoryDropdownOpen(true);
+    },
+    []
+  );
+
+  const handleTestSearch = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setTestSearch(e.target.value);
+    },
+    []
+  );
+
+  const handleCategorySelect = useCallback((category: string) => {
     setSelectedCategory(category);
     setCategorySearch(category);
-    setFilteredCategories([]);
-  };
-
-  const handleTestSelect = (test: string) => {
-    if (selectedCategory) {
-      const combinedName = `${selectedCategory} - ${test}`;
-      addInvestigation(combinedName);
-    }
-  };
-
-  const handleAddCustom = () => {
-    if (categorySearch && testSearch) {
-      const combinedName = `${categorySearch} - ${testSearch}`;
-      addInvestigation(combinedName);
-    }
-  };
-
-  const addInvestigation = (name: string) => {
-    const newItem: PrescriptionItem = {
-      id: Date.now().toString(),
-      name: name,
-    };
-    setInvestigations((prev) => [...prev, newItem]);
     setTestSearch("");
-    setFilteredTests([]);
-  };
+    setIsCategoryDropdownOpen(false);
+  }, []);
 
-  const handleRemoveItem = (id: string) => {
-    setInvestigations((prev) => prev.filter((item) => item.id !== id));
-  };
+  const handleTestSelect = useCallback(
+    (test: string) => {
+      if (selectedCategory) {
+        const combinedName = `${selectedCategory} - ${test}`;
+        addInvestigationItem(combinedName, selectedCategory);
+        setSelectedCategory(null);
+        setCategorySearch("");
+        setTestSearch("");
+      }
+    },
+    [selectedCategory, addInvestigationItem]
+  );
+
+  const handleAddCustom = useCallback(async () => {
+    if (customCategory && customTest && userId) {
+      const combinedName = `${customCategory} - ${customTest}`;
+      await addInvestigation({
+        name: customTest,
+        category: customCategory,
+        userId,
+      });
+      addInvestigationItem(combinedName, customCategory);
+      setCustomCategory("");
+      setCustomTest("");
+    }
+  }, [
+    customCategory,
+    customTest,
+    userId,
+    addInvestigation,
+    addInvestigationItem,
+  ]);
+
+  const handleRemoveItem = useCallback(
+    (id: string) => {
+      setInvestigations((prev) => prev.filter((item) => item.id !== id));
+    },
+    [setInvestigations]
+  );
+
+  const selectedInvestigations = useMemo(
+    () => (
+      <div className="flex flex-wrap gap-3">
+        {investigations.map((item) => (
+          <div key={item.id} className="flex items-center">
+            <Button
+              variant="secondary"
+              size="lg"
+              className="flex items-center gap-2 text-lg"
+            >
+              {item.name}
+            </Button>
+            <X
+              className="h-4 w-4 cursor-pointer text-red-500 ml-2"
+              onClick={() => handleRemoveItem(item.id)}
+            />
+          </div>
+        ))}
+      </div>
+    ),
+    [investigations, handleRemoveItem]
+  );
 
   return (
     <div className="mb-8">
@@ -108,10 +191,13 @@ export default function InvestigationsPage({
           <Input
             className="pl-10 py-3 text-lg"
             placeholder="Search categories (e.g., Haematology)"
-            value={categorySearch}
+            value={selectedCategory || categorySearch}
             onChange={handleCategorySearch}
+            onBlur={() =>
+              setTimeout(() => setIsCategoryDropdownOpen(false), 200)
+            }
           />
-          {filteredCategories.length > 0 && (
+          {isCategoryDropdownOpen && filteredCategories.length > 0 && (
             <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
               {filteredCategories.map((category, index) => (
                 <li
@@ -132,10 +218,11 @@ export default function InvestigationsPage({
             placeholder={
               selectedCategory
                 ? `Search tests in ${selectedCategory}`
-                : "Search tests"
+                : "Select a category first"
             }
             value={testSearch}
             onChange={handleTestSearch}
+            disabled={!selectedCategory}
           />
           {filteredTests.length > 0 && (
             <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
@@ -151,6 +238,18 @@ export default function InvestigationsPage({
             </ul>
           )}
         </div>
+      </div>
+      <div className="mb-4 flex space-x-4">
+        <Input
+          placeholder="Custom Category"
+          value={customCategory}
+          onChange={(e) => setCustomCategory(e.target.value)}
+        />
+        <Input
+          placeholder="Custom Test"
+          value={customTest}
+          onChange={(e) => setCustomTest(e.target.value)}
+        />
         <Button
           variant="outline"
           size="icon"
@@ -165,23 +264,7 @@ export default function InvestigationsPage({
           <h4 className="text-lg font-semibold mb-2">
             Selected Investigations
           </h4>
-          <div className="flex flex-wrap gap-3">
-            {investigations.map((item) => (
-              <div key={item.id} className="flex items-center">
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  className="flex items-center gap-2 text-lg"
-                >
-                  {item.name}
-                </Button>
-                <X
-                  className="h-4 w-4 cursor-pointer text-red-500 ml-2"
-                  onClick={() => handleRemoveItem(item.id)}
-                />
-              </div>
-            ))}
-          </div>
+          {selectedInvestigations}
         </div>
       </ScrollArea>
       <Textarea

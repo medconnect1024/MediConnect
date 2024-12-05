@@ -20,6 +20,7 @@ import type * as crons from "../crons.js";
 import type * as getdoctorslots from "../getdoctorslots.js";
 import type * as hospitals from "../hospitals.js";
 import type * as http from "../http.js";
+import type * as investigations from "../investigations.js";
 import type * as labReports from "../labReports.js";
 import type * as lib_mockapi from "../lib/mockapi.js";
 import type * as lib_mockconvex from "../lib/mockconvex.js";
@@ -54,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   getdoctorslots: typeof getdoctorslots;
   hospitals: typeof hospitals;
   http: typeof http;
+  investigations: typeof investigations;
   labReports: typeof labReports;
   "lib/mockapi": typeof lib_mockapi;
   "lib/mockconvex": typeof lib_mockconvex;

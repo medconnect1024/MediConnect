@@ -21,9 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { MEDICINE_NAMES } from "@/components/data/medicineNames";
-
 
 type MedicineItem = {
   id: string;
@@ -64,7 +62,6 @@ export default function MedicinePage({
     timing: "",
   });
 
-  // Filter suggestions based on search term
   const filteredSuggestions = MEDICINE_NAMES.filter((medicineName) =>
     medicineName.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -99,10 +96,8 @@ export default function MedicinePage({
         id: Date.now().toString(),
       };
 
-      // Update the medicines list
       setMedicines((prev) => [...prev, newMedicineItem]);
 
-      // Clear all fields, including dropdowns
       setNewMedicine({
         name: "",
         dosage: "",
@@ -127,15 +122,17 @@ export default function MedicinePage({
   };
 
   return (
-    <div className="mb-8">
+    <div className="mb-8 w-full overflow-x-auto">
       <h3 className="text-xl font-semibold mb-4">Medicine</h3>
-      <div className="flex items-center space-x-4 mb-4">
-        <div ref={searchRef} className="relative flex-grow w-48">
+      <div className="flex items-center space-x-2 mb-4">
+        <div ref={searchRef} className="relative flex-grow min-w-[150px]">
           <Search
-            className={`absolute left-3 top-2 h-5 w-5 text-muted-foreground ${searchTerm && filteredSuggestions.length === 0 ? "invisible" : ""}`}
+            className={`absolute left-2 top-2.5 h-4 w-4 text-muted-foreground ${
+              searchTerm && filteredSuggestions.length === 0 ? "invisible" : ""
+            }`}
           />
           <Input
-            className="pl-10 py-3 text-lg"
+            className="pl-8 py-2 text-sm"
             placeholder="Search"
             value={searchTerm}
             onChange={(e) => {
@@ -146,11 +143,11 @@ export default function MedicinePage({
             onFocus={() => setShowSuggestions(true)}
           />
           {showSuggestions && filteredSuggestions.length > 0 && (
-            <ul className="absolute z-10 bg-white border border-gray-300 rounded-md shadow-md mt-1 w-full">
+            <ul className="absolute z-10 bg-white border border-gray-300 rounded-md shadow-md mt-1 w-full max-h-60 overflow-y-auto">
               {filteredSuggestions.map((medicineName) => (
                 <li
                   key={medicineName}
-                  className="p-2 hover:bg-gray-200 cursor-pointer transition-colors"
+                  className="p-2 hover:bg-gray-200 cursor-pointer transition-colors text-sm"
                   onClick={() => handleSuggestionClick(medicineName)}
                 >
                   {medicineName}
@@ -165,15 +162,15 @@ export default function MedicinePage({
           onChange={(e) =>
             setNewMedicine((prev) => ({ ...prev, dosage: e.target.value }))
           }
-          className="w-32"
+          className="w-24 text-sm"
         />
         <Select
-          value={newMedicine.route || ""} // Bind to state
+          value={newMedicine.route || ""}
           onValueChange={(value) =>
             setNewMedicine((prev) => ({ ...prev, route: value }))
           }
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-32 text-sm">
             <SelectValue placeholder="Route" />
           </SelectTrigger>
           <SelectContent>
@@ -189,14 +186,13 @@ export default function MedicinePage({
             <SelectItem value="sub lingual">sub lingual</SelectItem>
           </SelectContent>
         </Select>
-
         <Select
-          value={newMedicine.timesPerDay || ""} // Bind to state
+          value={newMedicine.timesPerDay || ""}
           onValueChange={(value) =>
             setNewMedicine((prev) => ({ ...prev, timesPerDay: value }))
           }
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-32 text-sm">
             <SelectValue placeholder="Frequency" />
           </SelectTrigger>
           <SelectContent>
@@ -224,32 +220,30 @@ export default function MedicinePage({
             ))}
           </SelectContent>
         </Select>
-
         <Select
-          value={newMedicine.durationDays || ""} // Bind value to state
+          value={newMedicine.durationDays || ""}
           onValueChange={(value) =>
             setNewMedicine((prev) => ({ ...prev, durationDays: value }))
           }
         >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Duration (days)" />
+          <SelectTrigger className="w-32 text-sm">
+            <SelectValue placeholder="Duration" />
           </SelectTrigger>
           <SelectContent>
             {["1", "3", "5", "7", "10", "14", "30"].map((value) => (
               <SelectItem key={value} value={value}>
-                {value}
+                {value} days
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-
         <Select
-          value={newMedicine.timing || ""} // Bind value to state
+          value={newMedicine.timing || ""}
           onValueChange={(value) =>
             setNewMedicine((prev) => ({ ...prev, timing: value }))
           }
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-32 text-sm">
             <SelectValue placeholder="Timing" />
           </SelectTrigger>
           <SelectContent>
@@ -265,38 +259,37 @@ export default function MedicinePage({
             <SelectItem value="30 minutes">30 minutes before food</SelectItem>
           </SelectContent>
         </Select>
-
         <Button
           variant="outline"
           size="icon"
-          className="h-8 w-10"
+          className="h-10 w-10 flex-shrink-0"
           onClick={handleAddMedicine}
         >
-          <Plus className="h-6 w-6" />
+          <Plus className="h-4 w-4" />
         </Button>
       </div>
 
-      <ScrollArea className="h-[300px]">
+      <ScrollArea className="h-[300px] border rounded-md">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Medicine Name</TableHead>
+              <TableHead className="w-[200px]">Medicine Name</TableHead>
               <TableHead>Dosage</TableHead>
               <TableHead>Route</TableHead>
               <TableHead>Frequency</TableHead>
-              <TableHead>Duration (Days)</TableHead>
+              <TableHead>Duration</TableHead>
               <TableHead>Timing</TableHead>
-              <TableHead>Action</TableHead>
+              <TableHead className="w-[80px]">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {medicines.map((medicine) => (
               <TableRow key={medicine.id}>
-                <TableCell>{medicine.name}</TableCell>
+                <TableCell className="font-medium">{medicine.name}</TableCell>
                 <TableCell>{medicine.dosage}</TableCell>
                 <TableCell>{medicine.route}</TableCell>
                 <TableCell>{medicine.timesPerDay}</TableCell>
-                <TableCell>{medicine.durationDays}</TableCell>
+                <TableCell>{medicine.durationDays} days</TableCell>
                 <TableCell>{medicine.timing}</TableCell>
                 <TableCell>
                   <Button
@@ -316,7 +309,7 @@ export default function MedicinePage({
         placeholder="Instructions for all medicines"
         value={medicineInstructions}
         onChange={(e) => setMedicineInstructions(e.target.value)}
-        className="mt-4"
+        className="mt-4 w-full"
       />
     </div>
   );

@@ -236,6 +236,13 @@ export default defineSchema({
         metadata: v.any(),
         createdAt: v.string(),
       }),
+
+
+      investigations: defineTable({
+        name: v.string(),
+        category: v.string(),
+        userId: v.string(),
+      }),
     });
     
     

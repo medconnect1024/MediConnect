@@ -49,9 +49,15 @@ export default function FindingsComponent({
 }: FindingsComponentProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [systolic, diastolic] = vitals.bloodPressure
-    .split("/")
-    .map((v) => v.trim()) || ["", ""];
+  const [systolic, setSystolic] = useState("");
+  const [diastolic, setDiastolic] = useState("");
+
+  // Initialize BP fields
+  useEffect(() => {
+    const [sys, dia] = vitals.bloodPressure.split("/").map((v) => v.trim());
+    setSystolic(sys || "");
+    setDiastolic(dia || "");
+  }, [vitals.bloodPressure]);
 
   // Filter findings based on search term
   const filteredFindings = useMemo(() => {
@@ -75,9 +81,12 @@ export default function FindingsComponent({
   };
 
   const handleBPChange = (sys: string, dia: string) => {
+    setSystolic(sys);
+    setDiastolic(dia);
+    const newBP = sys || dia ? `${sys}/${dia}`.replace(/^\/*|\/*$/g, "") : "";
     setVitals((prev) => ({
       ...prev,
-      bloodPressure: `${sys}/${dia}`.replace(/^\/*|\/*$/g, ""),
+      bloodPressure: newBP,
     }));
   };
 
@@ -189,7 +198,7 @@ export default function FindingsComponent({
                 <Input
                   value={vitals.pulse}
                   onChange={(e) =>
-                    setVitals({ ...vitals, pulse: e.target.value })
+                    setVitals((prev) => ({ ...prev, pulse: e.target.value }))
                   }
                   placeholder=""
                 />
@@ -203,7 +212,7 @@ export default function FindingsComponent({
                 <Input
                   value={vitals.height}
                   onChange={(e) =>
-                    setVitals({ ...vitals, height: e.target.value })
+                    setVitals((prev) => ({ ...prev, height: e.target.value }))
                   }
                   placeholder=""
                 />
@@ -217,7 +226,7 @@ export default function FindingsComponent({
                 <Input
                   value={vitals.weight}
                   onChange={(e) =>
-                    setVitals({ ...vitals, weight: e.target.value })
+                    setVitals((prev) => ({ ...prev, weight: e.target.value }))
                   }
                   placeholder=""
                 />
@@ -231,7 +240,10 @@ export default function FindingsComponent({
                 <Input
                   value={vitals.temperature}
                   onChange={(e) =>
-                    setVitals({ ...vitals, temperature: e.target.value })
+                    setVitals((prev) => ({
+                      ...prev,
+                      temperature: e.target.value,
+                    }))
                   }
                   placeholder=""
                 />
@@ -242,7 +254,7 @@ export default function FindingsComponent({
             <div className="space-y-2">
               <Label>BMI</Label>
               <div className="flex items-center gap-2">
-                <Input value={vitals.bmi} readOnly placeholder="25.0" />
+                <Input value={vitals.bmi} readOnly placeholder="" />
                 <span className="text-sm text-muted-foreground">Kg/m2</span>
               </div>
             </div>
@@ -253,7 +265,7 @@ export default function FindingsComponent({
                 <Input
                   value={vitals.waistHip}
                   onChange={(e) =>
-                    setVitals({ ...vitals, waistHip: e.target.value })
+                    setVitals((prev) => ({ ...prev, waistHip: e.target.value }))
                   }
                   placeholder=""
                 />
@@ -266,7 +278,7 @@ export default function FindingsComponent({
                 <Input
                   value={vitals.spo2}
                   onChange={(e) =>
-                    setVitals({ ...vitals, spo2: e.target.value })
+                    setVitals((prev) => ({ ...prev, spo2: e.target.value }))
                   }
                   placeholder=""
                 />

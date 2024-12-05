@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -25,13 +25,54 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Menu } from "lucide-react";
+
+import Hls from "hls.js";
 interface DoctorProfileProps {
   userId: string;
 }
 
+interface Video {
+  _id: string;
+  userId: string;
+  url: string;
+  cloudflareId: string;
+  status: string;
+  metadata: {
+    name: string;
+    size: number;
+    type: string;
+  };
+  createdAt: string;
+}
+
+const VideoPlayer: React.FC<{ src: string }> = ({ src }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (Hls.isSupported() && videoRef.current) {
+      const hls = new Hls();
+      hls.loadSource(src);
+      hls.attachMedia(videoRef.current);
+    } else if (videoRef.current?.canPlayType("application/vnd.apple.mpegurl")) {
+      videoRef.current.src = src;
+    }
+  }, [src]);
+
+  return (
+    <video
+      ref={videoRef}
+      className="w-full h-full object-cover"
+      controls
+      playsInline
+    />
+  );
+};
+
 export function DoctorProfile({ userId }: DoctorProfileProps) {
   const doctor = useQuery(api.users.getUserDetails, { userId });
   const generateFileUrl = useMutation(api.prescriptions.generateFileUrl);
+  const videos = useQuery(api.videos.list, { userId }) || [];
+
   const [profileImageUrl, setProfileImageUrl] = useState(
     "/placeholder.svg?height=300&width=300"
   );
@@ -298,164 +339,59 @@ export function DoctorProfile({ userId }: DoctorProfileProps) {
                     <ChevronRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
-                <Tabs defaultValue="fertility" className="w-full">
-                  <TabsList className="bg-gray-100 border-b border-gray-200">
-                    <TabsTrigger
-                      value="fertility"
-                      className="data-[state=active]:bg-white data-[state=active]:text-blue-600"
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {videos.map((video: Video) => (
+                    <Card
+                      key={video._id}
+                      className="overflow-hidden hover:shadow-md transition-shadow h-full"
                     >
-                      Fertility
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="pcos"
-                      className="data-[state=active]:bg-white data-[state=active]:text-blue-600"
-                    >
-                      PCOS
-                    </TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="fertility" className="mt-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      {questions
-                        .filter((q) => q.category === "Fertility")
-                        .map((question, index) => (
-                          <Card
-                            key={index}
-                            className="overflow-hidden hover:shadow-md transition-shadow h-full"
+                      <div className="flex flex-col h-full">
+                        <div className="relative h-40">
+                          <VideoPlayer src={video.url} />
+                        </div>
+                        <div className="flex justify-end space-x-2 p-2 bg-gray-100">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-gray-600 hover:text-gray-800"
                           >
-                            <div className="flex flex-col h-full">
-                              <div className="relative h-40">
-                                <Image
-                                  src={`/placeholder.svg?text=${question.category}&bg=${question.category === "PCOS" ? "purple" : "blue"}&w=300&h=160`}
-                                  alt={question.title}
-                                  width={300}
-                                  height={160}
-                                  className="object-cover w-full h-full"
-                                />
-                                <div className="absolute bottom-1 right-1 bg-black bg-opacity-70 text-white text-xs px-1 rounded">
-                                  {/* {videoDurations[question.title]} */}
-                                </div>
-                              </div>
-                              <div className="flex justify-end space-x-2 p-2 bg-gray-100">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-gray-600 hover:text-gray-800"
-                                >
-                                  <Share2 className="h-4 w-4 mr-1" />
-                                  Share
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-gray-600 hover:text-gray-800"
-                                >
-                                  <Bookmark className="h-4 w-4 mr-1" />
-                                  Save
-                                </Button>
-                              </div>
-                              <CardContent className="p-4 flex-grow">
-                                <div className="flex flex-col justify-between h-full">
-                                  <div>
-                                    <h3 className="text-base font-medium mb-1 text-gray-900">
-                                      {question.title}
-                                    </h3>
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs bg-gray-100 text-gray-800 border-gray-300 mb-2"
-                                    >
-                                      {question.category}
-                                    </Badge>
-                                    <p className="text-xs text-gray-600 line-clamp-2">
-                                      {question.description}
-                                    </p>
-                                  </div>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 self-end"
-                                  >
-                                    <PlayCircle className="h-5 w-5 mr-1" />
-                                    Watch
-                                  </Button>
-                                </div>
-                              </CardContent>
-                            </div>
-                          </Card>
-                        ))}
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="pcos" className="mt-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      {questions
-                        .filter((q) => q.category === "PCOS")
-                        .map((question, index) => (
-                          <Card
-                            key={index}
-                            className="overflow-hidden hover:shadow-md transition-shadow h-full"
+                            <Share2 className="h-4 w-4 mr-1" />
+                            Share
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-gray-600 hover:text-gray-800"
                           >
-                            <div className="flex flex-col h-full">
-                              <div className="relative h-40">
-                                <Image
-                                  src={`/placeholder.svg?text=${question.category}&bg=${question.category === "PCOS" ? "purple" : "blue"}&w=300&h=160`}
-                                  alt={question.title}
-                                  width={300}
-                                  height={160}
-                                  className="object-cover w-full h-full"
-                                />
-                                <div className="absolute bottom-1 right-1 bg-black bg-opacity-70 text-white text-xs px-1 rounded">
-                                  {/* {videoDurations[question.title]} */}
-                                </div>
-                              </div>
-                              <div className="flex justify-end space-x-2 p-2 bg-gray-100">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-gray-600 hover:text-gray-800"
-                                >
-                                  <Share2 className="h-4 w-4 mr-1" />
-                                  Share
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-gray-600 hover:text-gray-800"
-                                >
-                                  <Bookmark className="h-4 w-4 mr-1" />
-                                  Save
-                                </Button>
-                              </div>
-                              <CardContent className="p-4 flex-grow">
-                                <div className="flex flex-col justify-between h-full">
-                                  <div>
-                                    <h3 className="text-base font-medium mb-1 text-gray-900">
-                                      {question.title}
-                                    </h3>
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs bg-gray-100 text-gray-800 border-gray-300 mb-2"
-                                    >
-                                      {question.category}
-                                    </Badge>
-                                    <p className="text-xs text-gray-600 line-clamp-2">
-                                      {question.description}
-                                    </p>
-                                  </div>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 self-end"
-                                  >
-                                    <PlayCircle className="h-5 w-5 mr-1" />
-                                    Watch
-                                  </Button>
-                                </div>
-                              </CardContent>
+                            <Bookmark className="h-4 w-4 mr-1" />
+                            Save
+                          </Button>
+                        </div>
+                        <CardContent className="p-4 flex-grow">
+                          <div className="flex flex-col justify-between h-full">
+                            <div>
+                              <h3 className="text-base font-medium mb-1 text-gray-900">
+                                {video.metadata.name}
+                              </h3>
+                              <p className="text-xs text-gray-600">
+                                Uploaded on{" "}
+                                {new Date(video.createdAt).toLocaleDateString()}
+                              </p>
                             </div>
-                          </Card>
-                        ))}
-                    </div>
-                  </TabsContent>
-                </Tabs>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 self-end"
+                            >
+                              <PlayCircle className="h-5 w-5 mr-1" />
+                              Watch
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
               </CardContent>
             </Card>
 
