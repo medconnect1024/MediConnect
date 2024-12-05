@@ -49,6 +49,7 @@ interface UserData {
   state?: string;
   zipCode?: string;
   website?: string;
+  hospitalId?: string;
   stateRegistrationNumber?: string;
   nmcRegistrationId?: string;
   licenseExpiryDate?: string;

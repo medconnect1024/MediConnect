@@ -198,6 +198,7 @@ export const updateUser = mutation({
     nmcRegistrationId: v.optional(v.string()),
     licenseExpiryDate: v.optional(v.string()),
     certificateStorageId: v.optional(v.string()),
+    hospitalId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
