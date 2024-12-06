@@ -20,7 +20,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarIcon, ChevronRight, ChevronLeft, Eye, X } from "lucide-react";
+import {
+  CalendarIcon,
+  ChevronRight,
+  ChevronLeft,
+  Eye,
+  X,
+  Loader2,
+} from "lucide-react";
 import { format } from "date-fns";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -181,7 +188,7 @@ export default function MultiStepPrescription({
   const userDetails = useQuery(api.users.getUserDetails, {
     userId: user?.id ?? "",
   });
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDraftSaved, setIsDraftSaved] = useState(false);
   const [isLeavingPage, setIsLeavingPage] = useState(false);
 
@@ -451,7 +458,7 @@ export default function MultiStepPrescription({
     // Add prescription title
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text("Prescription", pageWidth / 2, yPos, { align: "center" });
+    doc.text("Prescription Rx", pageWidth / 2, yPos, { align: "center" });
     yPos += lineHeight * 2;
 
     // Add patient details
@@ -564,6 +571,8 @@ export default function MultiStepPrescription({
       alert("Vitals are mandatory fields. Please fill them before submitting.");
       return;
     }
+    setIsSubmitting(true);
+
     const doctorId = user.id;
     const patientIdString = patientId.toString();
 
@@ -674,6 +683,7 @@ export default function MultiStepPrescription({
         });
         setSeverity("Mild");
         setActiveStep(0);
+        setIsSubmitting(false);
         setShowPreview(false);
         setTimeout(() => setSaveSuccess(false), 3000);
 
@@ -967,14 +977,23 @@ export default function MultiStepPrescription({
               onClick={() => setShowPreview(false)}
               variant="outline"
               className="w-full sm:w-auto mt-2 sm:mt-0"
+              disabled={isSubmitting}
             >
               <X className="mr-2 h-4 w-4" /> Close
             </Button>
             <Button
               onClick={handleSubmit}
               className="w-full sm:w-auto mt-2 sm:mt-0 bg-blue-500 text-white hover:bg-blue-600"
+              disabled={isSubmitting}
             >
-              Submit Prescription
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit Prescription"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
