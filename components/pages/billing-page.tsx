@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
@@ -17,12 +17,6 @@ import {
 } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Eye, Plus, X, FileText } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { format } from "date-fns";
 import { Id } from "@/convex/_generated/dataModel";
 import { jsPDF } from "jspdf";
@@ -45,6 +39,19 @@ interface Bill {
   pdfStorageId?: string;
 }
 
+interface UserDetails {
+  clinicName?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  specialization?: string;
+  licenseNumber?: string;
+  stateRegistrationNumber?: string;
+  logo?: string;
+}
+
 export default function BillingPage({ patientId }: BillingPageProps) {
   const { user } = useUser();
   const doctorId = user?.id;
@@ -56,12 +63,21 @@ export default function BillingPage({ patientId }: BillingPageProps) {
   const updateBillPdf = useMutation(api.bills.updateBillPdf);
   const generateUploadUrl = useMutation(api.bills.generateUploadUrl);
   const getFileUrl = useMutation(api.bills.getFileUrl);
+  const generateFileUrl = useMutation(api.bills.getFileUrl);
 
   const [newItems, setNewItems] = useState<BillItem[]>([]);
   const [newItemName, setNewItemName] = useState("");
   const [newItemCost, setNewItemCost] = useState("");
-  const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [newBillId, setNewBillId] = useState<Id<"bills"> | null>(null);
+
+  const newBill = useQuery(
+    api.bills.getBillById,
+    newBillId ? { billId: newBillId } : "skip"
+  );
+
+  const userDetails = useQuery(api.users.getUserDetails, {
+    userId: doctorId ?? "",
+  });
 
   const handleAddItem = () => {
     if (newItemName && newItemCost) {
@@ -80,108 +96,209 @@ export default function BillingPage({ patientId }: BillingPageProps) {
 
   const generatePDF = async (bill: Bill) => {
     const doc = new jsPDF();
-    let yPos = 30;
-    const lineHeight = 7;
     const margin = 10;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
+    const lineHeight = 7;
+    let yPos = 30;
 
-    const addText = (text: string) => {
-      const textLines = doc.splitTextToSize(text, pageWidth - 2 * margin);
-      textLines.forEach((line: string) => {
-        if (yPos > pageHeight - 40) {
-          doc.addPage();
-          yPos = 20;
+    const details: UserDetails = userDetails ?? {};
+    const clinicName = details.clinicName || "HealthCare Clinic";
+    const clinicAddress =
+      details.address || "123 Medical Street, Healthville, HC 12345";
+    const clinicPhone = details.phone || "+1 (555) 123-4567";
+    const clinicEmail = details.email || "info@healthcareclinic.com";
+
+    const doctorName =
+      details.firstName && details.lastName
+        ? `Dr. ${details.firstName} ${details.lastName}`
+        : "Dr. Jane Smith";
+    const doctorSpecialty = details.specialization || "General Practitioner";
+    const doctorLicense = details.licenseNumber
+      ? `License No: ${details.licenseNumber}`
+      : "License No: MD12345";
+    const RegistrationNumber =
+      details.stateRegistrationNumber || "General Practitioner";
+
+    const addHeader = async () => {
+      doc.setFillColor(240, 240, 240);
+      doc.rect(0, 0, pageWidth, 25, "F");
+
+      let logoWidth = 0;
+      let logoHeight = 0;
+      let textStartX = margin;
+
+      if (details.logo) {
+        try {
+          const logoUrl = await generateFileUrl({
+            storageId: details.logo,
+          });
+          if (logoUrl) {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            await new Promise<void>((resolve, reject) => {
+              img.onload = () => resolve();
+              img.onerror = reject;
+              img.src = logoUrl;
+            });
+
+            const aspectRatio = img.width / img.height;
+            logoHeight = 20;
+            logoWidth = logoHeight * aspectRatio;
+
+            doc.addImage(img, "PNG", margin, 2.5, logoWidth, logoHeight);
+            textStartX = margin + logoWidth + 5;
+          }
+        } catch (error) {
+          console.error("Error loading logo:", error);
         }
-        doc.text(line, margin, yPos);
+      }
+
+      const availableWidth = pageWidth - textStartX - margin;
+
+      doc.setTextColor(0, 0, 0);
+
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text(clinicName, textStartX + availableWidth / 2, 8, {
+        align: "center",
+      });
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(clinicAddress, textStartX + availableWidth / 2, 14, {
+        align: "center",
+      });
+
+      doc.setFontSize(8);
+      doc.text(
+        `Phone: ${clinicPhone} | Email: ${clinicEmail}`,
+        textStartX + availableWidth / 2,
+        20,
+        { align: "center" }
+      );
+
+      doc.setDrawColor(0);
+      doc.line(margin, 25, pageWidth - margin, 25);
+      yPos = 35;
+    };
+
+    const addText = (text: string, indent = 0, bold = false, fontSize = 12) => {
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      doc.setFontSize(fontSize);
+      const lines = doc.splitTextToSize(text, pageWidth - margin * 2 - indent);
+      lines.forEach((line: string) => {
+        if (yPos > pageHeight - margin * 2 - 30) addNewPage();
+        doc.text(line, margin + indent, yPos);
         yPos += lineHeight;
       });
     };
 
     const addSection = (title: string, content: string) => {
+      if (yPos + lineHeight * 3 > pageHeight - margin * 2 - 30) addNewPage();
+      doc.setFont("helvetica", "bold");
       doc.setFontSize(14);
-      addText(title);
+      doc.setTextColor(33, 150, 243);
+      doc.text(`• ${title}`, margin, yPos);
+      yPos += lineHeight;
+      doc.setFont("helvetica", "normal");
       doc.setFontSize(12);
-      addText(content);
+      doc.setTextColor(0, 0, 0);
+      addText(content, 10);
       yPos += 5;
     };
 
-    const addHeader = () => {
-      doc.setFontSize(18);
-      doc.setFont("helvetica", "bold");
-      doc.text("Clinic Name", pageWidth / 2, 15, { align: "center" });
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "normal");
-      doc.text("Clinic Address", pageWidth / 2, 22, { align: "center" });
-      doc.setFontSize(10);
-      doc.text(
-        `Phone: 123-456-7890 | Email: clinic@example.com`,
-        pageWidth / 2,
-        29,
-        { align: "center" }
-      );
-      doc.line(margin, 32, pageWidth - margin, 32);
-    };
+    const addFooter = (pageNo: number, totalPages: number) => {
+      const footerY = pageHeight - margin - 20;
+      doc.setFillColor(240, 240, 240);
+      doc.rect(0, footerY - 5, pageWidth, 25, "F");
+      doc.setFontSize(9);
+      doc.text(doctorName, margin, footerY);
+      doc.text(doctorSpecialty, margin, footerY + 5);
+      doc.text(doctorLicense, margin, footerY + 10);
+      doc.text(RegistrationNumber, margin, footerY + 15);
 
-    const addFooter = () => {
-      doc.setFontSize(10);
-      doc.text("Doctor Name", margin, pageHeight - 20);
-      doc.text("Doctor Specialty", margin, pageHeight - 15);
-      doc.text("License Number", margin, pageHeight - 10);
       doc.text(
-        `Page ${doc.getNumberOfPages()}`,
+        `Page ${pageNo} of ${totalPages}`,
         pageWidth - margin,
-        pageHeight - 10,
-        {
-          align: "right",
-        }
+        footerY + 10,
+        { align: "right" }
       );
-      doc.line(margin, pageHeight - 25, pageWidth - margin, pageHeight - 25);
+      doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
     };
 
-    addHeader();
+    const addNewPage = () => {
+      doc.addPage();
+      yPos = 30;
+      addHeader();
+    };
 
-    addSection(
-      "Bill Details",
-      `Bill Number: ${bill.billNumber}\nDate: ${format(new Date(bill.date), "PPP")}`
-    );
+    await addHeader();
 
-    doc.setFontSize(12);
-    doc.text("Items:", margin, yPos);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Bill", pageWidth / 2, yPos, { align: "center" });
     yPos += lineHeight * 2;
 
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Bill Number: ${bill.billNumber}`, margin, yPos);
+    yPos += lineHeight;
+    doc.text(`Date: ${format(new Date(bill.date), "PPP")}`, margin, yPos);
+    yPos += lineHeight * 2;
+
+    doc.setFillColor(240, 240, 240);
+    doc.rect(margin, yPos, pageWidth - margin * 2, 10, "F");
+    doc.setFont("helvetica", "bold");
+    doc.text("Item", margin + 5, yPos + 7);
+    doc.text("Cost", pageWidth - margin - 30, yPos + 7);
+    yPos += 15;
+
+    doc.setFont("helvetica", "normal");
     bill.items.forEach((item) => {
-      doc.text(`${item.name}: ₹${item.cost.toFixed(2)}`, margin, yPos);
-      yPos += lineHeight;
+      doc.text(item.name, margin + 5, yPos);
+      doc.text(`₹${item.cost.toFixed(2)}`, pageWidth - margin - 30, yPos, {
+        align: "right",
+      });
+      yPos += 10;
+      if (yPos > pageHeight - 40) addNewPage();
     });
 
-    yPos += lineHeight;
+    yPos += 5;
     doc.setFont("helvetica", "bold");
-    doc.text(`Total: ₹${bill.total.toFixed(2)}`, margin, yPos);
+    doc.text("Total:", margin + 5, yPos);
+    doc.text(`₹${bill.total.toFixed(2)}`, pageWidth - margin - 30, yPos, {
+      align: "right",
+    });
 
-    addFooter();
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      addFooter(i, totalPages);
+    }
 
     return doc.output("blob");
   };
 
   const handleCreateBill = async () => {
     if (newItems.length > 0 && doctorId) {
-      const newBillId = await createBill({
+      const createdBillId = await createBill({
         userId: doctorId,
         patientId: patientId.toString(),
         items: newItems,
       });
 
-      // Use useQuery to fetch the newly created bill
-      const newBill = useQuery(api.bills.getBillById, { billId: newBillId });
+      setNewBillId(createdBillId);
+    }
+  };
 
+  useEffect(() => {
+    const generateAndUploadPDF = async () => {
       if (newBill) {
         const pdfBlob = await generatePDF(newBill);
 
-        // Get upload URL from Convex
         const uploadUrl = await generateUploadUrl();
 
-        // Upload file to Convex storage
         const result = await fetch(uploadUrl, {
           method: "POST",
           headers: {
@@ -194,24 +311,28 @@ export default function BillingPage({ patientId }: BillingPageProps) {
           throw new Error("Failed to upload file");
         }
 
-        // Get the storageId from the upload response
         const { storageId } = await result.json();
 
-        // Update the bill with the PDF storage ID
-        await updateBillPdf({ billId: newBillId, pdfStorageId: storageId });
+        await updateBillPdf({ billId: newBill._id, pdfStorageId: storageId });
 
         setNewItems([]);
+        setNewBillId(null);
       }
+    };
+
+    if (newBill) {
+      generateAndUploadPDF();
     }
-  };
+  }, [newBill]);
 
   const handleViewBill = async (bill: Bill) => {
-    setSelectedBill(bill);
     if (bill.pdfStorageId) {
       const url = await getFileUrl({ storageId: bill.pdfStorageId });
-      setPdfUrl(url);
+      if (url) {
+        window.open(url, "_blank");
+      }
     } else {
-      setPdfUrl(null);
+      console.error("PDF not found for this bill");
     }
   };
 
@@ -239,7 +360,10 @@ export default function BillingPage({ patientId }: BillingPageProps) {
               value={newItemCost}
               onChange={(e) => setNewItemCost(e.target.value)}
             />
-            <Button onClick={handleAddItem}>
+            <Button
+              className="bg-blue-500 hover:bg-blue-600"
+              onClick={handleAddItem}
+            >
               <Plus className="mr-2 h-4 w-4" /> Add Item
             </Button>
           </div>
@@ -271,7 +395,7 @@ export default function BillingPage({ patientId }: BillingPageProps) {
           </Table>
           <Button
             onClick={handleCreateBill}
-            className="mt-2 bg-green-500 hover:bg-green-600 text-white"
+            className="mt-2 bg-blue-500 hover:bg-blue-600 text-white"
           >
             Create Bill
           </Button>
@@ -301,22 +425,8 @@ export default function BillingPage({ patientId }: BillingPageProps) {
                         size="sm"
                         onClick={() => handleViewBill(bill)}
                       >
-                        <Eye className="mr-2 h-4 w-4" /> View
+                        <FileText className="mr-2 h-4 w-4" /> View PDF
                       </Button>
-                      {bill.pdfStorageId && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={async () => {
-                            const url = await getFileUrl({
-                              storageId: bill.pdfStorageId!,
-                            });
-                            if (url) window.open(url, "_blank");
-                          }}
-                        >
-                          <FileText className="mr-2 h-4 w-4" /> PDF
-                        </Button>
-                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -324,53 +434,6 @@ export default function BillingPage({ patientId }: BillingPageProps) {
             </Table>
           </ScrollArea>
         </div>
-
-        <Dialog
-          open={!!selectedBill}
-          onOpenChange={() => setSelectedBill(null)}
-        >
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>Bill Details</DialogTitle>
-            </DialogHeader>
-            {selectedBill && (
-              <div>
-                <p>Bill Number: {selectedBill.billNumber}</p>
-                <p>Date: {format(new Date(selectedBill.date), "PPP")}</p>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Item</TableHead>
-                      <TableHead>Cost</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {selectedBill.items.map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell>₹{item.cost.toFixed(2)}</TableCell>
-                      </TableRow>
-                    ))}
-                    <TableRow>
-                      <TableCell className="font-bold">Total</TableCell>
-                      <TableCell className="font-bold">
-                        ₹{selectedBill.total.toFixed(2)}
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-                {pdfUrl && (
-                  <Button
-                    onClick={() => window.open(pdfUrl, "_blank")}
-                    className="mt-4"
-                  >
-                    <FileText className="mr-2 h-4 w-4" /> View PDF
-                  </Button>
-                )}
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
       </CardContent>
     </Card>
   );

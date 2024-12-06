@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import { UpcomingAppointments } from "@/components/UpcomingAppointments";
@@ -88,6 +88,17 @@ import { api } from "@/convex/_generated/api";
 import { SlotCreationForm } from "@/components/slot-creation-form";
 import { Modal, ModalContent, ModalTrigger } from "@/components/ui/modal";
 
+const LoadingSpinner: React.FC = () => {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+        <p className="mt-4 text-xl font-semibold text-gray-700">Loading...</p>
+      </div>
+    </div>
+  );
+};
+
 export default function EnhancedDoctorDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -95,22 +106,18 @@ export default function EnhancedDoctorDashboard() {
   const { user } = useUser();
   const doctorId = user?.id || "";
   const [showSlotCreationForm, setShowSlotCreationForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const patientData =
     useQuery(api.patients.getAppoitmentsByDoctor, { doctorId }) || [];
-  // Call the query and pass the doctorId
   const todayAppointments = useQuery(
     api.appointment.getNumberOfAppointmentsTodayForDoctor,
-    {
-      doctorId,
-    }
+    { doctorId }
   );
-
   const weeklyAppointments = useQuery(
     api.appointment.getWeeklyAppointmentsForDoctor,
     { doctorId }
   );
-
   const patientFlowData = useQuery(api.appointment.getPatientFlowThisWeek, {
     doctorId,
   });
@@ -118,15 +125,6 @@ export default function EnhancedDoctorDashboard() {
     api.appointment.getPatientSatisfactionData,
     { doctorId }
   );
-
-  // const patientSatisfactionData = [
-  //   { subject: "Communication", A: 120, B: 110, fullMark: 150 },
-  //   { subject: "Treatment Effectiveness", A: 98, B: 130, fullMark: 150 },
-  //   { subject: "Wait Time", A: 86, B: 130, fullMark: 150 },
-  //   { subject: "Facility Cleanliness", A: 99, B: 100, fullMark: 150 },
-  //   { subject: "Staff Friendliness", A: 85, B: 90, fullMark: 150 },
-  //   { subject: "Follow-up Care", A: 65, B: 85, fullMark: 150 },
-  // ];
 
   const patientRetentionData = [
     { name: "New", value: 30 },
@@ -169,7 +167,6 @@ export default function EnhancedDoctorDashboard() {
   ];
   const loggedInEmail = user?.emailAddresses[0]?.emailAddress || "";
 
-  // Query to fetch user role from the database
   const userExists = useQuery(api.users.checkUserEmail, {
     email: loggedInEmail,
   });
@@ -192,29 +189,42 @@ export default function EnhancedDoctorDashboard() {
     }
   };
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="flex pt-16 justify-center items-center w-full">
-        <div className="w-full max-w-7xl px-4">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-bold text-gray-800">
+      <div className="flex pt-4 sm:pt-16 justify-center items-center w-full">
+        <div className="w-full max-w-7xl px-2 sm:px-4 md:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row justify-between items-center mb-4 sm:mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-0">
               Welcome, Dr {user?.username || user?.firstName || "User"}!
             </h2>
             <Modal>
               <ModalTrigger asChild>
-                <Button className=" bg-blue-500 ">Create Slots</Button>
+                <Button className="bg-blue-500 text-sm sm:text-base">
+                  Create Slots
+                </Button>
               </ModalTrigger>
               <ModalContent>
                 <SlotCreationForm doctorId={doctorId} />
               </ModalContent>
             </Modal>
           </div>
-          <Card className="mb-8">
-            <CardContent className="p-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="mb-4 sm:mb-8">
+            <CardContent className="p-2 sm:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
                 <div className="flex items-center space-x-4">
                   <CalendarDays className="h-10 w-10 text-blue-500" />
-
                   <div>
                     <p className="text-sm font-medium text-gray-500">
                       Appointments Today
@@ -228,7 +238,6 @@ export default function EnhancedDoctorDashboard() {
                 </div>
                 <div className="flex items-center space-x-4">
                   <Users className="h-10 w-10 text-green-500" />
-
                   <div>
                     <p className="text-sm font-medium text-gray-500">
                       Patients This Week
@@ -269,15 +278,19 @@ export default function EnhancedDoctorDashboard() {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-8">
             <Card>
               <CardHeader>
-                <CardTitle className="text-gray-800">
+                <CardTitle className="text-lg sm:text-xl text-gray-800">
                   Patient Flow This Week
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer
+                  width="100%"
+                  height={200}
+                  className="sm:h-[250px]"
+                >
                   <LineChart data={patientFlowData || []}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="name" stroke="#6b7280" />
@@ -296,14 +309,18 @@ export default function EnhancedDoctorDashboard() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-gray-800">
+                <CardTitle className="text-lg sm:text-xl text-gray-800">
                   Patient Satisfaction Radar
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer
+                  width="100%"
+                  height={200}
+                  className="sm:h-[250px]"
+                >
                   <RadarChart
-                    outerRadius={90}
+                    outerRadius={80}
                     data={patientSatisfactionData || []}
                   >
                     <PolarGrid />
@@ -330,17 +347,19 @@ export default function EnhancedDoctorDashboard() {
             </Card>
           </div>
 
-          <div className="mb-8">
+          <div className="mb-4 sm:mb-8">
             <UpcomingAppointments />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-8">
             <Card>
               <CardHeader>
-                <CardTitle className="text-gray-800">AI Insights</CardTitle>
+                <CardTitle className="text-lg sm:text-xl text-gray-800">
+                  AI Insights
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-2 sm:space-y-4">
                   <div className="flex items-center space-x-4">
                     <AlertCircle className="h-6 w-6 text-yellow-500" />
                     <div>
@@ -392,12 +411,16 @@ export default function EnhancedDoctorDashboard() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-gray-800">
+                <CardTitle className="text-lg sm:text-xl text-gray-800">
                   WhatsApp Bot Insights
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={200}>
+                <ResponsiveContainer
+                  width="100%"
+                  height={150}
+                  className="sm:h-[200px]"
+                >
                   <BarChart data={whatsappBotData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
@@ -406,11 +429,11 @@ export default function EnhancedDoctorDashboard() {
                     <Bar dataKey="value" fill="#8884d8" />
                   </BarChart>
                 </ResponsiveContainer>
-                <div className="mt-4">
-                  <h4 className="font-semibold text-gray-700 mb-2">
+                <div className="mt-2 sm:mt-4">
+                  <h4 className="font-semibold text-gray-700 mb-1 sm:mb-2 text-sm sm:text-base">
                     Key Insights
                   </h4>
-                  <ul className="space-y-2 text-sm text-gray-600">
+                  <ul className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-600">
                     <li>
                       • 150 appointment reminders sent, reducing no-shows by 30%
                     </li>
@@ -431,23 +454,23 @@ export default function EnhancedDoctorDashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-gray-800">
+              <CardTitle className="text-lg sm:text-xl text-gray-800">
                 Follow-up Call Status
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-2 sm:space-y-4">
                 {patientData.map((patient) => (
                   <div
                     key={patient.id}
-                    className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
+                    className="bg-white p-2 sm:p-4 rounded-lg shadow-sm border border-gray-200"
                   >
-                    <div className="flex justify-between items-start">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                       <div>
-                        <h4 className="font-semibold text-gray-800">
+                        <h4 className="font-semibold text-gray-800 text-sm sm:text-base">
                           {patient.name} - {patient.condition}
                         </h4>
-                        <p className="text-gray-600 mt-1">
+                        <p className="text-gray-600 mt-1 text-xs sm:text-sm">
                           Last visit: {patient.lastVisit} | Next appointment:{" "}
                           {patient.nextAppointment}
                         </p>
@@ -460,6 +483,7 @@ export default function EnhancedDoctorDashboard() {
                               ? "secondary"
                               : "destructive"
                         }
+                        className="mt-1 sm:mt-0 text-xs"
                       >
                         {patient.followUpStatus}
                       </Badge>
@@ -474,20 +498,20 @@ export default function EnhancedDoctorDashboard() {
                       {patient.followUpStatus === "Pending" && (
                         <XCircle className="h-4 w-4 text-red-500 mr-2" />
                       )}
-                      <p className="text-sm text-gray-700">
+                      <p className="text-xs sm:text-sm text-gray-700">
                         {patient.lastFollowUpCall
                           ? `Last follow-up call: ${patient.lastFollowUpCall}`
                           : "No follow-up call recorded"}
                       </p>
                     </div>
-                    <p className="text-sm text-gray-600 mt-2">
+                    <p className="text-xs sm:text-sm text-gray-600 mt-2">
                       <strong>Follow-up notes:</strong> {patient.followUpNotes}
                     </p>
-                    <div className="mt-4 flex space-x-2">
+                    <div className="mt-2 sm:mt-4 flex flex-wrap gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                        className="text-blue-600 border-blue-300 hover:bg-blue-50 text-xs sm:text-sm"
                         onClick={() =>
                           handleNavigation(`/patient/${patient.id}`)
                         }
@@ -497,7 +521,7 @@ export default function EnhancedDoctorDashboard() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-green-600 border-green-300 hover:bg-green-50"
+                        className="text-green-600 border-green-300 hover:bg-green-50 text-xs sm:text-sm"
                         onClick={() =>
                           handleNavigation(
                             `/patient/${patient.id}/treatment-plan`
@@ -509,11 +533,11 @@ export default function EnhancedDoctorDashboard() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className={
+                        className={`text-xs sm:text-sm ${
                           patient.followUpStatus === "Completed"
                             ? "text-purple-600 border-purple-300 hover:bg-purple-50"
                             : "text-yellow-600 border-yellow-300 hover:bg-yellow-50"
-                        }
+                        }`}
                         onClick={() =>
                           handleNavigation(`/patient/${patient.id}/follow-up`)
                         }

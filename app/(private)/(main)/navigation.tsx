@@ -14,6 +14,8 @@ import {
   FileText,
   Settings,
   Plus,
+  Menu,
+  X,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import Logo from "@/components/common/Logo";
@@ -26,6 +28,7 @@ import {
 import { Loading } from "@/components/shared/Loading";
 import { SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import { api } from "../../../convex/_generated/api";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const doctorMenuItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
@@ -58,14 +61,14 @@ export default function FixedNavigation() {
   const pathname = usePathname();
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [initialRedirect, setInitialRedirect] = useState(false); // Define initialRedirect state here
+  const [initialRedirect, setInitialRedirect] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { user, isSignedIn } = useUser();
   const loggedInEmail = user?.emailAddresses[0]?.emailAddress || "";
   const userId = user?.id || "";
 
-  // Query to check if user email is present in users table
   const userExists = useQuery(api.users.checkUserEmail, {
     email: loggedInEmail,
   });
@@ -82,11 +85,40 @@ export default function FixedNavigation() {
   const handleResultClick = (patientId: string) => {
     router.push(`/consultation?patientId=${encodeURIComponent(patientId)}`);
     setIsOpen(false);
+    setIsMobileMenuOpen(false);
+  };
+
+  const handleLogoClick = () => {
+    if (userExists) {
+      switch (userExists.role) {
+        case "Doctor":
+          router.push("/dashboard");
+          break;
+        case "Desk":
+          router.push("/registrationdesk");
+          break;
+        case "Patient":
+          router.push("/patientdashboard");
+          break;
+        case "Admin":
+          router.push("/hospitals");
+          break;
+        default:
+          router.push("/");
+      }
+    } else {
+      router.push("/");
+    }
+  };
+
+  const handleMenuItemClick = (path: string) => {
+    router.push(path);
+    setIsMobileMenuOpen(false);
   };
 
   useEffect(() => {
     if (userExists && !initialRedirect) {
-      const currentPath = pathname.split("/")[1]; // Get the first part of the path
+      const currentPath = pathname.split("/")[1];
       const roleDashboards = {
         Doctor: "dashboard",
         Desk: "registrationdesk",
@@ -97,13 +129,12 @@ export default function FixedNavigation() {
       const userRole = userExists.role as keyof typeof roleDashboards;
       const correctDashboard = roleDashboards[userRole];
 
-      // Check session storage to ensure redirect only happens once
       if (
         currentPath !== correctDashboard &&
         !sessionStorage.getItem("redirected")
       ) {
         router.push(`/${correctDashboard}`);
-        sessionStorage.setItem("redirected", "true"); // Mark redirect as done
+        sessionStorage.setItem("redirected", "true");
         setInitialRedirect(true);
       }
     }
@@ -132,7 +163,7 @@ export default function FixedNavigation() {
       case "Patient":
         return patientMenuItems;
       case "Admin":
-        return adminMenuItems; // Include the admin menu
+        return adminMenuItems;
       default:
         return [];
     }
@@ -140,15 +171,54 @@ export default function FixedNavigation() {
 
   const menuItems = getMenuItems();
 
+  const renderMenuItems = (isMobile: boolean) => (
+    <>
+      {menuItems.map((item) => (
+        <Button
+          key={item.name}
+          variant="ghost"
+          className={`text-gray-600 hover:text-gray-800 flex items-center ${
+            pathname === item.path ? "bg-gray-100" : ""
+          } ${isMobile ? "w-full justify-start" : ""}`}
+          onClick={() => handleMenuItemClick(item.path)}
+        >
+          <item.icon className="mr-2 h-4 w-4" />
+          {item.name}
+        </Button>
+      ))}
+      {!userExists && (
+        <Button
+          variant="ghost"
+          className={`text-gray-600 hover:text-gray-800 flex items-center ${isMobile ? "w-full justify-start" : ""}`}
+          onClick={() => handleMenuItemClick("/docprofile")}
+        >
+          <UserCheck className="mr-2 h-4 w-4" />
+          Update Profile
+        </Button>
+      )}
+      <Button
+        variant="ghost"
+        className={`text-gray-600 hover:text-gray-800 flex items-center ${isMobile ? "w-full justify-start" : ""}`}
+        onClick={() => handleMenuItemClick("/docprofile")}
+      >
+        <Settings className="mr-2 h-4 w-4" />
+        Settings
+      </Button>
+    </>
+  );
+
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white shadow-md z-10">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex items-center">
+        <div
+          className="flex items-center cursor-pointer"
+          onClick={handleLogoClick}
+        >
           <Logo />
         </div>
         <div className="flex items-center space-x-4">
           {userExists?.role === "Doctor" && (
-            <div className="relative w-64" ref={searchRef}>
+            <div className="relative w-64 hidden md:block" ref={searchRef}>
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 className="pl-8"
@@ -191,39 +261,9 @@ export default function FixedNavigation() {
               )}
             </div>
           )}
-          {menuItems.map((item) => (
-            <Link href={item.path} key={item.name} passHref>
-              <Button
-                variant="ghost"
-                className={`text-gray-600 hover:text-gray-800 flex items-center ${
-                  pathname === item.path ? "bg-gray-100" : ""
-                }`}
-              >
-                <item.icon className="mr-2 h-4 w-4" />
-                {item.name}
-              </Button>
-            </Link>
-          ))}
-          {!userExists && (
-            <Link href="/profile" passHref>
-              <Button
-                variant="ghost"
-                className="text-gray-600 hover:text-gray-800 flex items-center"
-              >
-                <UserCheck className="mr-2 h-4 w-4" />
-                Update Profile
-              </Button>
-            </Link>
-          )}
-          <Link href="/docprofile" passHref>
-            <Button
-              variant="ghost"
-              className="text-gray-600 hover:text-gray-800 flex items-center"
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
-            </Button>
-          </Link>
+          <div className="hidden md:flex items-center space-x-4">
+            {renderMenuItems(false)}
+          </div>
           <AuthLoading>
             <Loading />
           </AuthLoading>
@@ -240,6 +280,67 @@ export default function FixedNavigation() {
           <Authenticated>
             <UserButton />
           </Authenticated>
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                aria-label="Open Menu"
+              >
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+              <nav className="flex flex-col space-y-4">
+                {userExists?.role === "Doctor" && (
+                  <div className="relative w-full" ref={searchRef}>
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      className="pl-8"
+                      placeholder="Search Patient"
+                      aria-label="Search Patient"
+                      value={searchTerm}
+                      onChange={handleSearch}
+                      onFocus={() => setIsOpen(true)}
+                    />
+                    {isOpen && (
+                      <div className="absolute z-10 left-0 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+                        {patients ? (
+                          patients.length > 0 ? (
+                            <ul
+                              className="max-h-60 overflow-auto py-1"
+                              role="listbox"
+                            >
+                              {patients.map((patient) => (
+                                <li
+                                  key={patient._id}
+                                  className="px-2 py-1 text-sm hover:bg-gray-100 cursor-pointer truncate"
+                                  role="option"
+                                  onClick={() => handleResultClick(patient._id)}
+                                >
+                                  {patient.firstName} {patient.lastName}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="p-2 text-sm text-muted-foreground">
+                              No patients found
+                            </p>
+                          )
+                        ) : (
+                          <p className="p-2 text-sm text-muted-foreground">
+                            Loading...
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {renderMenuItems(true)}
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </nav>
