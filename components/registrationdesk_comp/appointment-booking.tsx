@@ -29,6 +29,7 @@ import * as z from "zod";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { Id } from "@/convex/_generated/dataModel";
+import { useUser } from "@clerk/nextjs";
 
 const formSchema = z.object({
   patientId: z.string().min(1, "Patient is required"),
@@ -63,6 +64,8 @@ export default function AppointmentBooking({
   };
 
   const { toast } = useToast();
+  const { user } = useUser();
+  const userId = user?.id || "";
   const addAppointment = useMutation(api.appointment.addAppointment);
   const updateSlotStatus = useMutation(api.slots.updateSlotStatus);
   const patients = useQuery(api.patients.getAllPatients);

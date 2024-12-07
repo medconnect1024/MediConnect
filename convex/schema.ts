@@ -78,6 +78,10 @@ export default defineSchema({
       oxygenSaturation: v.optional(v.string()),
       doctorId:v.optional(v.string()), // New field to store the ID of the doctor who registered the patient
       hospitalId: v.optional(v.string()),
+      allergies: v.optional(v.string()),
+    chronicConditions: v.optional(v.string()),
+    pastSurgeries: v.optional(v.string()),
+    familyHistory: v.optional(v.string()),
     })
       .index("by_patient_id", ["patientId"])
       .index("by_email", ["email"])

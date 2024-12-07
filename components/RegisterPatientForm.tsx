@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Popover,
   PopoverContent,
@@ -59,6 +60,10 @@ const formSchema = z.object({
   heartRate: z.string().optional(),
   temperature: z.string().optional(),
   oxygenSaturation: z.string().optional(),
+  allergies: z.string().optional(),
+  chronicConditions: z.string().optional(),
+  pastSurgeries: z.string().optional(),
+  familyHistory: z.string().optional(),
 });
 
 export default function RegisterPatientForm() {
@@ -83,6 +88,10 @@ export default function RegisterPatientForm() {
       heartRate: "",
       temperature: "",
       oxygenSaturation: "",
+      allergies: "",
+      chronicConditions: "",
+      pastSurgeries: "",
+      familyHistory: "",
     },
   });
 
@@ -97,6 +106,10 @@ export default function RegisterPatientForm() {
     phoneNumber,
   });
 
+  const userId = user?.id || "";
+  const hospitalId = useQuery(api.users.getHospitalIdByUserId, {
+    userId,
+  });
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!isSignedIn || !user) {
       toast.error("You must be signed in to register a patient.");
@@ -113,12 +126,21 @@ export default function RegisterPatientForm() {
         return;
       }
 
+      // Assuming the user object has a hospitalId property
+      // const hospitalId = api.user.getHospitalIdByUserId.hospitalId as string;
+
+      if (!hospitalId) {
+        toast.error("Hospital ID not found for the current user.");
+        return;
+      }
+
       await registerPatient({
         ...values,
         doctorId: user.id,
+        hospitalId: hospitalId,
       });
       toast.success("Patient has been registered successfully");
-      form.reset(); // Reset the form after successful submission
+      form.reset();
     } catch (error) {
       toast.error("Failed to register patient. Please try again.");
       console.error("Error registering patient:", error);
@@ -140,7 +162,7 @@ export default function RegisterPatientForm() {
               className="w-full"
               onValueChange={setActiveTab}
             >
-              <TabsList className="grid w-full grid-cols-3 mb-8">
+              <TabsList className="grid w-full grid-cols-4 mb-8">
                 <TabsTrigger
                   value="personal"
                   className="data-[state=active]:bg-blue-500 data-[state=active]:text-white"
@@ -158,6 +180,12 @@ export default function RegisterPatientForm() {
                   className="data-[state=active]:bg-blue-500 data-[state=active]:text-white"
                 >
                   Vitals
+                </TabsTrigger>
+                <TabsTrigger
+                  value="medical-history"
+                  className="data-[state=active]:bg-blue-500 data-[state=active]:text-white"
+                >
+                  Medical History
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="personal">
@@ -270,7 +298,11 @@ export default function RegisterPatientForm() {
                                   variant={"outline"}
                                   className={`w-full pl-3 text-left font-normal ${
                                     !field.value && "text-muted-foreground"
-                                  } ${form.formState.errors.dateOfBirth ? "border-red-500" : ""}`}
+                                  } ${
+                                    form.formState.errors.dateOfBirth
+                                      ? "border-red-500"
+                                      : ""
+                                  }`}
                                 >
                                   {field.value ? (
                                     format(new Date(field.value), "PPP")
@@ -514,6 +546,78 @@ export default function RegisterPatientForm() {
                         <FormLabel>Oxygen Saturation (%) (Optional)</FormLabel>
                         <FormControl>
                           <Input placeholder="Oxygen Saturation" {...field} />
+                        </FormControl>
+                        <FormMessage className="text-red-500" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </TabsContent>
+              <TabsContent value="medical-history">
+                <div className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="allergies"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Allergies (Optional)</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="List any known allergies"
+                            className="min-h-[100px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage className="text-red-500" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="chronicConditions"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Chronic Conditions (Optional)</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="List any chronic conditions"
+                            className="min-h-[100px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage className="text-red-500" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="pastSurgeries"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Past Surgeries (Optional)</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="List any past surgeries"
+                            className="min-h-[100px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage className="text-red-500" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="familyHistory"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Family Medical History (Optional)</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Describe any relevant family medical history"
+                            className="min-h-[100px]"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage className="text-red-500" />
                       </FormItem>

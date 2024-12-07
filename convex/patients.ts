@@ -102,6 +102,11 @@ export const registerPatient = mutation({
     temperature: v.optional(v.string()),
     oxygenSaturation: v.optional(v.string()),
     doctorId:v.optional(v.string()), // New field to store the ID of the doctor who registered the patient
+    allergies: v.optional(v.string()),
+    chronicConditions: v.optional(v.string()),
+    pastSurgeries: v.optional(v.string()),
+    familyHistory: v.optional(v.string()),
+    hospitalId: v.optional(v.string()),
   },
   async handler(ctx, args) {
     // Generate a unique ID for the patient
@@ -455,6 +460,10 @@ export const updatePatient = mutation({
     heartRate: v.optional(v.string()),
     temperature: v.optional(v.string()),
     oxygenSaturation: v.optional(v.string()),
+    allergies: v.optional(v.string()),
+    chronicConditions: v.optional(v.string()),
+    pastSurgeries: v.optional(v.string()),
+    familyHistory: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, ...updateData } = args;

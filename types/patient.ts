@@ -1,6 +1,10 @@
 import { Id } from "@/convex/_generated/dataModel";
 
 export interface Patient {
+  allergies: string | undefined;
+  chronicConditions: string | undefined;
+  pastSurgeries: string | undefined;
+  familyHistory: string | undefined;
   id: Id<"patients">; // This will be mapped from _id
   _creationTime: number;
   patientId: string | number;
