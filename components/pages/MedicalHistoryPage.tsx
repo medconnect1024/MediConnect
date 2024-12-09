@@ -7,7 +7,7 @@ import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 
 interface MedicalHistoryPageProps {
-  patientId: string | number | null;
+  patientId: number;
 }
 
 const MedicalHistoryPage: React.FC<MedicalHistoryPageProps> = ({
@@ -26,6 +26,7 @@ const MedicalHistoryPage: React.FC<MedicalHistoryPageProps> = ({
         }
       : "skip" // Skip the query if patientId or userId is not available
   );
+  const getPatientById = useQuery(api.patients.getPatientId, { patientId });
 
   useEffect(() => {
     setIsClient(true);
@@ -58,11 +59,14 @@ const MedicalHistoryPage: React.FC<MedicalHistoryPageProps> = ({
                 ? new Date(lastAppointment.appointmentDate).toLocaleDateString()
                 : "No data",
             },
-            // {
-            //   label: "Last Appointment Time",
-            //   value: lastAppointment?.appointmentTime || "No data",
-            // },
-
+            {
+              label: " Allergies",
+              value: getPatientById?.allergies || "No data",
+            },
+            {
+              label: "Past Surgeries",
+              value: getPatientById?.pastSurgeries || "No data",
+            },
             {
               label: "Medical problems",
               value: lastAppointment?.reasonForVisit || "No data",
@@ -76,8 +80,6 @@ const MedicalHistoryPage: React.FC<MedicalHistoryPageProps> = ({
               value: lastAppointment?.insuranceDetails || "No data",
             },
             { label: "Notes", value: lastAppointment?.notes || "No data" },
-            { label: " since", value: "No data" },
-            { label: "Medication", value: "No data" },
           ].map(({ label, value }) => (
             <div key={label}>
               <p className="text-sm text-muted-foreground">{label}</p>

@@ -6,45 +6,50 @@ import { Button } from "@/components/ui/button";
 import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Shield } from "lucide-react";
+import { Shield, Check, X } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
 
 interface VaccinationPageProps {
   patientId: number | string;
 }
 
 const vaccineCategories = {
-  "CANCER PREVENTING VACCINES": [
-    "HEPATITIS B VACCINE",
-    "HUMAN PAPILLOMA VIRUS VACCINE",
+  "Cancer Preventing Vaccines": [
+    "Hepatitis B Vaccine",
+    "Human Papilloma Virus Vaccine",
   ],
-  "INFECTIONS PREVENTING VACCINES": [
-    "MMR VACCINE",
-    "MEASLES VACCINE",
-    "POLIO VACCINE",
-    "JAPANESE ENCEPHALITIS VACCINE",
-    "ROTA VIRUS VACCINE",
-    "HEPATITIS A VACCINE",
-    "COVID-19 VACCINE",
-    "INFLUENZA VACCINE",
-    "VARICELLA VACCINE",
-    "PNEUMOCOCCAL VACCINE",
-    "BCG VACCINE",
-    "DPT VACCINE",
-    "TYPHOID VACCINE",
-    "MENINGOCOCCAL VACCINE",
-    "HEMOPHILUS INFLUENZA TYPE B VACCINE",
-    "CHOLERA VACCINE",
-    "MALARIA VACCINE",
+  "Infection Preventing Vaccines": [
+    "MMR Vaccine",
+    "Measles Vaccine",
+    "Polio Vaccine",
+    "Japanese Encephalitis Vaccine",
+    "Rota Virus Vaccine",
+    "Hepatitis A Vaccine",
+    "COVID-19 Vaccine",
+    "Influenza Vaccine",
+    "Varicella Vaccine",
+    "Pneumococcal Vaccine",
+    "BCG Vaccine",
+    "DPT Vaccine",
+    "Typhoid Vaccine",
+    "Meningococcal Vaccine",
+    "Hemophilus Influenza Type B Vaccine",
+    "Cholera Vaccine",
+    "Malaria Vaccine",
   ],
-  "INTERNATIONAL TRAVEL VACCINES": [
-    "YELLOW FEVER VACCINE",
-    "RABIES VACCINE",
-    "CHOLERA VACCINE",
-    "TICK BORNE ENCEPHALITIS VACCINE",
-    "TYPHOID VACCINE",
-    "JE VIRUS VACCINE",
-    "MALARIA VACCINE",
-    "MENINGOCOCCAL VACCINE",
+  "International Travel Vaccines": [
+    "Yellow Fever Vaccine",
+    "Rabies Vaccine",
+    "Cholera Vaccine",
+    "Tick Borne Encephalitis Vaccine",
+    "Typhoid Vaccine",
+    "JE Virus Vaccine",
+    "Malaria Vaccine",
+    "Meningococcal Vaccine",
   ],
 };
 
@@ -99,58 +104,92 @@ const VaccinationPage: React.FC<VaccinationPageProps> = ({ patientId }) => {
   }
 
   return (
-    <Card className="w-full ">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold text-center text-blue-500 flex items-center justify-center">
-          <Shield className="mr-2" />
-          Vaccination Schedule
+    <Card className="w-full">
+      <CardHeader className=" text-black">
+        <CardTitle className="text-3xl font-bold text-center flex items-center justify-center">
+          <Shield className="mr-2 h-8 w-8" />
+          Vaccination
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="text-center mb-4">
-          <p className="text-sm text-muted-foreground">Patient ID</p>
-          <p className="text-lg font-medium">{patientIdString}</p>
+      <CardContent className="p-6">
+        <div className="text-center mb-6">
+          <Badge variant="secondary" className="text-lg px-3 py-1">
+            Patient ID: {patientIdString}
+          </Badge>
         </div>
-        {Object.entries(vaccineCategories).map(([category, vaccines]) => (
-          <div key={category} className="space-y-4">
-            <h3 className="text-lg font-semibold text-blue-600">{category}</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {vaccines.map((vaccine) => (
-                <div key={vaccine} className="flex items-center space-x-2">
-                  <Button
-                    variant={selectedVaccines[vaccine] ? "default" : "outline"}
-                    className={`w-full ${selectedVaccines[vaccine] ? "bg-blue-500 hover:bg-blue-600" : "text-blue-500 border-blue-500 hover:bg-blue-100"}`}
-                    onClick={() => handleVaccineToggle(vaccine)}
-                  >
-                    {vaccine}
-                  </Button>
-                  <span className="text-sm font-medium">
-                    {selectedVaccines[vaccine] ? "Yes" : "No"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+        <Tabs defaultValue="cancer" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsTrigger value="cancer">Cancer</TabsTrigger>
+            <TabsTrigger value="infections">Infections</TabsTrigger>
+            <TabsTrigger value="travel">Travel</TabsTrigger>
+          </TabsList>
+          {Object.entries(vaccineCategories).map(
+            ([category, vaccines], index) => (
+              <TabsContent
+                key={category}
+                value={["cancer", "infections", "travel"][index]}
+                className="mt-4"
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-xl font-semibold text-blue-600">
+                      {category}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-[400px] pr-4">
+                      <div className="space-y-4">
+                        {vaccines.map((vaccine) => (
+                          <motion.div
+                            key={vaccine}
+                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <span className="font-medium">{vaccine}</span>
+                            <div className="flex items-center space-x-2">
+                              <Switch
+                                checked={selectedVaccines[vaccine] || false}
+                                onCheckedChange={() =>
+                                  handleVaccineToggle(vaccine)
+                                }
+                              />
+                              {selectedVaccines[vaccine] ? (
+                                <Check className="h-5 w-5 text-green-500" />
+                              ) : (
+                                <X className="h-5 w-5 text-red-500" />
+                              )}
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )
+          )}
+        </Tabs>
         <Button
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+          className="w-full mt-6 bg-blue-500 hover:bg-blue-600 text-white"
           onClick={handleSubmit}
         >
-          Submit Vaccination Records
+          Update Vaccination Records
         </Button>
-        <div className="mt-4">
-          <h3 className="text-lg font-semibold mb-2 text-blue-600">
-            Current Vaccination Status:
+        <div className="mt-8">
+          <h3 className="text-xl font-semibold mb-4 text-blue-600">
+            Current Vaccination Status
           </h3>
-          <ul className="list-disc list-inside grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {getVaccinations
               ?.filter((v) => v.status === "Yes")
               .map((vaccination, index) => (
-                <li key={index} className="text-sm">
+                <Badge key={index} variant="outline" className="justify-start">
+                  <Check className="mr-2 h-4 w-4 text-green-500" />
                   {vaccination.vaccineName}
-                </li>
+                </Badge>
               ))}
-          </ul>
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -523,6 +523,10 @@ export const getPatientId = query({
       heartRate: patient.heartRate,
       temperature: patient.temperature,
       oxygenSaturation: patient.oxygenSaturation,
+      allergies:  patient.allergies,
+      chronicConditions:  patient.chronicConditions,
+      pastSurgeries:  patient.pastSurgeries,
+      familyHistory: patient.familyHistory,
     };
   } catch (error) {
     console.error("Error fetching patient:", error);

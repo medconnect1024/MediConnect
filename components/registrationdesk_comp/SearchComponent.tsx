@@ -27,68 +27,32 @@ export default function PatientSearch() {
     hospitalId ? { userId, hospitalId } : "skip"
   );
 
-  const patientsByIdQuery = useQuery(
-    api.patients.getPatientById,
-    searchTerm && hospitalId
-      ? { patientId: parseInt(searchTerm) || 0, userId, hospitalId }
-      : "skip"
-  );
-
-  const patientsByNameQuery = useQuery(
-    api.patients.getPatientByName,
-    searchTerm && hospitalId
-      ? { firstName: searchTerm, userId, hospitalId }
-      : "skip"
-  );
-
-  const patientsByPhoneQuery = useQuery(
-    api.patients.getPatientByPhone,
-    searchTerm && hospitalId
-      ? { phoneNumber: searchTerm, userId, hospitalId }
-      : "skip"
-  );
-
   useEffect(() => {
-    if (searchTerm) {
-      const results: Patient[] = [];
-      if (
-        patientsByIdQuery &&
-        !Array.isArray(patientsByIdQuery) &&
-        "id" in patientsByIdQuery
-      ) {
-        results.push(patientsByIdQuery as Patient);
-      }
-      if (patientsByNameQuery && Array.isArray(patientsByNameQuery)) {
-        results.push(...(patientsByNameQuery as Patient[]));
-      }
-      if (
-        patientsByPhoneQuery &&
-        !Array.isArray(patientsByPhoneQuery) &&
-        "id" in patientsByPhoneQuery
-      ) {
-        results.push(patientsByPhoneQuery as Patient);
-      }
-      setSearchResults(results);
-    } else if (allPatients && Array.isArray(allPatients)) {
-      // Map the received data to match our Patient interface
+    if (allPatients && Array.isArray(allPatients)) {
       const mappedPatients: Patient[] = allPatients.map((patient) => ({
         ...patient,
         id: patient._id,
       }));
-      setSearchResults(mappedPatients);
+
+      if (searchTerm) {
+        const lowercaseSearchTerm = searchTerm.toLowerCase();
+        const filteredPatients = mappedPatients.filter(
+          (patient) =>
+            patient.patientId?.toString().includes(lowercaseSearchTerm) ||
+            patient.firstName.toLowerCase().includes(lowercaseSearchTerm) ||
+            patient.lastName.toLowerCase().includes(lowercaseSearchTerm) ||
+            patient.phoneNumber.includes(searchTerm)
+        );
+        setSearchResults(filteredPatients);
+      } else {
+        setSearchResults(mappedPatients);
+      }
     } else {
       setSearchResults([]);
     }
-  }, [
-    searchTerm,
-    patientsByIdQuery,
-    patientsByNameQuery,
-    patientsByPhoneQuery,
-    allPatients,
-  ]);
+  }, [searchTerm, allPatients]);
 
   const handleViewDetails = (patientId: Id<"patients">) => {
-    console.log("View Details clicked for patient ID:", patientId);
     setSelectedPatientId(patientId);
     setIsModalOpen(true);
   };
@@ -98,24 +62,18 @@ export default function PatientSearch() {
     setSelectedPatientId(null);
   };
 
-  console.log(
-    "PatientSearch render - selectedPatientId:",
-    selectedPatientId,
-    "isModalOpen:",
-    isModalOpen
-  );
-
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto mt-10 px-4 py-1 w-screen">
-        <div className="rounded-lg bg-white p-1 shadow-sm mb-9">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Search Patients</label>
+        <div className="rounded-lg bg-white p-6 shadow-sm mb-9">
+          <div className="space-y-2 mb-6">
+            <label className="text-lg font-medium">Search Patients</label>
             <div className="flex space-x-2">
               <Input
                 placeholder="Enter ID, Name, or Phone Number"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-grow"
               />
               <Button variant="outline" size="icon">
                 <Search className="h-4 w-4" />
@@ -124,7 +82,7 @@ export default function PatientSearch() {
           </div>
 
           {/* Results Table */}
-          <div className="mt-6 overflow-x-auto">
+          <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b bg-gray-50">

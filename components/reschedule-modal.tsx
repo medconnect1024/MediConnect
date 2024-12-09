@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { format } from "date-fns";
+import { useState, useEffect } from "react";
+import { format, parse } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,32 +16,44 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 interface RescheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
   onReschedule: (date: string, time: string) => void;
+  doctorId: string;
 }
 
 export function RescheduleModal({
   isOpen,
   onClose,
   onReschedule,
+  doctorId,
 }: RescheduleModalProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     new Date()
   );
   const [selectedTime, setSelectedTime] = useState<string>("");
 
+  const formattedDate = selectedDate
+    ? format(selectedDate, "yyyy-MM-dd'T'00:00:00.000'Z'")
+    : undefined;
+
+  const availableSlots = useQuery(api.slots.getAvailableSlots, {
+    doctorId,
+    date: formattedDate || "",
+  });
+
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
-    // The calendar will close automatically as it's in "single" mode
+    setSelectedTime("");
   };
 
   const handleReschedule = () => {
     if (selectedDate && selectedTime) {
-      const formattedDate = format(selectedDate, "yyyy-MM-dd");
-      onReschedule(formattedDate, selectedTime);
+      onReschedule(formattedDate!, selectedTime);
     }
   };
 
@@ -58,17 +70,17 @@ export function RescheduleModal({
             onSelect={handleDateSelect}
             className="rounded-md border"
           />
-          <Select onValueChange={setSelectedTime}>
+          <Select onValueChange={setSelectedTime} value={selectedTime}>
             <SelectTrigger>
               <SelectValue placeholder="Select time" />
             </SelectTrigger>
             <SelectContent>
-              {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
+              {availableSlots?.map((slot) => (
                 <SelectItem
-                  key={hour}
-                  value={`${hour.toString().padStart(2, "0")}:00`}
+                  key={slot.id}
+                  value={`${slot.startTime} - ${slot.endTime}`}
                 >
-                  {`${hour.toString().padStart(2, "0")}:00`}
+                  {`${slot.startTime} - ${slot.endTime}`}
                 </SelectItem>
               ))}
             </SelectContent>

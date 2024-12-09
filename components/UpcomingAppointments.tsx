@@ -243,7 +243,7 @@ export function UpcomingAppointments() {
         isOpen={isRescheduleModalOpen}
         onClose={() => setIsRescheduleModalOpen(false)}
         onReschedule={handleReschedule}
-        //doctorId="doctor-id-123"
+        doctorId={doctorId}
       />
     </div>
   );

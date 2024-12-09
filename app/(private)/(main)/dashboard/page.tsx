@@ -90,10 +90,12 @@ import { Modal, ModalContent, ModalTrigger } from "@/components/ui/modal";
 
 const LoadingSpinner: React.FC = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-        <p className="mt-4 text-xl font-semibold text-gray-700">Loading...</p>
+        <p className="mt-4 text-xl font-semibold text-gray-700">
+          Loading MyMediRecords...
+        </p>
       </div>
     </div>
   );
@@ -202,7 +204,7 @@ export default function EnhancedDoctorDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="flex pt-4 sm:pt-16 justify-center items-center w-full">
         <div className="w-full max-w-7xl px-2 sm:px-4 md:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-center mb-4 sm:mb-6">

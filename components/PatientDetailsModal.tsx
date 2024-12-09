@@ -104,7 +104,7 @@ export function PatientDetailsModal({
   };
 
   const handleMakeAppointment = () => {
-    router.push("/appointment-booking");
+    router.push("/appointmment");
   };
 
   const fields = [
