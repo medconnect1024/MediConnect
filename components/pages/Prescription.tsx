@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -41,6 +41,8 @@ import EnhancedPreviousPrescriptions from "./previous-prescriptions";
 import EnhancedPrescriptionPreview from "./prescription-preview";
 import { sendPrescriptionToWhatsApp } from "./wati-sender";
 import { jsPDF } from "jspdf";
+import { UnsavedChangesModal } from "./UnsavedChangesModal";
+import { useRouter, usePathname } from "next/navigation";
 
 type SymptomItem = {
   id: string;
@@ -89,31 +91,6 @@ type Prescription = {
   severity?: "Mild" | "Moderate" | "Severe";
 };
 
-interface ApiPrescription {
-  _id: Id<"prescriptions">;
-  _creationTime: number;
-  investigationNotes?: string;
-  followUpDate?: string;
-  medicineInstructions?: string;
-  severity?: string;
-  findings: { id: string; description: string }[];
-  symptoms: SymptomItem[];
-  diagnoses: { id: string; name: string }[];
-  medicines: MedicineItem[];
-  investigations: { id: string; name: string }[];
-  medicineReminder: {
-    message: boolean;
-    call: boolean;
-  };
-  chronicCondition: boolean;
-  criticalLabValues?: string;
-  vitals: {
-    temperature: string;
-    bloodPressure: string;
-    pulse: string;
-  };
-}
-
 interface MultiStepPrescriptionProps {
   patientId: number;
 }
@@ -130,6 +107,8 @@ const steps = [
 export default function MultiStepPrescription({
   patientId,
 }: MultiStepPrescriptionProps) {
+  const [isLeavingPage, setIsLeavingPage] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [sendToWhatsApp, setSendToWhatsApp] = useState(false);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [activeStep, setActiveStep] = useState(0);
@@ -171,11 +150,17 @@ export default function MultiStepPrescription({
   const [severity, setSeverity] = useState<"Mild" | "Moderate" | "Severe">(
     "Mild"
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const router = useRouter();
+  const pathname = usePathname();
+  const prevPathname = useRef(pathname);
+
+  const { user } = useUser();
   const getPatientPhone = useQuery(api.patients.getPatientPhone, {
     patientId: patientId.toString(),
   });
   const generateFileUrl = useMutation(api.prescriptions.generateFileUrl);
-
   const savePrescription = useMutation(api.prescriptions.savePrescription);
   const generateUploadUrl = useMutation(api.labReports.generateUploadUrl);
   const getLastPrescriptionForPatient = useQuery(
@@ -184,22 +169,86 @@ export default function MultiStepPrescription({
       patientId: patientId.toString(),
     }
   );
-  const { user } = useUser();
   const userDetails = useQuery(api.users.getUserDetails, {
     userId: user?.id ?? "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDraftSaved, setIsDraftSaved] = useState(false);
-  const [isLeavingPage, setIsLeavingPage] = useState(false);
+
+  const checkUnsavedChanges = useCallback(() => {
+    return (
+      symptoms.length > 0 ||
+      findings.length > 0 ||
+      diagnoses.length > 0 ||
+      medicines.length > 0 ||
+      investigations.length > 0 ||
+      investigationNotes !== "" ||
+      followUpDate !== undefined ||
+      medicineReminder.message ||
+      medicineReminder.call ||
+      medicineInstructions !== "" ||
+      chronicCondition ||
+      criticalLabValues !== "" ||
+      vitals.temperature !== "" ||
+      vitals.bloodPressure !== "" ||
+      vitals.pulse !== "" ||
+      severity !== "Mild"
+    );
+  }, [
+    symptoms,
+    findings,
+    diagnoses,
+    medicines,
+    investigations,
+    investigationNotes,
+    followUpDate,
+    medicineReminder,
+    medicineInstructions,
+    chronicCondition,
+    criticalLabValues,
+    vitals,
+    severity,
+  ]);
+
+  useEffect(() => {
+    setHasUnsavedChanges(checkUnsavedChanges());
+  }, [checkUnsavedChanges]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    if (pathname !== prevPathname.current && hasUnsavedChanges) {
+      const userWantsToLeave = window.confirm(
+        "You have unsaved changes. Are you sure you want to leave?"
+      );
+      if (userWantsToLeave) {
+        setHasUnsavedChanges(false);
+      } else {
+        router.push(prevPathname.current);
+      }
+    }
+    prevPathname.current = pathname;
+  }, [pathname, hasUnsavedChanges, router]);
 
   useEffect(() => {
     if (getLastPrescriptionForPatient) {
-      const apiPrescription = getLastPrescriptionForPatient as ApiPrescription;
+      const apiPrescription = getLastPrescriptionForPatient as any;
       setPreviousPrescriptions([
         {
           prescriptionId: apiPrescription._id,
           symptoms: apiPrescription.symptoms,
-          findings: apiPrescription.findings.map((f) => ({
+          findings: apiPrescription.findings.map((f: any) => ({
             id: f.id,
             name: f.description,
           })),
@@ -212,8 +261,7 @@ export default function MultiStepPrescription({
           medicineInstructions: apiPrescription.medicineInstructions,
           chronicCondition: apiPrescription.chronicCondition,
           vitals: apiPrescription.vitals,
-          severity:
-            (apiPrescription.severity as Prescription["severity"]) || undefined,
+          severity: apiPrescription.severity || undefined,
         },
       ]);
     }
@@ -566,7 +614,6 @@ export default function MultiStepPrescription({
       console.error("User not signed in");
       return;
     }
-    // Check if vitals are filled
     if (!vitals.temperature || !vitals.bloodPressure || !vitals.pulse) {
       alert("Vitals are mandatory fields. Please fill them before submitting.");
       return;
@@ -579,25 +626,11 @@ export default function MultiStepPrescription({
     const newPrescription = {
       doctorId,
       patientId: patientIdString,
-      medicines: medicines.map((m) => ({
-        id: m.id,
-        name: m.name,
-        dosage: m.dosage,
-        route: m.route,
-        timesPerDay: m.timesPerDay,
-        durationDays: m.durationDays,
-        timing: m.timing,
-      })),
-      symptoms: symptoms.map((s) => ({
-        id: s.id,
-        name: s.name,
-        frequency: s.frequency,
-        severity: s.severity,
-        duration: s.duration,
-      })),
+      medicines,
+      symptoms,
       findings: findings.map((f) => ({ id: f.id, description: f.name })),
-      diagnoses: diagnoses.map((d) => ({ id: d.id, name: d.name })),
-      investigations: investigations.map((i) => ({ id: i.id, name: i.name })),
+      diagnoses,
+      investigations,
       investigationNotes,
       followUpDate: followUpDate ? followUpDate.toISOString() : undefined,
       medicineReminder,
@@ -613,14 +646,11 @@ export default function MultiStepPrescription({
 
     while (retries < maxRetries) {
       try {
-        // Generate PDF
         const pdfBlob = await generatePDF(newPrescription);
         setPdfBlob(pdfBlob);
 
-        // Get upload URL from Convex
         const uploadUrl = await generateUploadUrl();
 
-        // Upload file to Convex storage
         const result = await fetch(uploadUrl, {
           method: "POST",
           headers: {
@@ -633,16 +663,13 @@ export default function MultiStepPrescription({
           throw new Error(`Failed to upload file: ${result.statusText}`);
         }
 
-        // Get the storageId from the upload response
         const { storageId } = await result.json();
 
-        // Save prescription with storageId
         const savedPrescription = await savePrescription({
           ...newPrescription,
           storageId,
         });
 
-        // Send to WhatsApp if checkbox is checked
         if (sendToWhatsApp && getPatientPhone) {
           try {
             const pdfUrl = await generateFileUrl({ storageId: storageId });
@@ -650,44 +677,19 @@ export default function MultiStepPrescription({
               getPatientPhone,
               userDetails?.firstName + " " + userDetails?.lastName || "Doctor",
               pdfUrl,
-              "Patient" // You may want to fetch the patient's name from your database
+              "Patient"
             );
             console.log("Prescription sent to WhatsApp successfully");
           } catch (error) {
             console.error("Error sending prescription to WhatsApp:", error);
-            // Don't throw here, as we don't want to prevent saving the prescription if WhatsApp fails
           }
         }
 
         setSaveSuccess(true);
-        // Reset all state variables
-        setSymptoms([]);
-        setFindings([]);
-        setDiagnoses([]);
-        setMedicines([]);
-        setInvestigations([]);
-        setInvestigationNotes("");
-        setFollowUpDate(undefined);
-        setMedicineReminder({ message: false, call: false });
-        setMedicineInstructions("");
-        setChronicCondition(false);
-        setVitals({
-          temperature: "",
-          bloodPressure: "",
-          pulse: "",
-          height: "",
-          weight: "",
-          bmi: "",
-          waistHip: "",
-          spo2: "",
-        });
-        setSeverity("Mild");
-        setActiveStep(0);
-        setIsSubmitting(false);
-        setShowPreview(false);
+        resetForm();
+        setHasUnsavedChanges(false);
         setTimeout(() => setSaveSuccess(false), 3000);
 
-        // If we reach here, the operation was successful, so we break out of the retry loop
         break;
       } catch (error) {
         console.error(
@@ -700,11 +702,37 @@ export default function MultiStepPrescription({
             `Failed to save prescription after ${maxRetries} attempts. Please try again later.`
           );
         } else {
-          // Wait for a short time before retrying
           await new Promise((resolve) => setTimeout(resolve, 1000 * retries));
         }
       }
     }
+    setIsSubmitting(false);
+  };
+
+  const resetForm = () => {
+    setSymptoms([]);
+    setFindings([]);
+    setDiagnoses([]);
+    setMedicines([]);
+    setInvestigations([]);
+    setInvestigationNotes("");
+    setFollowUpDate(undefined);
+    setMedicineReminder({ message: false, call: false });
+    setMedicineInstructions("");
+    setChronicCondition(false);
+    setVitals({
+      temperature: "",
+      bloodPressure: "",
+      pulse: "",
+      height: "",
+      weight: "",
+      bmi: "",
+      waistHip: "",
+      spo2: "",
+    });
+    setSeverity("Mild");
+    setActiveStep(0);
+    setShowPreview(false);
   };
 
   const renderPreviousPrescriptions = () => (
@@ -786,8 +814,8 @@ export default function MultiStepPrescription({
                     mode="single"
                     selected={followUpDate}
                     onSelect={(date) => {
-                      setFollowUpDate(date); // Set the selected date
-                      setPopoverOpen(false); // Close the popover after selecting the date
+                      setFollowUpDate(date);
+                      setPopoverOpen(false);
                     }}
                     initialFocus
                     className="p-5"
@@ -998,9 +1026,14 @@ export default function MultiStepPrescription({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <UnsavedChangesModal
+        isOpen={isLeavingPage}
+        onClose={() => setIsLeavingPage(false)}
+        onConfirm={() => {
+          setHasUnsavedChanges(false);
+          setIsLeavingPage(false);
+        }}
+      />
     </Card>
   );
-}
-function addNewPage() {
-  throw new Error("Function not implemented.");
 }
