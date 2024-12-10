@@ -125,6 +125,7 @@ export default function AppointmentBooking({
         ...values,
         appointmentId,
         appointmentDate: formattedDate,
+        hospitalId: hospitalId ?? "",
       });
       // Update the slot status to booked
       if (values.slotId) {

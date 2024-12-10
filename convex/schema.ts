@@ -114,9 +114,11 @@ export default defineSchema({
           createdAt: v.optional(v.string()),  // Make createdAt optional
           updatedAt: v.optional(v.string()),
           slotId: v.optional(v.string()),
+          hospitalId: v.optional(v.string()),
         })
     .index("by_doctor_id", ["doctorId"])
-    .index("by_patient_id", ["patientId"]),
+    .index("by_patient_id", ["patientId"])
+    .index("by_hospital_id", ["hospitalId"]),
   
 
     prescriptions: defineTable({

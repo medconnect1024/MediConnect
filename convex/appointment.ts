@@ -6,6 +6,7 @@ export const addAppointment = mutation({
   args: {
     patientId: v.string(),
     doctorId: v.string(),
+    hospitalId: v.optional(v.string()),
     appointmentId: v.string(),
     speciality: v.optional(v.string()),
     service: v.optional(v.string()),
@@ -25,6 +26,7 @@ export const addAppointment = mutation({
   handler: async (ctx, args) => {
     const appointmentId = await ctx.db.insert('appointments', {
       patientId: args.patientId,
+      hospitalId: args.hospitalId,
       doctorId: args.doctorId,
       appointmentId: args.appointmentId,
       speciality: args.speciality,
@@ -46,11 +48,18 @@ export const addAppointment = mutation({
   },
 })
 
-// Query to get all appointments
-export const getAppointments = query(async (ctx) => {
-  return await ctx.db.query('appointments').collect()
-})
+export const getAppointment = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const appointments = await ctx.db
+      .query("appointments")
+      .filter((q) => q.eq(q.field("patientId"), args.userId))
+      .collect();
 
+    console.log("Fetched appointments for user:", args.userId, appointments);
+    return appointments;
+  },
+});
 // Query to get all patients
 export const getAllPatients = query(async (ctx) => {
   return await ctx.db.query('patients').collect()
@@ -333,3 +342,68 @@ export const rescheduleAppointment = mutation({
     return { success: true };
   },
 });
+
+export const updateAppointment = mutation({
+  args: {
+    appointmentId: v.id("appointments"),
+    updates: v.object({
+      doctorId: v.optional(v.string()),
+      appointmentDate: v.optional(v.string()),
+      appointmentTime: v.optional(v.string()),
+      service: v.optional(v.string()),
+      speciality: v.optional(v.string()),
+      referredBy: v.optional(v.string()),
+      location: v.optional(v.string()),
+      appointmentType: v.optional(v.union(v.literal("regular"), v.literal("recurring"))),
+      isTeleconsultation: v.optional(v.boolean()),
+      status: v.optional(v.union(v.literal("Scheduled"), v.literal("waitlist"), v.literal("completed"), v.literal("cancelled"), v.literal("attending"))),
+      notes: v.optional(v.string()),
+      reasonForVisit: v.optional(v.string()),
+      insuranceDetails: v.optional(v.string()),
+    }),
+  },
+  handler: async (ctx, args) => {
+    const { appointmentId, updates } = args;
+    await ctx.db.patch(appointmentId, {
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    });
+  },
+});
+
+export const deleteAppointment = mutation({
+  args: { appointmentId: v.id("appointments") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.appointmentId);
+  },
+});
+
+export const getAppointmentsByHospitalId = query({
+  args: { hospitalId: v.string() },
+  handler: async (ctx, args) => {
+    const appointments = await ctx.db
+      .query("appointments")
+      .filter((q) => q.eq(q.field("hospitalId"), args.hospitalId))
+      .collect();
+
+    return appointments;
+  },
+});
+
+export const getAppointmentsByDoctorId = query({
+  args: { doctorId: v.string(), hospitalId: v.string() },
+  handler: async (ctx, args) => {
+    const appointments = await ctx.db
+      .query("appointments")
+      .filter((q) => 
+        q.and(
+          q.eq(q.field("doctorId"), args.doctorId),
+          q.eq(q.field("hospitalId"), args.hospitalId)
+        )
+      )
+      .collect();
+
+    return appointments;
+  },
+});
+

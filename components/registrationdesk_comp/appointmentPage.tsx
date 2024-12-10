@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   format,
-  addMinutes,
+  parseISO,
+  parse,
   isAfter,
   isBefore,
-  parseISO,
   startOfDay,
   endOfDay,
 } from "date-fns";
@@ -53,6 +53,36 @@ import { Calendar } from "@/components/ui/calendar";
 import { DateRange } from "react-day-picker";
 
 import AppointmentBooking from "./appointment-booking";
+import AppointmentDetails from "./appointment-details";
+import { useUser } from "@clerk/nextjs";
+import { Id } from "@/convex/_generated/dataModel";
+
+// Define the Appointment type
+type Appointment = {
+  _id: Id<"appointments">;
+  _creationTime: number;
+  service?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  speciality?: string;
+  appointmentTime: string;
+  appointmentDate: string;
+  doctorId: string;
+  patientId: string;
+  hospitalId: string;
+  status: string;
+  isTeleconsultation: boolean;
+};
+
+// Define the Doctor type
+type Doctor = {
+  _id: Id<"users">;
+  _creationTime: number;
+  hospitalId?: string;
+  firstName: string;
+  lastName: string;
+  userId: string;
+};
 
 export default function AppointmentPage() {
   const [selectedDoctor, setSelectedDoctor] = useState<string>("all");
@@ -60,41 +90,83 @@ export default function AppointmentPage() {
   const [activeTab, setActiveTab] = useState("upcoming");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<Appointment | null>(null);
 
-  const doctors = useQuery(api.users.getDoctors) || [];
-  const appointments = useQuery(api.appointment.getAppointments) || [];
+  const { user } = useUser();
+  const userId = user?.id || "";
+  const hospitalId = useQuery(api.users.getHospitalIdByUserId, { userId });
+  const doctors = useQuery(api.users.getDoctorsByHospitalId, {
+    hospitalId: hospitalId ?? undefined,
+  }) as Doctor[] | undefined;
+
+  const appointmentsQuery =
+    selectedDoctor === "all"
+      ? api.appointment.getAppointmentsByHospitalId
+      : api.appointment.getAppointmentsByDoctorId;
+
+  const appointmentsQueryArgs =
+    selectedDoctor === "all"
+      ? { hospitalId: hospitalId ?? "" }
+      : { doctorId: selectedDoctor, hospitalId: hospitalId ?? "" };
+
+  const appointments = useQuery(
+    appointmentsQuery,
+    hospitalId ? appointmentsQueryArgs : "skip"
+  ) as Appointment[] | undefined;
+
+  console.log("Fetched appointments:", appointments);
+
+  useEffect(() => {
+    if (dateRange?.from) {
+      setActiveTab("date-range");
+    }
+  }, [dateRange]);
 
   const handleBookingClose = () => {
     setIsBookingOpen(false);
   };
+
   const handleSelect = (range: DateRange | undefined) => {
     setDateRange(range);
-    if (range?.from) {
-      setActiveTab("date-range");
-    }
   };
 
-  const filteredAppointments = appointments.filter((apt) => {
-    const appointmentDate = parseISO(apt.appointmentDate);
-    const today = startOfDay(new Date());
+  const parseAppointmentDateTime = (dateString: string, timeString: string) => {
+    const date = parseISO(dateString);
+    const [startTime, endTime] = timeString
+      .split(" - ")
+      .map((time) => parse(time, "hh:mm a", date));
+    return { startTime, endTime };
+  };
 
-    const isInDateRange =
-      dateRange?.from && dateRange?.to
-        ? isAfter(appointmentDate, startOfDay(dateRange.from)) &&
-          isBefore(appointmentDate, endOfDay(dateRange.to))
-        : true;
+  const filteredAppointments =
+    appointments?.filter((apt) => {
+      console.log("Filtering appointment:", apt);
+      const { startTime } = parseAppointmentDateTime(
+        apt.appointmentDate,
+        apt.appointmentTime
+      );
+      const today = startOfDay(new Date());
 
-    return (
-      (selectedDoctor === "all" || apt.doctorId === selectedDoctor) &&
-      ((activeTab === "upcoming" && isAfter(appointmentDate, today)) ||
+      const isInDateRange =
+        dateRange?.from && dateRange?.to
+          ? isAfter(startTime, startOfDay(dateRange.from)) &&
+            isBefore(startTime, endOfDay(dateRange.to))
+          : true;
+
+      const isMatchingTab =
+        (activeTab === "upcoming" && isAfter(startTime, today)) ||
         (activeTab === "pending" && apt.status === "Scheduled") ||
-        (activeTab === "past" && isBefore(appointmentDate, today)) ||
-        (activeTab === "date-range" && isInDateRange))
-    );
-  });
+        (activeTab === "past" && isBefore(startTime, today)) ||
+        (activeTab === "date-range" && isInDateRange);
+
+      return isMatchingTab;
+    }) || [];
+
+  console.log("Filtered appointments:", filteredAppointments);
 
   const groupedAppointments = filteredAppointments.reduce(
-    (acc: Record<string, typeof appointments>, apt) => {
+    (acc: Record<string, Appointment[]>, apt) => {
       const date = format(parseISO(apt.appointmentDate), "yyyy-MM-dd");
       if (!acc[date]) acc[date] = [];
       acc[date].push(apt);
@@ -122,8 +194,8 @@ export default function AppointmentPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Doctors</SelectItem>
-                  {doctors.map((doctor) => (
-                    <SelectItem key={doctor._id} value={doctor._id}>
+                  {doctors?.map((doctor) => (
+                    <SelectItem key={doctor._id} value={doctor.userId}>
                       {doctor.firstName} {doctor.lastName}
                     </SelectItem>
                   ))}
@@ -151,8 +223,8 @@ export default function AppointmentPage() {
               </div>
             </div>
             <div className="text-sm text-muted-foreground">
-              Displaying {filteredAppointments.length} of {appointments.length}{" "}
-              Events
+              Displaying {filteredAppointments.length} of{" "}
+              {appointments?.length || 0} Events
             </div>
           </div>
 
@@ -238,14 +310,14 @@ export default function AppointmentPage() {
                   <div className="text-lg font-semibold mb-4">
                     {format(parseISO(date), "EEEE, d MMMM yyyy")}
                   </div>
-                  {groupedAppointments[date].map((appointment) => {
-                    const doctor = doctors.find(
+                  {groupedAppointments[date].map((appointment: Appointment) => {
+                    const doctor = doctors?.find(
                       (d) => d.userId === appointment.doctorId
                     );
-                    const appointmentDate = parseISO(
-                      appointment.appointmentDate
+                    const { startTime, endTime } = parseAppointmentDateTime(
+                      appointment.appointmentDate,
+                      appointment.appointmentTime
                     );
-                    const appointmentEndTime = addMinutes(appointmentDate, 30); // Assuming 30-minute appointments
 
                     return (
                       <div
@@ -256,8 +328,8 @@ export default function AppointmentPage() {
                           <div className="h-8 w-8 rounded-full bg-primary/10" />
                           <div>
                             <div className="font-medium">
-                              {format(appointmentDate, "h:mm a")} -{" "}
-                              {format(appointmentEndTime, "h:mm a")}
+                              {format(startTime, "h:mm a")} -{" "}
+                              {format(endTime, "h:mm a")}
                             </div>
                             <div className="text-sm text-muted-foreground">
                               {doctor
@@ -273,9 +345,24 @@ export default function AppointmentPage() {
                               ? "Teleconsultation"
                               : "In-person"}
                           </div>
-                          <Button variant="ghost" size="sm">
-                            Details
-                          </Button>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  setSelectedAppointment(appointment)
+                                }
+                              >
+                                Details
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <AppointmentDetails
+                                appointment={selectedAppointment}
+                              />
+                            </DialogContent>
+                          </Dialog>
                         </div>
                       </div>
                     );
