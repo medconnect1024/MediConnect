@@ -120,6 +120,27 @@ export const getDoctors = query(async (ctx) => {
   return await ctx.db.query('users').collect()
 })
 
+export const getDoctorsByHospitalId = query({
+  args: { hospitalId: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    if (!args.hospitalId) return [];
+
+    return await ctx.db
+      .query("users")
+      .filter((q) => 
+        q.and(
+          q.eq(q.field("hospitalId"), args.hospitalId),
+          q.eq(q.field("role"), "Doctor")
+        )
+      )
+      .collect();
+  },
+});
+
+
+
+
+
 export const getUserDetails = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {

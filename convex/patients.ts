@@ -534,3 +534,23 @@ export const getPatientId = query({
   }
   },
 });
+
+
+
+
+export const getAllPatientsByhospitalid = query({
+  args: { hospitalId: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    if (!args.hospitalId) return [];
+
+    const patients = await ctx.db
+      .query("patients")
+      .filter((q) => q.eq(q.field("hospitalId"), args.hospitalId))
+      .collect();
+
+    // Return all fields for each patient
+    return patients;
+  },
+});
+
+

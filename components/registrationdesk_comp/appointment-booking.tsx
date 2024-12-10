@@ -66,10 +66,15 @@ export default function AppointmentBooking({
   const { toast } = useToast();
   const { user } = useUser();
   const userId = user?.id || "";
+  const hospitalId = useQuery(api.users.getHospitalIdByUserId, { userId });
   const addAppointment = useMutation(api.appointment.addAppointment);
   const updateSlotStatus = useMutation(api.slots.updateSlotStatus);
-  const patients = useQuery(api.patients.getAllPatients);
-  const doctors = useQuery(api.users.getDoctors);
+  const patients = useQuery(api.patients.getAllPatientsByhospitalid, {
+    hospitalId: hospitalId ?? undefined,
+  });
+  const doctors = useQuery(api.users.getDoctorsByHospitalId, {
+    hospitalId: hospitalId ?? undefined,
+  });
   const router = useRouter();
 
   const [selectedDoctor, setSelectedDoctor] = useState<string | null>(null);
@@ -103,6 +108,14 @@ export default function AppointmentBooking({
       setAvailableSlots(getAvailableSlots);
     }
   }, [getAvailableSlots]);
+
+  useEffect(() => {
+    if (doctors && doctors.length === 1) {
+      const singleDoctor = doctors[0];
+      form.setValue("doctorId", singleDoctor.userId);
+      setSelectedDoctor(singleDoctor.userId);
+    }
+  }, [doctors, form]);
 
   const onSubmit = async (values: FormSchema) => {
     try {
@@ -192,29 +205,41 @@ export default function AppointmentBooking({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Doctor*</FormLabel>
-                      <Select
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          setSelectedDoctor(value);
-                        }}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="bg-white">
-                            <SelectValue placeholder="Select doctor" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {doctors?.map((doctor) => (
-                            <SelectItem
-                              key={doctor.userId}
-                              value={doctor.userId}
-                            >
-                              {doctor.firstName} {doctor.lastName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {doctors && doctors.length > 1 ? (
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            setSelectedDoctor(value);
+                          }}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="bg-white">
+                              <SelectValue placeholder="Select doctor" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {doctors?.map((doctor) => (
+                              <SelectItem
+                                key={doctor.userId}
+                                value={doctor.userId}
+                              >
+                                {doctor.firstName} {doctor.lastName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          value={
+                            doctors?.[0]?.firstName +
+                            " " +
+                            doctors?.[0]?.lastName
+                          }
+                          disabled
+                          className="bg-white"
+                        />
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -244,28 +269,28 @@ export default function AppointmentBooking({
                           <SelectItem value="orthopedics">
                             Orthopedics
                           </SelectItem>
-                          <SelectItem value="generalsurgery">
-                            General surgery
+                          <SelectItem value="general-surgery">
+                            General Surgery
                           </SelectItem>
-                          <SelectItem value="Urology">Urology</SelectItem>
-                          <SelectItem value="Nephrology">Nephrology</SelectItem>
-                          <SelectItem value="Endocrinology">
+                          <SelectItem value="urology">Urology</SelectItem>
+                          <SelectItem value="nephrology">Nephrology</SelectItem>
+                          <SelectItem value="endocrinology">
                             Endocrinology
                           </SelectItem>
-                          <SelectItem value="Transplant medicine">
-                            Transplant medicine
+                          <SelectItem value="transplant-medicine">
+                            Transplant Medicine
                           </SelectItem>
-                          <SelectItem value="Neurosurgery">
+                          <SelectItem value="neurosurgery">
                             Neurosurgery
                           </SelectItem>
-                          <SelectItem value="Internal Medicine">
+                          <SelectItem value="internal-medicine">
                             Internal Medicine
                           </SelectItem>
-                          <SelectItem value="Psychiatry">Psychiatry</SelectItem>
-                          <SelectItem value="Pediatrics">Pediatrics</SelectItem>
-                          <SelectItem value="OGyn">OGyn</SelectItem>
-                          <SelectItem value="Oncology">Oncology</SelectItem>
-                          <SelectItem value="Gastroenterology">
+                          <SelectItem value="psychiatry">Psychiatry</SelectItem>
+                          <SelectItem value="pediatrics">Pediatrics</SelectItem>
+                          <SelectItem value="ogyn">OB/GYN</SelectItem>
+                          <SelectItem value="oncology">Oncology</SelectItem>
+                          <SelectItem value="gastroenterology">
                             Gastroenterology
                           </SelectItem>
                         </SelectContent>
@@ -435,6 +460,7 @@ export default function AppointmentBooking({
                           }
                         }}
                         defaultValue={field.value}
+                        disabled={!selectedDoctor || !selectedDate}
                       >
                         <FormControl>
                           <SelectTrigger className="bg-white">
@@ -442,11 +468,19 @@ export default function AppointmentBooking({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {availableSlots.map((slot) => (
-                            <SelectItem key={slot.id} value={slot.id}>
-                              {slot.startTime} - {slot.endTime}
+                          {availableSlots.length > 0 ? (
+                            availableSlots.map((slot) => (
+                              <SelectItem key={slot.id} value={slot.id}>
+                                {slot.startTime} - {slot.endTime}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="no-slots" disabled>
+                              {selectedDoctor && selectedDate
+                                ? "No available slots"
+                                : "Please select a doctor and date first"}
                             </SelectItem>
-                          ))}
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
