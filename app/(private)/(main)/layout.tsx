@@ -6,27 +6,29 @@ import RoleBasedNavigation from "@/components/RoleBasedNavigation";
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 
-//TODO: change content
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.mymedirecords.com/"),
+  metadataBase: new URL("https://www.mymedirecords.com"), // Replace with your deployed URL
   title: {
     default: "Your AI Doctor",
-    template: " ",
+    template: "%s | MyMediRecords",
   },
-  description: "write description",
-  keywords: "write keywords",
+  description:
+    "Revolutionize your health records with AI-powered insights and seamless organization.",
+  keywords:
+    "AI doctor, medical records, health insights, healthcare AI, medical organization",
   openGraph: {
-    title: "",
-    description: "write desc",
-    url: "write prod website url for seo",
+    title: "Your AI Doctor - Organize and Optimize Your Health",
+    description:
+      "Your trusted platform for AI-powered medical records and health insights.",
+    url: "https://www.mymedirecords.com",
     type: "website",
-    siteName: "write sitename",
+    siteName: "MyMediRecords",
     images: [
       {
-        url: "opengraph-image.png",
+        url: "opengraph-image.png", // Ensure the file exists in your public folder
         width: 1200,
         height: 630,
-        alt: "Write alt text",
+        alt: "MyMediRecords - Your AI doctor",
       },
     ],
   },

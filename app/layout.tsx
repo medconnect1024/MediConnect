@@ -17,25 +17,28 @@ const geistMono = localFont({
 
 //TODO: write content
 export const metadata: Metadata = {
-  metadataBase: new URL("https://write_your_prod_website_url"),
+  metadataBase: new URL("https://www.mymedirecords.com"), // Replace with your deployed URL
   title: {
-    default: "Your AI doctor ",
-    template: "%s | MyMediRecords ",
+    default: "Your AI Doctor",
+    template: "%s | MyMediRecords",
   },
-  description: "write description for seo",
-  keywords: "write keywords for seo",
+  description:
+    "Revolutionize your health records with AI-powered insights and seamless organization.",
+  keywords:
+    "AI doctor, medical records, health insights, healthcare AI, medical organization",
   openGraph: {
-    title: "Product Title - tag Line(optional)",
-    description: "write description for seo",
-    url: "write main website url after deployment",
+    title: "Your AI Doctor - Organize and Optimize Your Health",
+    description:
+      "Your trusted platform for AI-powered medical records and health insights.",
+    url: "https://www.mymedirecords.com",
     type: "website",
-    siteName: "write siteName",
+    siteName: "MyMediRecords",
     images: [
       {
-        url: "opengraph-image.png",
+        url: "opengraph-image.png", // Ensure the file exists in your public folder
         width: 1200,
         height: 630,
-        alt: "write alt text",
+        alt: "MyMediRecords - Your AI doctor",
       },
     ],
   },
