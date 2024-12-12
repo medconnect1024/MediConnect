@@ -133,7 +133,7 @@ const AnimatedContent: React.FC<AnimatedContentProps> = ({
           </div>
           <Button
             size="icon"
-            className="bg-gradient-to-r from-blue-600 to-sky-400 text-white rounded-full hover:opacity-90 transition-opacity h-15 "
+            className="bg-gradient-to-r from-blue-600 to-sky-400 text-white rounded-full h-12 w-12 flex items-center justify-center shadow-lg hover:opacity-90 transition-opacity"
           >
             <ArrowRight className="h-5 w-5" />
           </Button>

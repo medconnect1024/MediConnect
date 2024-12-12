@@ -44,6 +44,7 @@ type PrescriptionData = {
   investigations: { id: string; name: string }[];
   investigationNotes?: string;
   followUpDate?: Date;
+  referTo?: string;
   medicineReminder: {
     message: boolean;
     call: boolean;
@@ -282,6 +283,11 @@ export default function EnhancedPrescriptionPreview({
                     ? format(data.followUpDate, "PPP")
                     : "No follow-up date set"}
                 </span>
+
+                <div className="mt-4">
+                  <span className="font-medium">ReferTo: </span>
+                  <span>{data.referTo}</span>
+                </div>
               </CardContent>
             </Card>
           </div>

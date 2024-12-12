@@ -150,6 +150,7 @@ export default defineSchema({
       investigations: v.array(v.object({ id: v.string(), name: v.string() })),
       investigationNotes: v.optional(v.string()),
       followUpDate: v.optional(v.string()),
+      referTo: v.optional(v.string()),
       severity: v.optional(v.string()), 
       medicineReminder: v.object({
         message: v.boolean(),

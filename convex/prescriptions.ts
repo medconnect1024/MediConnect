@@ -32,6 +32,7 @@ export const savePrescription = mutation({
     investigations: v.array(v.object({ id: v.string(), name: v.string() })),
     investigationNotes: v.optional(v.string()),
     followUpDate: v.optional(v.string()),
+    referTo: v.optional(v.string()),
     medicineReminder: v.object({
       message: v.boolean(),
       call: v.boolean(),
@@ -66,6 +67,7 @@ export const savePrescription = mutation({
       investigations,
       investigationNotes,
       followUpDate,
+      referTo,
       medicineReminder,
       medicineInstructions,
       dosage,
@@ -92,6 +94,7 @@ export const savePrescription = mutation({
       investigations,
       investigationNotes,
       followUpDate,
+      referTo,
       medicineReminder,
       medicineInstructions,
       dosage,

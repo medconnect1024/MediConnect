@@ -76,6 +76,7 @@ type Prescription = {
   investigations: { id: string; name: string }[];
   investigationNotes?: string;
   followUpDate?: string;
+  referTo?: string;
   medicineReminder: {
     message: boolean;
     call: boolean;
@@ -123,6 +124,7 @@ export default function MultiStepPrescription({
   >([]);
   const [investigationNotes, setInvestigationNotes] = useState("");
   const [followUpDate, setFollowUpDate] = useState<Date | undefined>(undefined);
+  const [referTo, setReferTo] = useState("");
   const [isPopoverOpen, setPopoverOpen] = useState(false);
   const [medicineReminder, setMedicineReminder] = useState({
     message: false,
@@ -257,6 +259,7 @@ export default function MultiStepPrescription({
           investigations: apiPrescription.investigations,
           investigationNotes: apiPrescription.investigationNotes,
           followUpDate: apiPrescription.followUpDate,
+          referTo: apiPrescription.referTo,
           medicineReminder: apiPrescription.medicineReminder,
           medicineInstructions: apiPrescription.medicineInstructions,
           chronicCondition: apiPrescription.chronicCondition,
@@ -598,6 +601,7 @@ export default function MultiStepPrescription({
       `Reminders: ${prescriptionData.medicineReminder.message ? "Message" : ""}${prescriptionData.medicineReminder.message && prescriptionData.medicineReminder.call ? ", " : ""}${prescriptionData.medicineReminder.call ? "Call" : ""}` ||
         "No reminders set"
     );
+    addText(`ReferTo: ${prescriptionData.referTo || "None"}`);
 
     // Finalize and add footers for all pages
     const totalPages = doc.getNumberOfPages();
@@ -633,6 +637,7 @@ export default function MultiStepPrescription({
       investigations,
       investigationNotes,
       followUpDate: followUpDate ? followUpDate.toISOString() : undefined,
+      referTo,
       medicineReminder,
       medicineInstructions,
       chronicCondition,
@@ -717,6 +722,7 @@ export default function MultiStepPrescription({
     setInvestigations([]);
     setInvestigationNotes("");
     setFollowUpDate(undefined);
+    setReferTo("");
     setMedicineReminder({ message: false, call: false });
     setMedicineInstructions("");
     setChronicCondition(false);
@@ -867,6 +873,22 @@ export default function MultiStepPrescription({
                 </label>
               </div>
             </div>
+            <div className="mt-4">
+              <label
+                htmlFor="referTo"
+                className="text-sm font-medium leading-none block mb-2"
+              >
+                Refer To
+              </label>
+              <input
+                type="text"
+                id="referTo"
+                value={referTo}
+                onChange={(e) => setReferTo(e.target.value)}
+                placeholder="Enter referral details"
+                className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
           </div>
         );
       default:
@@ -886,6 +908,7 @@ export default function MultiStepPrescription({
         investigations,
         investigationNotes,
         followUpDate,
+        referTo,
         medicineReminder,
         medicineInstructions,
         chronicCondition,

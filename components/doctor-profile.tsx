@@ -4,8 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Calendar,
@@ -20,13 +19,25 @@ import {
   ChevronRight,
   Share2,
   Bookmark,
+  Menu,
+  Sun,
+  Moon,
+  ThumbsUp,
+  MessageCircle,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Menu } from "lucide-react";
-
+import { motion, AnimatePresence } from "framer-motion";
 import Hls from "hls.js";
+
+// Add Google Fonts
+import { Poppins } from "next/font/google";
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
 interface DoctorProfileProps {
   userId: string;
 }
@@ -47,6 +58,7 @@ interface Video {
 
 const VideoPlayer: React.FC<{ src: string }> = ({ src }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     if (Hls.isSupported() && videoRef.current) {
@@ -58,13 +70,38 @@ const VideoPlayer: React.FC<{ src: string }> = ({ src }) => {
     }
   }, [src]);
 
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
   return (
-    <video
-      ref={videoRef}
-      className="w-full h-full object-cover"
-      controls
-      playsInline
-    />
+    <div className="relative group">
+      <video
+        ref={videoRef}
+        className="w-full h-full object-cover rounded-lg"
+        playsInline
+        onClick={togglePlay}
+      />
+      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={togglePlay}
+          className="bg-black bg-opacity-50 text-white rounded-full p-4 transform transition-transform hover:scale-110"
+        >
+          {isPlaying ? (
+            <span className="sr-only">Pause</span>
+          ) : (
+            <PlayCircle className="w-12 h-12" />
+          )}
+        </button>
+      </div>
+    </div>
   );
 };
 
@@ -77,6 +114,8 @@ export function DoctorProfile({ userId }: DoctorProfileProps) {
     "/placeholder.svg?height=300&width=300"
   );
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+
   useEffect(() => {
     const fetchProfileImage = async () => {
       if (doctor && doctor.profileImageUrl) {
@@ -94,13 +133,27 @@ export function DoctorProfile({ userId }: DoctorProfileProps) {
     fetchProfileImage();
   }, [doctor, generateFileUrl]);
 
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [darkMode]);
+
   if (!doctor) {
-    return <div className="text-center py-24">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        Loading...
+      </div>
+    );
   }
 
   return (
-    <div className=" flex flex-col min-h-screen bg-gray-50">
-      <header className="px-4 lg:px-6 h-16 flex items-center border-b bg-white/50 backdrop-blur-sm fixed w-full z-50">
+    <div
+      className={`min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-900 transition-colors duration-300 ${poppins.className}`}
+    >
+      <header className="px-4 lg:px-6 h-16 flex items-center justify-between border-b bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm fixed top-0 left-0 w-full z-50 transition-colors duration-300">
         <Link className="flex items-center justify-center" href="#">
           <motion.span
             className="font-bold text-xl md:text-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-sky-400 bg-clip-text text-transparent"
@@ -111,27 +164,27 @@ export function DoctorProfile({ userId }: DoctorProfileProps) {
             MyMedirecords
           </motion.span>
         </Link>
-        <nav className="hidden md:flex ml-auto gap-4 sm:gap-6">
+        <nav className="hidden md:flex gap-4 sm:gap-6">
           <Link
-            className="text-sm font-medium hover:text-blue-600 transition-colors"
+            className="text-sm font-medium hover:text-blue-600 transition-colors dark:text-gray-300 dark:hover:text-blue-400"
             href="#"
           >
             About
           </Link>
           <Link
-            className="text-sm font-medium hover:text-blue-600 transition-colors"
+            className="text-sm font-medium hover:text-blue-600 transition-colors dark:text-gray-300 dark:hover:text-blue-400"
             href="#"
           >
             Medical Team
           </Link>
           <Link
-            className="text-sm font-medium hover:text-blue-600 transition-colors"
+            className="text-sm font-medium hover:text-blue-600 transition-colors dark:text-gray-300 dark:hover:text-blue-400"
             href="#"
           >
             Blog
           </Link>
           <Link
-            className="text-sm font-medium hover:text-blue-600 transition-colors"
+            className="text-sm font-medium hover:text-blue-600 transition-colors dark:text-gray-300 dark:hover:text-blue-400"
             href="#"
           >
             Login
@@ -140,322 +193,412 @@ export function DoctorProfile({ userId }: DoctorProfileProps) {
             Sign Up
           </Button>
         </nav>
-        <Button
-          className="md:hidden ml-auto"
-          variant="ghost"
-          size="icon"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          <Menu className="h-6 w-6" />
-        </Button>
-        {mobileMenuOpen && (
-          <div className="absolute top-16 left-0 right-0 bg-white border-b p-4 md:hidden">
-            <nav className="flex flex-col gap-4">
-              <Link
-                className="text-sm font-medium hover:text-blue-600 transition-colors"
-                href="#"
-              >
-                About
-              </Link>
-              <Link
-                className="text-sm font-medium hover:text-blue-600 transition-colors"
-                href="#"
-              >
-                Medical Team
-              </Link>
-              <Link
-                className="text-sm font-medium hover:text-blue-600 transition-colors"
-                href="#"
-              >
-                Blog
-              </Link>
-              <Link
-                className="text-sm font-medium hover:text-blue-600 transition-colors"
-                href="#"
-              >
-                Login
-              </Link>
-              <Button className="bg-gradient-to-r from-blue-600 to-sky-400 text-white hover:opacity-90 transition-opacity w-full">
-                Sign Up
-              </Button>
-            </nav>
-          </div>
-        )}
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setDarkMode(!darkMode)}
+            className="text-gray-700 dark:text-gray-300"
+          >
+            {darkMode ? (
+              <Sun className="h-5 w-5" />
+            ) : (
+              <Moon className="h-5 w-5" />
+            )}
+          </Button>
+          <Button
+            className="md:hidden"
+            variant="ghost"
+            size="icon"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            <Menu className="h-6 w-6" />
+          </Button>
+        </div>
       </header>
-      <div className="container mx-auto px-4 py-8 mt-10">
-        <div className="grid lg:grid-cols-[350px_1fr] gap-8">
-          {/* Left Column - Profile Info */}
-          <div className="space-y-6">
-            <Card className="border-none shadow-lg">
-              <CardContent className="p-6">
-                <div className="relative mb-6">
-                  <Image
-                    src={profileImageUrl}
-                    alt={`Dr. ${doctor.firstName} ${doctor.lastName}`}
-                    width={300}
-                    height={300}
-                    className="rounded-full w-40 h-40 object-cover mx-auto border-4 border-white shadow-md"
-                  />
-                  <Badge className="absolute bottom-2 right-1/3 bg-green-500 text-white">
-                    Available
-                  </Badge>
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 bg-white dark:bg-gray-900 md:hidden"
+            initial={{ opacity: 0, x: "-100%" }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: "-100%" }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          >
+            <div className="flex flex-col h-full p-4">
+              <Button
+                className="self-end mb-8"
+                variant="ghost"
+                size="icon"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </Button>
+              <nav className="flex flex-col gap-4">
+                <Link
+                  className="text-lg font-medium hover:text-blue-600 transition-colors dark:text-gray-300 dark:hover:text-blue-400"
+                  href="#"
+                >
+                  About
+                </Link>
+                <Link
+                  className="text-lg font-medium hover:text-blue-600 transition-colors dark:text-gray-300 dark:hover:text-blue-400"
+                  href="#"
+                >
+                  Medical Team
+                </Link>
+                <Link
+                  className="text-lg font-medium hover:text-blue-600 transition-colors dark:text-gray-300 dark:hover:text-blue-400"
+                  href="#"
+                >
+                  Blog
+                </Link>
+                <Link
+                  className="text-lg font-medium hover:text-blue-600 transition-colors dark:text-gray-300 dark:hover:text-blue-400"
+                  href="#"
+                >
+                  Login
+                </Link>
+                <Button className="bg-gradient-to-r from-blue-600 to-sky-400 text-white hover:opacity-90 transition-opacity w-full">
+                  Sign Up
+                </Button>
+              </nav>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <main className="container mx-auto px-4 py-8 mt-16">
+        <section className="mb-12">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-8 bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg transition-colors duration-300">
+            <motion.div
+              className="relative"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Image
+                src={profileImageUrl}
+                alt={`Dr. ${doctor.firstName} ${doctor.lastName}`}
+                width={300}
+                height={300}
+                className="rounded-full w-48 h-48 object-cover border-4 border-white dark:border-gray-700 shadow-lg"
+              />
+              <Badge className="absolute bottom-2 right-2 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                Available
+              </Badge>
+            </motion.div>
+            <div className="text-center md:text-left">
+              <motion.h1
+                className="text-4xl font-bold mb-2 text-gray-900 dark:text-white"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                Dr. {doctor.firstName} {doctor.lastName}
+              </motion.h1>
+              <motion.p
+                className="text-xl text-gray-600 dark:text-gray-400 mb-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                {doctor.role || "Medical Professional"}
+              </motion.p>
+              <motion.div
+                className="flex flex-wrap justify-center md:justify-start gap-2 mb-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+              >
+                <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-3 py-1 rounded-full text-sm font-semibold">
+                  {doctor.specialization || "Specialist"}
+                </Badge>
+                {/* Add more badges for certifications or specialties */}
+              </motion.div>
+              <motion.div
+                className="space-y-3 text-sm text-gray-600 dark:text-gray-400"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+              >
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-blue-500" />
+                  <span>{doctor.address || "Location not specified"}</span>
                 </div>
-                <h1 className="text-3xl font-serif text-center mb-2 text-gray-900">
-                  Dr. {doctor.firstName} {doctor.lastName}
-                </h1>
-                <p className="text-xl text-center text-gray-600 mb-4">
-                  {doctor.role || "Medical Professional"}
-                </p>
-                <div className="flex justify-center space-x-2 mb-6">
-                  <Badge
-                    variant="secondary"
-                    className="bg-blue-100 text-blue-800"
-                  >
-                    {doctor.specialization || "Specialist"}
-                  </Badge>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-5 w-5 text-blue-500" />
+                  <span>{doctor.phone || "Phone number not available"}</span>
                 </div>
-                <div className="space-y-3 text-sm text-gray-600">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-gray-400" />
-                    <span>{doctor.address || "Location not specified"}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-gray-400" />
-                    <span>{doctor.phone || "Phone number not available"}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                    <span>{doctor.email || "Email not available"}</span>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Mail className="h-5 w-5 text-blue-500" />
+                  <span>{doctor.email || "Email not available"}</span>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-lg">
-              Book Appointment
-            </Button>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900">
-                  Education & Training
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                {educationAndTraining.map((item, index) => (
-                  <div key={index} className="flex items-start gap-2">
-                    <Book className="h-4 w-4 text-gray-400 mt-1" />
-                    <div>
-                      <p className="font-medium text-gray-900">{item.degree}</p>
-                      <p className="text-gray-600">{item.institution}</p>
-                      <p className="text-gray-500">{item.year}</p>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900">
-                  Awards & Honors
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                {awardsAndHonors.map((award, index) => (
-                  <div key={index} className="flex items-start gap-2">
-                    <Award className="h-4 w-4 text-gray-400 mt-1" />
-                    <div>
-                      <p className="font-medium text-gray-900">{award.title}</p>
-                      <p className="text-gray-600">{award.year}</p>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900">
-                  Upcoming Events
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {upcomingEvents.map((event, index) => (
-                  <div
-                    key={index}
-                    className="flex items-start gap-4 border-b border-gray-200 last:border-b-0 pb-4 last:pb-0"
-                  >
-                    <div className="bg-blue-100 p-2 rounded-lg">
-                      <Calendar className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-lg mb-1 text-gray-900">
-                        {event.title}
-                      </h3>
-                      <p className="text-gray-600 text-sm flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        {event.date} | {event.time}
-                      </p>
-                      <p className="text-gray-700 text-sm mt-2">
-                        {event.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+              </motion.div>
+            </div>
           </div>
+        </section>
 
-          {/* Right Column - Content */}
-          <div className="space-y-8">
-            <Card>
+        <div className="grid md:grid-cols-3 gap-8">
+          <div className="md:col-span-2 space-y-8">
+            <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
               <CardContent className="p-6">
-                <h2 className="text-2xl font-serif mb-4 text-gray-900">
+                <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
                   About Dr. {doctor.firstName} {doctor.lastName}
                 </h2>
-                <p className="text-gray-700 leading-relaxed mb-4">
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
                   {doctor.bio || "Bio not available"}
                 </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl font-serif text-gray-900">
+              <CardContent className="p-4 sm:p-6">
+                <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-900 dark:text-white">
                   Patient Q&A Videos
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-semibold text-gray-900">
-                    Featured Videos
-                  </h3>
-                  <Button
-                    variant="outline"
-                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                  >
-                    View All Videos
-                    <ChevronRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {videos.map((video: Video) => (
-                    <Card
+                    <motion.div
                       key={video._id}
-                      className="overflow-hidden hover:shadow-md transition-shadow h-full"
+                      className="bg-white dark:bg-gray-800 rounded-md overflow-hidden shadow hover:shadow-lg transition-shadow duration-300"
+                      whileHover={{ scale: 1.02 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 12,
+                      }}
                     >
-                      <div className="flex flex-col h-full">
-                        <div className="relative h-40">
-                          <VideoPlayer src={video.url} />
-                        </div>
-                        <div className="flex justify-end space-x-2 p-2 bg-gray-100">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-gray-600 hover:text-gray-800"
-                          >
-                            <Share2 className="h-4 w-4 mr-1" />
-                            Share
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-gray-600 hover:text-gray-800"
-                          >
-                            <Bookmark className="h-4 w-4 mr-1" />
-                            Save
-                          </Button>
-                        </div>
-                        <CardContent className="p-4 flex-grow">
-                          <div className="flex flex-col justify-between h-full">
-                            <div>
-                              <h3 className="text-base font-medium mb-1 text-gray-900">
-                                {video.metadata.name}
-                              </h3>
-                              <p className="text-xs text-gray-600">
-                                Uploaded on{" "}
-                                {new Date(video.createdAt).toLocaleDateString()}
-                              </p>
-                            </div>
+                      <div className="aspect-w-16 aspect-h-9">
+                        <VideoPlayer src={video.url} />
+                      </div>
+                      <div className="p-3 sm:p-4">
+                        <h3 className="text-sm sm:text-md font-semibold mb-1 text-gray-900 dark:text-white">
+                          {video.metadata.name}
+                        </h3>
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2">
+                          Uploaded on{" "}
+                          {new Date(video.createdAt).toLocaleDateString()}
+                        </p>
+                        <div className="flex justify-between items-center">
+                          <div className="flex space-x-1">
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 self-end"
+                              className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
                             >
-                              <PlayCircle className="h-5 w-5 mr-1" />
-                              Watch
+                              <ThumbsUp className="h-4 w-4 mr-1" />
+                              Like
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                            >
+                              <MessageCircle className="h-4 w-4 mr-1" />
+                              Comment
                             </Button>
                           </div>
-                        </CardContent>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900"
+                          >
+                            <PlayCircle className="h-4 w-4 mr-1" />
+                            Watch
+                          </Button>
+                        </div>
                       </div>
-                    </Card>
+                    </motion.div>
                   ))}
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl font-serif text-gray-900">
+              <CardContent className="p-6">
+                <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
                   Patient Testimonials
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {patientTestimonials.map((testimonial, index) => (
-                  <div
-                    key={index}
-                    className="border-b border-gray-200 last:border-b-0 pb-6 last:pb-0"
-                  >
-                    <div className="flex items-center mb-2">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-5 w-5 ${i < testimonial.rating ? "text-yellow-400" : "text-gray-300"}`}
-                        />
-                      ))}
-                    </div>
-                    <p className="italic mb-2 text-gray-700">
-                      "{testimonial.comment}"
-                    </p>
-                    <p className="text-gray-600 text-sm">
-                      - {testimonial.name}
-                    </p>
-                  </div>
-                ))}
+                </h2>
+                <div className="space-y-6">
+                  {patientTestimonials.map((testimonial, index) => (
+                    <motion.div
+                      key={index}
+                      className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-300"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                    >
+                      <div className="flex items-center mb-4">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-5 w-5 ${i < testimonial.rating ? "text-yellow-400" : "text-gray-300"}`}
+                          />
+                        ))}
+                      </div>
+                      <p className="italic mb-4 text-gray-700 dark:text-gray-300">
+                        "{testimonial.comment}"
+                      </p>
+                      <p className="text-gray-600 dark:text-gray-400 text-sm font-semibold">
+                        - {testimonial.name}
+                      </p>
+                    </motion.div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="space-y-8">
+            <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+              <CardContent className="p-6">
+                <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+                  Education & Training
+                </h2>
+                <ul className="space-y-4">
+                  {educationAndTraining.map((item, index) => (
+                    <motion.li
+                      key={index}
+                      className="flex items-start gap-3"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                    >
+                      <Book className="h-5 w-5 text-blue-500 mt-1 flex-shrink-0" />
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {item.degree}
+                        </p>
+                        <p className="text-gray-600 dark:text-gray-400">
+                          {item.institution}
+                        </p>
+                        <p className="text-gray-500 dark:text-gray-500">
+                          {item.year}
+                        </p>
+                      </div>
+                    </motion.li>
+                  ))}
+                </ul>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl font-serif text-gray-900">
-                  Recent Publications
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {recentPublications.map((pub, index) => (
-                  <div
-                    key={index}
-                    className="border-b border-gray-200 last:border-b-0 pb-4 last:pb-0"
-                  >
-                    <h3 className="font-medium text-lg mb-1 text-gray-900">
-                      {pub.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm">{pub.authors}</p>
-                    <p className="text-gray-500 text-sm">{pub.journal}</p>
-                    <Button
-                      variant="link"
-                      className="text-blue-600 hover:text-blue-800 p-0 h-auto mt-2"
+            <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+              <CardContent className="p-6">
+                <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+                  Awards & Honors
+                </h2>
+                <ul className="space-y-4">
+                  {awardsAndHonors.map((award, index) => (
+                    <motion.li
+                      key={index}
+                      className="flex items-start gap-3"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
                     >
-                      Read More <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </div>
-                ))}
+                      <Award className="h-5 w-5 text-blue-500 mt-1 flex-shrink-0" />
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {award.title}
+                        </p>
+                        <p className="text-gray-600 dark:text-gray-400">
+                          {award.year}
+                        </p>
+                        <p className="text-gray-500 dark:text-gray-500">
+                          {award.organization}
+                        </p>
+                      </div>
+                    </motion.li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+              <CardContent className="p-6">
+                <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+                  Upcoming Events
+                </h2>
+                <ul className="space-y-4">
+                  {upcomingEvents.map((event, index) => (
+                    <motion.li
+                      key={index}
+                      className="flex items-start gap-3"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                    >
+                      <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg">
+                        <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {event.title}
+                        </p>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          {event.date} | {event.time}
+                        </p>
+                        <p className="text-gray-500 dark:text-gray-500 text-sm mt-1">
+                          {event.description}
+                        </p>
+                      </div>
+                    </motion.li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+              <CardContent className="p-6">
+                <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+                  Recent Publications
+                </h2>
+                <ul className="space-y-4">
+                  {recentPublications.map((pub, index) => (
+                    <motion.li
+                      key={index}
+                      className="border-b border-gray-200 dark:border-gray-700 last:border-b-0 pb-4 last:pb-0"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                    >
+                      <h3 className="font-medium text-lg mb-1 text-gray-900 dark:text-white">
+                        {pub.title}
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-400 text-sm">
+                        {pub.authors}
+                      </p>
+                      <p className="text-gray-500 dark:text-gray-500 text-sm">
+                        {pub.journal}
+                      </p>
+                      <Button
+                        variant="link"
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 p-0 h-auto mt-2"
+                      >
+                        Read More <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </motion.li>
+                  ))}
+                </ul>
               </CardContent>
             </Card>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
@@ -516,82 +659,6 @@ const recentPublications = [
   },
 ];
 
-const questions = [
-  {
-    title: "What causes PCOS?",
-    category: "PCOS",
-    description:
-      "Dr. Cayton Vaught explains the underlying causes of Polycystic Ovary Syndrome (PCOS) and its impact on hormonal balance.",
-  },
-  {
-    title: "What are the most common menstrual symptoms with PCOS?",
-    category: "PCOS",
-    description:
-      "Learn about the typical menstrual irregularities associated with PCOS and how they affect your reproductive health.",
-  },
-  {
-    title: "What is lean PCOS?",
-    category: "PCOS",
-    description:
-      "A deeper look into the characteristics and implications of lean PCOS, a less common form of the condition.",
-  },
-  {
-    title:
-      "How are the cysts in PCOS similar to or different from other ovarian cysts?",
-    category: "PCOS",
-    description:
-      "Comparison of PCOS cysts with other types of ovarian cysts, and their impact on fertility.",
-  },
-  {
-    title: "How is PCOS diagnosed?",
-    category: "PCOS",
-    description:
-      "Explanation of the diagnostic process for PCOS, including common tests and criteria used by doctors.",
-  },
-  {
-    title: "What does IVF look like if I have PCOS?",
-    category: "Fertility",
-    description:
-      "Overview of IVF procedures tailored for individuals with PCOS, including potential challenges and success rates.",
-  },
-  {
-    title: "What lifestyle changes should I make with PCOS?",
-    category: "PCOS",
-    description:
-      "Recommendations for lifestyle modifications to manage PCOS symptoms and improve overall health.",
-  },
-  {
-    title: "How does PCOS impact fertility?",
-    category: "Fertility",
-    description:
-      "Discussion on the effects of PCOS on fertility and potential treatment options to improve conception chances.",
-  },
-  {
-    title: "What are the success rates for IVF treatment?",
-    category: "Fertility",
-    description:
-      "Statistics and factors influencing IVF success rates, including age, health conditions, and treatment protocols.",
-  },
-  {
-    title: "How long does the IVF process typically take?",
-    category: "Fertility",
-    description:
-      "Timeline of the IVF process, from initial consultation to embryo transfer and pregnancy test.",
-  },
-  {
-    title: "What are the risks associated with fertility treatments?",
-    category: "Fertility",
-    description:
-      "Potential risks and complications of fertility treatments, including medication side effects and multiple pregnancies.",
-  },
-  {
-    title: "How can I improve my chances of conceiving naturally?",
-    category: "Fertility",
-    description:
-      "Tips and strategies to enhance natural conception, including lifestyle changes and timing of intercourse.",
-  },
-];
-
 const upcomingEvents = [
   {
     title: "Webinar: Understanding PCOS and Fertility",
@@ -629,19 +696,3 @@ const patientTestimonials = [
       "Dr. Cayton Vaught's knowledge of the latest fertility treatments gave us hope when we thought we had run out of options. We're forever grateful.",
   },
 ];
-
-const videoDurations = {
-  "What causes PCOS?": "5:23",
-  "What are the most common menstrual symptoms with PCOS?": "4:17",
-  "What is lean PCOS?": "3:45",
-  "How are the cysts in PCOS similar to or different from other ovarian cysts?":
-    "6:02",
-  "How is PCOS diagnosed?": "7:30",
-  "What does IVF look like if I have PCOS?": "8:15",
-  "What lifestyle changes should I make with PCOS?": "5:50",
-  "How does PCOS impact fertility?": "6:40",
-  "What are the success rates for IVF treatment?": "4:55",
-  "How long does the IVF process typically take?": "7:20",
-  "What are the risks associated with fertility treatments?": "6:10",
-  "How can I improve my chances of conceiving naturally?": "5:35",
-};
