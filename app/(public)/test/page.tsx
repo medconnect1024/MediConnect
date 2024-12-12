@@ -59,8 +59,11 @@ import {
 } from "@/components/ui/dialog";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { api } from "@/convex/_generated/api";
+import { useQuery, useMutation } from "convex/react";
 
 interface VendingMachine {
+  _id: string;
   id: string;
   name: string;
   status: "online" | "offline";
@@ -72,6 +75,7 @@ interface VendingMachine {
 }
 
 interface Vendor {
+  _id: string;
   id: string;
   name: string;
   status: string;
@@ -90,13 +94,20 @@ interface Transaction {
   amount: number;
 }
 
+interface IoTData {
+  temperature: number;
+  humidity: number;
+  waterLevel: number;
+}
+
 export default function TeaVendingDashboard() {
-  const [selectedMachine, setSelectedMachine] = useState<string>('all')
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
-  //const [activeTab, setActiveTab] = useState<'dashboard' | 'vendors'>('dashboard')
-  const [isAddMachineOpen, setIsAddMachineOpen] = useState(false)
-  const [isAddVendorOpen, setIsAddVendorOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<string>('dashboard')
+  const [selectedMachine, setSelectedMachine] = useState<string>("all");
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+  const [isAddMachineOpen, setIsAddMachineOpen] = useState(false);
+  const [isAddVendorOpen, setIsAddVendorOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("dashboard");
   const [newMachine, setNewMachine] = useState({
     id: "",
     name: "",
@@ -110,76 +121,15 @@ export default function TeaVendingDashboard() {
     company: "",
   });
 
-  const vendingMachines: VendingMachine[] = [
-    {
-      id: "VM001",
-      name: "Central Park",
-      status: "online",
-      temperature: 72,
-      canisterLevels: { green: 80, black: 65, oolong: 45 },
-      replenishmentOrder: { status: "Placed", eta: "2023-11-21" },
-      deliveryBoy: {
-        name: "John Doe",
-        location: "En route",
-        eta: "15 minutes",
-      },
-      lastFulfilled: "2023-11-18",
-    },
-    {
-      id: "VM002",
-      name: "Times Square",
-      status: "offline",
-      temperature: 68,
-      canisterLevels: { green: 30, black: 50, oolong: 70 },
-      replenishmentOrder: { status: "Delivered", eta: null },
-      deliveryBoy: { name: "Jane Smith", location: "At machine", eta: null },
-      lastFulfilled: "2023-11-19",
-    },
-    {
-      id: "VM003",
-      name: "Grand Central",
-      status: "online",
-      temperature: 70,
-      canisterLevels: { green: 90, black: 85, oolong: 60 },
-      replenishmentOrder: { status: "Not required", eta: null },
-      deliveryBoy: null,
-      lastFulfilled: "2023-11-17",
-    },
-  ];
-
-  const vendors: Vendor[] = [
-    {
-      id: "V001",
-      name: "Green Leaf Tea Co.",
-      status: "Active",
-      amountDue: 5000,
-      lastOrder: "2023-11-15",
-      contactPerson: "Alice Green",
-      email: "alice@greenleaftea.com",
-      phone: "+1 (555) 123-4567",
-    },
-    {
-      id: "V002",
-      name: "Black Pearl Imports",
-      status: "Inactive",
-      amountDue: 0,
-      lastOrder: "2023-10-30",
-      contactPerson: "Bob Black",
-      email: "bob@blackpearlimports.com",
-      phone: "+1 (555) 987-6543",
-    },
-  ];
+  const vendingMachines = useQuery(api.machines.list) || [];
+  const vendors = useQuery(api.vendors.list) || [];
 
   const selectedMachineData =
     selectedMachine === "all"
       ? null
-      : vendingMachines.find((vm) => vm.id === selectedMachine);
+      : vendingMachines.find((vm) => vm._id === selectedMachine);
 
-  const toggleMachineStatus = (machineId: string) => {
-    console.log(
-      `Toggling ${machineId} ${vendingMachines.find((vm) => vm.id === machineId)?.status === "online" ? "offline" : "online"}`
-    );
-  };
+  const toggleMachineStatus = useMutation(api.machines.toggleStatus);
 
   const transactions: Transaction[] = [
     {
@@ -226,27 +176,44 @@ export default function TeaVendingDashboard() {
     setNewVendor((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleMachineSubmit = (e: React.FormEvent) => {
+  const addMachine = useMutation(api.machines.add);
+  const handleMachineSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const accessToken =
-      Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-    console.log("New machine onboarded:", { ...newMachine, accessToken });
-    toast.success(
-      `${newMachine.name} has been successfully added with ID: ${newMachine.id}`
-    );
-    setNewMachine({ id: "", name: "", location: "", description: "" });
-    setIsAddMachineOpen(false);
+    try {
+      const result = await addMachine(newMachine);
+      console.log("New machine added:", result);
+      toast.success(
+        `${newMachine.name} has been successfully added with ID: ${result.id}`
+      );
+      setNewMachine({ id: "", name: "", location: "", description: "" });
+      setIsAddMachineOpen(false);
+    } catch (error) {
+      console.error("Error adding machine:", error);
+      toast.error("Failed to add machine. Please try again.");
+    }
   };
 
-  const handleVendorSubmit = (e: React.FormEvent) => {
+  const addVendor = useMutation(api.vendors.add);
+  const handleVendorSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("New vendor onboarded:", newVendor);
-    toast.success(
-      `${newVendor.name} from ${newVendor.company} has been successfully added.`
-    );
-    setNewVendor({ name: "", email: "", phone: "", company: "" });
-    setIsAddVendorOpen(false);
+    try {
+      const result = await addVendor(newVendor);
+      console.log("New vendor added:", result);
+      toast.success(
+        `${newVendor.name} from ${newVendor.company} has been successfully added.`
+      );
+      setNewVendor({ name: "", email: "", phone: "", company: "" });
+      setIsAddVendorOpen(false);
+    } catch (error) {
+      console.error("Error adding vendor:", error);
+      toast.error("Failed to add vendor. Please try again.");
+    }
   };
+
+  const latestIoTData = useQuery(
+    api.iot.getLatestIoTData,
+    selectedMachineData ? { machineId: selectedMachineData.id } : "skip"
+  );
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-emerald-50 to-teal-100 dark:from-emerald-900 dark:to-teal-800">
@@ -271,7 +238,7 @@ export default function TeaVendingDashboard() {
               <SelectContent>
                 <SelectItem value="all">All Vending Machines</SelectItem>
                 {vendingMachines.map((machine) => (
-                  <SelectItem key={machine.id} value={machine.id}>
+                  <SelectItem key={machine._id} value={machine._id}>
                     {machine.name}
                   </SelectItem>
                 ))}
@@ -441,11 +408,13 @@ export default function TeaVendingDashboard() {
           <Tabs
             value={activeTab}
             onValueChange={(value: string) =>
-              setActiveTab(value as "dashboard" | "vendors")
+              setActiveTab(
+                value as "dashboard" | "vendors" | "addMachine" | "addVendor"
+              )
             }
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsList className="grid w-full grid-cols-4 mb-4">
               <TabsTrigger value="dashboard" className="text-lg font-semibold">
                 <LayoutDashboardIcon className="w-5 h-5 mr-2" />
                 Dashboard
@@ -453,6 +422,14 @@ export default function TeaVendingDashboard() {
               <TabsTrigger value="vendors" className="text-lg font-semibold">
                 <UsersIcon className="w-5 h-5 mr-2" />
                 Vendors
+              </TabsTrigger>
+              <TabsTrigger value="addMachine" className="text-lg font-semibold">
+                <PlusCircleIcon className="w-5 h-5 mr-2" />
+                Add Machine
+              </TabsTrigger>
+              <TabsTrigger value="addVendor" className="text-lg font-semibold">
+                <UserPlusIcon className="w-5 h-5 mr-2" />
+                Add Vendor
               </TabsTrigger>
             </TabsList>
             <TabsContent value="dashboard">
@@ -530,7 +507,7 @@ export default function TeaVendingDashboard() {
                       </TableHeader>
                       <TableBody>
                         {vendingMachines.map((machine) => (
-                          <TableRow key={machine.id}>
+                          <TableRow key={machine._id}>
                             <TableCell>{machine.id}</TableCell>
                             <TableCell>{machine.name}</TableCell>
                             <TableCell>
@@ -591,7 +568,7 @@ export default function TeaVendingDashboard() {
                               <Switch
                                 checked={machine.status === "online"}
                                 onCheckedChange={() =>
-                                  toggleMachineStatus(machine.id)
+                                  toggleMachineStatus({ id: machine._id })
                                 }
                               />
                             </TableCell>
@@ -621,7 +598,9 @@ export default function TeaVendingDashboard() {
                           <Switch
                             checked={selectedMachineData.status === "online"}
                             onCheckedChange={() =>
-                              toggleMachineStatus(selectedMachineData.id)
+                              toggleMachineStatus({
+                                id: selectedMachineData._id,
+                              })
                             }
                           />
                           <span>
@@ -646,7 +625,7 @@ export default function TeaVendingDashboard() {
                         </h3>
                         <div className="space-y-2">
                           {Object.entries(
-                            selectedMachineData.canisterLevels
+                            selectedMachineData.canisterLevel
                           ).map(([tea, level]) => (
                             <div
                               key={tea}
@@ -726,6 +705,42 @@ export default function TeaVendingDashboard() {
                           <span>{selectedMachineData.lastFulfilled}</span>
                         </div>
                       </div>
+                    </div>
+
+                    <div className="mt-6">
+                      <h3 className="text-lg font-semibold mb-2">
+                        Latest IoT Data
+                      </h3>
+                      {latestIoTData ? (
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">
+                              Temperature
+                            </p>
+                            <p className="text-2xl font-bold">
+                              {latestIoTData.temperature}°F
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">
+                              canisterLevel
+                            </p>
+                            <p className="text-2xl font-bold">
+                              {latestIoTData.canisterLevel}%
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">
+                              rating
+                            </p>
+                            <p className="text-2xl font-bold">
+                              {latestIoTData.rating}%
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p>No IoT data available for this machine.</p>
+                      )}
                     </div>
 
                     <div className="mt-6">
@@ -856,7 +871,7 @@ export default function TeaVendingDashboard() {
                     </TableHeader>
                     <TableBody>
                       {vendors.map((vendor) => (
-                        <TableRow key={vendor.id}>
+                        <TableRow key={vendor._id}>
                           <TableCell>{vendor.id}</TableCell>
                           <TableCell>
                             <div className="flex items-center">
@@ -909,6 +924,149 @@ export default function TeaVendingDashboard() {
                       ))}
                     </TableBody>
                   </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="addMachine">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Add New Vending Machine</CardTitle>
+                  <CardDescription>
+                    Enter the details for the new vending machine.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleMachineSubmit}>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="id" className="text-right">
+                          ID
+                        </Label>
+                        <Input
+                          id="id"
+                          name="id"
+                          value={newMachine.id}
+                          onChange={handleMachineInputChange}
+                          className="col-span-3"
+                          required
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="name" className="text-right">
+                          Name
+                        </Label>
+                        <Input
+                          id="name"
+                          name="name"
+                          value={newMachine.name}
+                          onChange={handleMachineInputChange}
+                          className="col-span-3"
+                          required
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="location" className="text-right">
+                          Location
+                        </Label>
+                        <Input
+                          id="location"
+                          name="location"
+                          value={newMachine.location}
+                          onChange={handleMachineInputChange}
+                          className="col-span-3"
+                          required
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="description" className="text-right">
+                          Description
+                        </Label>
+                        <Textarea
+                          id="description"
+                          name="description"
+                          value={newMachine.description}
+                          onChange={handleMachineInputChange}
+                          className="col-span-3"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit">Add Machine</Button>
+                    </DialogFooter>
+                  </form>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="addVendor">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Add New Vendor</CardTitle>
+                  <CardDescription>
+                    Enter the details for the new vendor.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleVendorSubmit}>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="vendorName" className="text-right">
+                          Name
+                        </Label>
+                        <Input
+                          id="vendorName"
+                          name="name"
+                          value={newVendor.name}
+                          onChange={handleVendorInputChange}
+                          className="col-span-3"
+                          required
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="vendorEmail" className="text-right">
+                          Email
+                        </Label>
+                        <Input
+                          id="vendorEmail"
+                          name="email"
+                          type="email"
+                          value={newVendor.email}
+                          onChange={handleVendorInputChange}
+                          className="col-span-3"
+                          required
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="vendorPhone" className="text-right">
+                          Phone
+                        </Label>
+                        <Input
+                          id="vendorPhone"
+                          name="phone"
+                          type="tel"
+                          value={newVendor.phone}
+                          onChange={handleVendorInputChange}
+                          className="col-span-3"
+                          required
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="vendorCompany" className="text-right">
+                          Company
+                        </Label>
+                        <Input
+                          id="vendorCompany"
+                          name="company"
+                          value={newVendor.company}
+                          onChange={handleVendorInputChange}
+                          className="col-span-3"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit">Add Vendor</Button>
+                    </DialogFooter>
+                  </form>
                 </CardContent>
               </Card>
             </TabsContent>
