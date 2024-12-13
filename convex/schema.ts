@@ -288,9 +288,9 @@ export default defineSchema({
       iot_data: defineTable({
         machineId: v.string(),
         timestamp: v.string(),
-        temperature: v.number(),
-        rating: v.number(),
-        canisterLevel: v.number(),
+        temperature: v.optional(v.number()),
+        rating: v.optional(v.number()),
+        canisterLevel:v.optional(v.number()),
       }),
     });
     

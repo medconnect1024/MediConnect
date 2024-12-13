@@ -4,21 +4,24 @@ import { v } from "convex/values";
 export const addIoTData = mutation({
   args: {
     machineId: v.string(),
-    temperature: v.number(),
-    rating: v.number(),
-    canisterLevel: v.number(),
+    temperature: v.optional(v.number()),
+    rating: v.optional(v.number()),
+    canisterLevel: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const { machineId, temperature, rating, canisterLevel } = args;
     const timestamp = new Date().toISOString();
 
-    const iotDataId = await ctx.db.insert("iot_data", {
+    const iotData: any = {
       machineId,
       timestamp,
-      temperature,
-      rating,
-      canisterLevel,
-    });
+    };
+
+    if (temperature !== undefined) iotData.temperature = temperature;
+    if (rating !== undefined) iotData.rating = rating;
+    if (canisterLevel !== undefined) iotData.canisterLevel = canisterLevel;
+
+    const iotDataId = await ctx.db.insert("iot_data", iotData);
 
     // Update the machine's data in the machines table
     const machine = await ctx.db
@@ -27,11 +30,14 @@ export const addIoTData = mutation({
       .first();
 
     if (machine) {
-      await ctx.db.patch(machine._id, { 
-        temperature,
-        rating,
-        canisterLevel,
-      });
+      const updateData: any = {};
+      if (temperature !== undefined) updateData.temperature = temperature;
+      if (rating !== undefined) updateData.rating = rating;
+      if (canisterLevel !== undefined) updateData.canisterLevel = canisterLevel;
+
+      if (Object.keys(updateData).length > 0) {
+        await ctx.db.patch(machine._id, updateData);
+      }
     }
 
     return { id: iotDataId, timestamp };

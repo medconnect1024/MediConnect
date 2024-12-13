@@ -235,7 +235,7 @@ export default function TeaVendingDashboard() {
           <div className="flex items-center space-x-4 mb-4 md:mb-0">
             <CoffeeIcon className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
             <h1 className="text-3xl font-bold text-emerald-800 dark:text-emerald-200">
-              TeaVend Dashboard
+              Kulhad Dashboard
             </h1>
           </div>
           <div className="flex flex-wrap items-center gap-4">
