@@ -96,9 +96,9 @@ interface Transaction {
 }
 
 interface IoTData {
-  temperature: number;
-  humidity: number;
-  waterLevel: number;
+  temperature?: number;
+  humidity?: number;
+  waterLevel?: number;
 }
 
 export default function TeaVendingDashboard() {
@@ -215,8 +215,9 @@ export default function TeaVendingDashboard() {
     api.iot.getLatestIoTData,
     selectedMachineData ? { machineId: selectedMachineData.id } : "skip"
   );
-  const renderStars = (rating: number) => {
-    const roundedRating = Math.round(rating);
+  const renderStars = (rating: number | undefined) => {
+    // Use a default value of 0 if rating is undefined
+    const roundedRating = Math.round(rating ?? 0);
     return Array(roundedRating)
       .fill(0)
       .map((_, index) => (
