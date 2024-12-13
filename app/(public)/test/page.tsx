@@ -16,6 +16,7 @@ import {
   PlusCircleIcon,
   UserPlusIcon,
   UsersIcon,
+  Star,
 } from "lucide-react";
 import {
   Card,
@@ -214,7 +215,14 @@ export default function TeaVendingDashboard() {
     api.iot.getLatestIoTData,
     selectedMachineData ? { machineId: selectedMachineData.id } : "skip"
   );
-
+  const renderStars = (rating: number) => {
+    const roundedRating = Math.round(rating);
+    return Array(roundedRating)
+      .fill(0)
+      .map((_, index) => (
+        <Star key={index} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+      ));
+  };
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-emerald-50 to-teal-100 dark:from-emerald-900 dark:to-teal-800">
       <ToastContainer
@@ -616,7 +624,7 @@ export default function TeaVendingDashboard() {
                         </h3>
                         <div className="flex items-center space-x-2">
                           <ThermometerIcon className="h-5 w-5 text-red-500" />
-                          <span>{selectedMachineData.temperature}°F</span>
+                          <span>{selectedMachineData.temperature}°C</span>
                         </div>
                       </div>
                       <div className="md:col-span-2">
@@ -718,7 +726,7 @@ export default function TeaVendingDashboard() {
                               Temperature
                             </p>
                             <p className="text-2xl font-bold">
-                              {latestIoTData.temperature}°F
+                              {latestIoTData.temperature}°C
                             </p>
                           </div>
                           <div>
@@ -731,11 +739,14 @@ export default function TeaVendingDashboard() {
                           </div>
                           <div>
                             <p className="text-sm font-medium text-muted-foreground">
-                              rating
+                              Rating
                             </p>
                             <p className="text-2xl font-bold">
-                              {latestIoTData.rating}%
+                              {latestIoTData.rating}
                             </p>
+                            <div className="flex mt-1">
+                              {renderStars(latestIoTData.rating)}
+                            </div>
                           </div>
                         </div>
                       ) : (
