@@ -404,7 +404,7 @@ export default function AppointmentBooking({
                           }}
                         >
                           {field.value
-                            ? formatDate(field.value)
+                            ? new Date(field.value).toLocaleDateString() // Format the date to display only date part
                             : "Pick a date"}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>

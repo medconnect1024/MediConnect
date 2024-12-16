@@ -27,6 +27,7 @@ const FREQUENCY_OPTIONS = [
   "1 time a day",
   "2 times a day",
   "More than 2 times a day",
+  "Absent",
   "Type your own",
 ];
 
@@ -37,6 +38,7 @@ const DURATION_OPTIONS = [
   "2 days",
   "3 days",
   "More than one week",
+  "Absent",
   "Type your own",
 ];
 

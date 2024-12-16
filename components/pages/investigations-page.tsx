@@ -112,12 +112,21 @@ export default function InvestigationsPage({
     []
   );
 
-  const handleCategorySelect = useCallback((category: string) => {
-    setSelectedCategory(category);
-    setCategorySearch(category);
-    setTestSearch("");
-    setIsCategoryDropdownOpen(false);
-  }, []);
+  const handleCategorySelect = useCallback(
+    (category: string) => {
+      if (selectedCategory === category) {
+        // If the same category is clicked again, deselect it
+        setSelectedCategory(null);
+        setCategorySearch("");
+      } else {
+        setSelectedCategory(category);
+        setCategorySearch(category);
+      }
+      setTestSearch("");
+      setIsCategoryDropdownOpen(false);
+    },
+    [selectedCategory]
+  );
 
   const handleTestSelect = useCallback(
     (test: string) => {
@@ -189,7 +198,7 @@ export default function InvestigationsPage({
         <div className="relative flex-1">
           <Search className="absolute left-3 top-2 h-5 w-5 text-muted-foreground" />
           <Input
-            className="pl-10 py-3 text-lg"
+            className="pl-10 pr-10 py-3 text-lg"
             placeholder="Search categories (e.g., Haematology)"
             value={selectedCategory || categorySearch}
             onChange={handleCategorySearch}
@@ -197,6 +206,20 @@ export default function InvestigationsPage({
               setTimeout(() => setIsCategoryDropdownOpen(false), 200)
             }
           />
+          {(selectedCategory || categorySearch) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-2 top-2"
+              onClick={() => {
+                setSelectedCategory(null);
+                setCategorySearch("");
+                setTestSearch("");
+              }}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
           {isCategoryDropdownOpen && filteredCategories.length > 0 && (
             <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
               {filteredCategories.map((category, index) => (

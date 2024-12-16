@@ -54,6 +54,7 @@ interface UserData {
   nmcRegistrationId?: string;
   licenseExpiryDate?: string;
   certificateStorageId?: string;
+  signatureStorageId?: string;
 }
 
 export default function DoctorProfileUpdate() {
@@ -84,15 +85,18 @@ export default function DoctorProfileUpdate() {
       userData.logo && generateFileUrl({ storageId: userData.logo }),
       userData.certificateStorageId &&
         generateFileUrl({ storageId: userData.certificateStorageId }),
+      userData.signatureStorageId &&
+        generateFileUrl({ storageId: userData.signatureStorageId }),
     ];
 
-    const [profileImageUrl, logoUrl, certificateUrl] =
+    const [profileImageUrl, logoUrl, certificateUrl, signatureUrl] =
       await Promise.all(urlPromises);
 
     setFileUrls({
       profileImageUrl: profileImageUrl || "",
       logo: logoUrl || "",
       certificateStorageId: certificateUrl || "",
+      signatureStorageId: signatureUrl || "",
     });
   };
 
@@ -111,7 +115,11 @@ export default function DoctorProfileUpdate() {
   };
 
   const handleFileUpload = async (
-    field: "profileImageUrl" | "logo" | "certificateStorageId",
+    field:
+      | "profileImageUrl"
+      | "logo"
+      | "certificateStorageId"
+      | "signatureStorageId",
     file: File
   ) => {
     setIsUploading(true);
@@ -146,7 +154,7 @@ export default function DoctorProfileUpdate() {
 
       toast({
         title: "Success",
-        description: `${fileType === "image" ? "Image" : "Certificate"} uploaded successfully.`,
+        description: `${fileType === "image" ? "Image" : "File"} uploaded successfully.`,
       });
     } catch (error) {
       console.error("Error uploading file:", error);
@@ -458,6 +466,48 @@ export default function DoctorProfileUpdate() {
                             e.target.files &&
                             handleFileUpload(
                               "certificateStorageId",
+                              e.target.files[0]
+                            )
+                          }
+                          disabled={isUploading}
+                        />
+                      </Label>
+                    </div>
+                  </div>
+                  <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-3">
+                    <Label htmlFor="signatureStorageId">
+                      Upload Your Signature
+                    </Label>
+                    <div className="flex items-center space-x-4">
+                      {fileUrls.signatureStorageId && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            window.open(fileUrls.signatureStorageId, "_blank")
+                          }
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          View Signature
+                        </Button>
+                      )}
+                      <Label
+                        htmlFor="signatureStorageId"
+                        className="flex cursor-pointer items-center space-x-2 rounded-md border border-dashed border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                      >
+                        <Upload className="h-4 w-4" />
+                        <span>
+                          {isUploading ? "Uploading..." : "Upload Signature"}
+                        </span>
+                        <Input
+                          id="signatureStorageId"
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={(e) =>
+                            e.target.files &&
+                            handleFileUpload(
+                              "signatureStorageId",
                               e.target.files[0]
                             )
                           }

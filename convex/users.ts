@@ -173,6 +173,8 @@ export const getUserDetails = query({
       state: user.state ?? undefined,
       zipCode: user.zipCode ?? undefined,
       website: user.website ?? undefined,
+      signatureStorageId: user.signatureStorageId ?? undefined,
+
     };
   },
 });
@@ -219,6 +221,7 @@ export const updateUser = mutation({
     nmcRegistrationId: v.optional(v.string()),
     licenseExpiryDate: v.optional(v.string()),
     certificateStorageId: v.optional(v.string()),
+    signatureStorageId: v.optional(v.string()),
     hospitalId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -280,6 +283,7 @@ export const getAllDoctors = query({
       state: doctor.state ?? undefined,
       zipCode: doctor.zipCode ?? undefined,
       website: doctor.website ?? undefined,
+      signatureStorageId: doctor.signatureStorageId ?? undefined,
     }));
   },
 });

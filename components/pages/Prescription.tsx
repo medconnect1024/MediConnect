@@ -509,7 +509,7 @@ export default function MultiStepPrescription({
     // Add prescription title
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text("Prescription Rx", pageWidth / 2, yPos, { align: "center" });
+    doc.text("Rx  Prescription ", pageWidth / 2, yPos, { align: "center" });
     yPos += lineHeight * 2;
 
     // Add patient details
@@ -603,10 +603,54 @@ export default function MultiStepPrescription({
     );
     addText(`ReferTo: ${prescriptionData.referTo || "None"}`);
 
+    const addSignature = async () => {
+      if (userDetails?.signatureStorageId) {
+        try {
+          const signatureUrl = await generateFileUrl({
+            storageId: userDetails.signatureStorageId,
+          });
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = signatureUrl;
+          });
+
+          const signatureWidth = 50;
+          const signatureHeight = 25;
+          const signatureX = pageWidth - margin - signatureWidth;
+          const signatureY = pageHeight - margin - 60; // Position above the footer
+
+          doc.addImage(
+            img,
+            "PNG",
+            signatureX,
+            signatureY,
+            signatureWidth,
+            signatureHeight
+          );
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "normal");
+          doc.text(
+            "Doctor's Signature",
+            signatureX + signatureWidth / 2,
+            signatureY + signatureHeight + 5,
+            { align: "center" }
+          );
+        } catch (error) {
+          console.error("Error loading signature:", error);
+        }
+      }
+    };
+
     // Finalize and add footers for all pages
     const totalPages = doc.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
+      if (i === totalPages) {
+        await addSignature(); // Add signature to the last page
+      }
       addFooter(i, totalPages);
     }
 
