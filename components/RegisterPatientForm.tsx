@@ -4,11 +4,10 @@ import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { CalendarIcon, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Form,
   FormControl,
@@ -20,12 +19,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { format } from "date-fns";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -36,13 +29,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CardHeader } from "@/components/ui/card";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
+import { ModernDatePicker } from "./modern-date-picker";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   firstName: z.string().min(1, { message: "First name is required" }),
   middleName: z.string().optional(),
   lastName: z.string().min(1, { message: "Last name is required" }),
-  dateOfBirth: z.string().min(1, { message: "Date of birth is required" }),
   gender: z.enum(["Male", "Female", "Other"], {
     message: "Gender must be 'Male', 'Female', or 'Other'",
   }),
@@ -98,7 +91,6 @@ export default function RegisterPatientForm() {
   const registerPatient = useMutation(api.patients.registerPatient);
   const [activeTab, setActiveTab] = useState("personal");
   const { user, isSignedIn } = useUser();
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const { email, phoneNumber } = form.watch();
   const checkDuplicates = useQuery(api.patients.checkDuplicates, {
@@ -110,6 +102,7 @@ export default function RegisterPatientForm() {
   const hospitalId = useQuery(api.users.getHospitalIdByUserId, {
     userId,
   });
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!isSignedIn || !user) {
       toast.error("You must be signed in to register a patient.");
@@ -125,9 +118,6 @@ export default function RegisterPatientForm() {
         toast.error("This phone number is already registered.");
         return;
       }
-
-      // Assuming the user object has a hospitalId property
-      // const hospitalId = api.user.getHospitalIdByUserId.hospitalId as string;
 
       if (!hospitalId) {
         toast.error("Hospital ID not found for the current user.");
@@ -282,66 +272,10 @@ export default function RegisterPatientForm() {
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
+                    <ModernDatePicker
+                      form={form}
                       name="dateOfBirth"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Date of birth</FormLabel>
-                          <Popover
-                            open={isCalendarOpen}
-                            onOpenChange={setIsCalendarOpen}
-                          >
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant={"outline"}
-                                  className={`w-full pl-3 text-left font-normal ${
-                                    !field.value && "text-muted-foreground"
-                                  } ${
-                                    form.formState.errors.dateOfBirth
-                                      ? "border-red-500"
-                                      : ""
-                                  }`}
-                                >
-                                  {field.value ? (
-                                    format(new Date(field.value), "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent
-                              className="w-auto p-0"
-                              align="start"
-                            >
-                              <Calendar
-                                mode="single"
-                                selected={
-                                  field.value
-                                    ? new Date(field.value)
-                                    : undefined
-                                }
-                                onSelect={(date) => {
-                                  field.onChange(date?.toISOString());
-                                  setIsCalendarOpen(false);
-                                }}
-                                disabled={(date) =>
-                                  date > new Date() ||
-                                  date < new Date("1900-01-01")
-                                }
-                                initialFocus
-                                captionLayout="dropdown-buttons"
-                                fromYear={1900}
-                                toYear={new Date().getFullYear()}
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage className="text-red-500" />
-                        </FormItem>
-                      )}
+                      label="Date of birth"
                     />
 
                     <FormField

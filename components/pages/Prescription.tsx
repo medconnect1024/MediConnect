@@ -620,7 +620,7 @@ export default function MultiStepPrescription({
           const signatureWidth = 50;
           const signatureHeight = 25;
           const signatureX = pageWidth - margin - signatureWidth;
-          const signatureY = pageHeight - margin - 60; // Position above the footer
+          const signatureY = pageHeight - margin - 600; // Position above the footer
 
           doc.addImage(
             img,
