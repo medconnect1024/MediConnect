@@ -4,10 +4,11 @@ import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Save } from "lucide-react";
+import { CalendarIcon, Save } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
+// import { Calendar } from "@/components/ui/calendar";
 import {
   Form,
   FormControl,
@@ -19,6 +20,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -29,14 +36,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CardHeader } from "@/components/ui/card";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
-import { ModernDatePicker } from "./modern-date-picker";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   firstName: z.string().min(1, { message: "First name is required" }),
   middleName: z.string().optional(),
   lastName: z.string().min(1, { message: "Last name is required" }),
-  dateOfBirth: z.string(),
+  dateOfBirth: z.string().min(1, { message: "Date of birth is required" }),
   gender: z.enum(["Male", "Female", "Other"], {
     message: "Gender must be 'Male', 'Female', or 'Other'",
   }),
@@ -92,6 +98,7 @@ export default function RegisterPatientForm() {
   const registerPatient = useMutation(api.patients.registerPatient);
   const [activeTab, setActiveTab] = useState("personal");
   const { user, isSignedIn } = useUser();
+  // const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const { email, phoneNumber } = form.watch();
   const checkDuplicates = useQuery(api.patients.checkDuplicates, {
@@ -103,7 +110,6 @@ export default function RegisterPatientForm() {
   const hospitalId = useQuery(api.users.getHospitalIdByUserId, {
     userId,
   });
-
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!isSignedIn || !user) {
       toast.error("You must be signed in to register a patient.");
@@ -119,6 +125,9 @@ export default function RegisterPatientForm() {
         toast.error("This phone number is already registered.");
         return;
       }
+
+      // Assuming the user object has a hospitalId property
+      // const hospitalId = api.user.getHospitalIdByUserId.hospitalId as string;
 
       if (!hospitalId) {
         toast.error("Hospital ID not found for the current user.");
@@ -273,10 +282,146 @@ export default function RegisterPatientForm() {
                       )}
                     />
 
-                    <ModernDatePicker
-                      form={form}
+                    <FormField
+                      control={form.control}
                       name="dateOfBirth"
-                      label="Date of birth"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Date of birth</FormLabel>
+                          <div className="flex gap-2">
+                            <Select
+                              onValueChange={(day) => {
+                                const currentValue = field.value
+                                  ? new Date(field.value)
+                                  : new Date();
+                                const newDate = new Date(currentValue);
+                                newDate.setDate(parseInt(day));
+                                if (!isNaN(newDate.getTime())) {
+                                  field.onChange(newDate.toISOString());
+                                }
+                              }}
+                              value={
+                                field.value
+                                  ? new Date(field.value).getDate().toString()
+                                  : undefined
+                              }
+                            >
+                              <FormControl>
+                                <SelectTrigger className="w-[100px]">
+                                  <SelectValue placeholder="Day" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {Array.from(
+                                  { length: 31 },
+                                  (_, i) => i + 1
+                                ).map((day) => (
+                                  <SelectItem key={day} value={day.toString()}>
+                                    {day}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+
+                            <Select
+                              onValueChange={(month) => {
+                                const currentValue = field.value
+                                  ? new Date(field.value)
+                                  : new Date();
+                                const newDate = new Date(currentValue);
+                                newDate.setMonth(parseInt(month));
+                                // Adjust for invalid dates (e.g., Feb 31 -> Feb 28/29)
+                                if (newDate.getMonth() !== parseInt(month)) {
+                                  newDate.setDate(0);
+                                }
+                                if (!isNaN(newDate.getTime())) {
+                                  field.onChange(newDate.toISOString());
+                                }
+                              }}
+                              value={
+                                field.value
+                                  ? new Date(field.value).getMonth().toString()
+                                  : undefined
+                              }
+                            >
+                              <FormControl>
+                                <SelectTrigger className="w-[130px]">
+                                  <SelectValue placeholder="Month" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {[
+                                  "January",
+                                  "February",
+                                  "March",
+                                  "April",
+                                  "May",
+                                  "June",
+                                  "July",
+                                  "August",
+                                  "September",
+                                  "October",
+                                  "November",
+                                  "December",
+                                ].map((month, index) => (
+                                  <SelectItem
+                                    key={month}
+                                    value={index.toString()}
+                                  >
+                                    {month}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+
+                            <Select
+                              onValueChange={(year) => {
+                                const currentValue = field.value
+                                  ? new Date(field.value)
+                                  : new Date();
+                                const newDate = new Date(currentValue);
+                                newDate.setFullYear(parseInt(year));
+                                // Adjust for invalid dates (e.g., Feb 29 on non-leap years)
+                                if (newDate.getFullYear() !== parseInt(year)) {
+                                  newDate.setDate(0);
+                                }
+                                if (!isNaN(newDate.getTime())) {
+                                  field.onChange(newDate.toISOString());
+                                }
+                              }}
+                              value={
+                                field.value
+                                  ? new Date(field.value)
+                                      .getFullYear()
+                                      .toString()
+                                  : undefined
+                              }
+                            >
+                              <FormControl>
+                                <SelectTrigger className="w-[120px]">
+                                  <SelectValue placeholder="Year" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {Array.from(
+                                  {
+                                    length: new Date().getFullYear() - 1900 + 1,
+                                  },
+                                  (_, i) => new Date().getFullYear() - i
+                                ).map((year) => (
+                                  <SelectItem
+                                    key={year}
+                                    value={year.toString()}
+                                  >
+                                    {year}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <FormMessage className="text-red-500" />
+                        </FormItem>
+                      )}
                     />
 
                     <FormField
