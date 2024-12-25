@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 interface UserData {
   _id?: string;
@@ -60,6 +61,7 @@ interface UserData {
 export default function DoctorProfileUpdate() {
   const [step, setStep] = useState(1);
   const { toast } = useToast();
+  const router = useRouter();
 
   const user = useQuery(api.users.currentUser);
   const updateUser = useMutation(api.users.updateUser);
@@ -199,6 +201,10 @@ export default function DoctorProfileUpdate() {
     }
   };
 
+  const handleUploadVideos = () => {
+    router.push("/videospage");
+  };
+
   if (!userData) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -210,6 +216,12 @@ export default function DoctorProfileUpdate() {
   return (
     <div className="relative min-h-screen top-10">
       <div className="max-w-7xl mx-auto">
+        <Button
+          className="absolute top-4 right-4 bg-blue-600"
+          onClick={handleUploadVideos}
+        >
+          Upload Videos
+        </Button>
         <div className="mb-8">
           <div className="flex justify-center space-x-8">
             {[
@@ -234,7 +246,7 @@ export default function DoctorProfileUpdate() {
         <Card className="border-0 shadow-lg">
           {step === 1 && (
             <>
-              <CardHeader>
+              <CardHeader className="w-screen">
                 <CardTitle>Personal Information</CardTitle>
                 <CardDescription>
                   Please provide your basic contact information
@@ -321,7 +333,7 @@ export default function DoctorProfileUpdate() {
 
           {step === 2 && (
             <>
-              <CardHeader>
+              <CardHeader className="w-screen">
                 <CardTitle>Professional Information</CardTitle>
                 <CardDescription>
                   Tell us about your medical practice and credentials
@@ -533,7 +545,7 @@ export default function DoctorProfileUpdate() {
 
           {step === 3 && (
             <>
-              <CardHeader>
+              <CardHeader className="w-screen">
                 <CardTitle>Practice Information</CardTitle>
                 <CardDescription>
                   Enter your practice location details
@@ -639,7 +651,7 @@ export default function DoctorProfileUpdate() {
 
           {step === 4 && (
             <>
-              <CardHeader>
+              <CardHeader className="w-screen">
                 <CardTitle>All Set!</CardTitle>
                 <CardDescription>
                   Your profile has been updated successfully
@@ -664,13 +676,16 @@ export default function DoctorProfileUpdate() {
               </Button>
             )}
             {step < 3 ? (
-              <Button className="ml-auto" onClick={() => setStep(step + 1)}>
+              <Button
+                className="ml-auto bg-blue-600"
+                onClick={() => setStep(step + 1)}
+              >
                 Next
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             ) : step === 3 ? (
               <Button
-                className="ml-auto"
+                className="ml-auto bg-blue-600"
                 onClick={handleSubmit}
                 disabled={isLoading}
               >
@@ -679,7 +694,7 @@ export default function DoctorProfileUpdate() {
               </Button>
             ) : (
               <Button
-                className="ml-auto"
+                className="ml-auto bg-blue-600"
                 onClick={() => (window.location.href = "/dashboard")}
               >
                 Go to Dashboard
