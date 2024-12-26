@@ -31,9 +31,9 @@ export default function RoleBasedNavigation({
     if (userExists) {
       const currentPath = pathname.split("/")[1]; // Get the first part of the path
       const roleDashboards = {
-        Doctor: "dashboard",
-        Desk: "registrationdesk",
-        Patient: "patientdashboard",
+        Doctor: "/dashboard",
+        Desk: "/registrationdesk",
+        Patient: "/homepage",
         Admin: "/hospitals",
       };
 

@@ -42,7 +42,7 @@ export default function LoadingScreen() {
         const roleDashboards = {
           Doctor: "/dashboard",
           Desk: "/registrationdesk",
-          Patient: "/patientdashboard",
+          Patient: "/homepage",
           Admin: "/hospitals",
         };
 

@@ -98,7 +98,7 @@ export default function FixedNavigation() {
           router.push("/registrationdesk");
           break;
         case "Patient":
-          router.push("/patientdashboard");
+          router.push("/homepage");
           break;
         case "Admin":
           router.push("/hospitals");
@@ -122,7 +122,7 @@ export default function FixedNavigation() {
       const roleDashboards = {
         Doctor: "dashboard",
         Desk: "registrationdesk",
-        Patient: "patientdashboard",
+        Patient: "homepage",
         Admin: "hospitals",
       };
 
@@ -160,8 +160,8 @@ export default function FixedNavigation() {
         return doctorMenuItems;
       case "Desk":
         return deskMenuItems;
-      case "Patient":
-        return patientMenuItems;
+      // case "Patient":
+      //   return patientMenuItems;
       case "Admin":
         return adminMenuItems;
       default:

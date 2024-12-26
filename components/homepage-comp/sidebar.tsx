@@ -13,7 +13,10 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
-interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+}
 
 const categories = [
   {
@@ -49,7 +52,7 @@ const categories = [
   },
 ];
 
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar({ className, activeTab, onTabChange }: SidebarProps) {
   const [openCategory, setOpenCategory] = useState<string | null>(null);
 
   const toggleCategory = (categoryName: string) => {
@@ -123,19 +126,22 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
         <div className="space-y-1 px-3">
           {[
-            { icon: Home, label: "Home", href: "/" },
-            { icon: Search, label: "Explore", href: "/explore" },
-            { icon: Users, label: "Experts", href: "/experts" },
-            { icon: UserCircle, label: "Profile", href: "/profile" },
+            { icon: Home, label: "Home", href: "/dashboardpage" },
+            { icon: Search, label: "Explore", href: "#" },
+            { icon: Users, label: "Experts", href: "#" },
+            { icon: UserCircle, label: "Profile", href: "#" },
           ].map((item) => (
-            <Link
+            <button
               key={item.label}
-              href={item.href}
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-200 hover:bg-blue-900 transition-all"
+              onClick={() => onTabChange(item.label)}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-gray-200 hover:bg-blue-900 transition-all w-full text-left",
+                activeTab === item.label && "bg-blue-900 text-white"
+              )}
             >
               <item.icon className="h-4 w-4" />
               {item.label}
-            </Link>
+            </button>
           ))}
         </div>
       </div>

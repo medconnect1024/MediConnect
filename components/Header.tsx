@@ -34,7 +34,7 @@ export default function Header() {
       const roleDashboards: Record<string, string> = {
         Doctor: "/dashboard",
         Desk: "/registrationdesk",
-        Patient: "/patientdashboard",
+        Patient: "/homepage",
         Admin: "/hospitals",
       };
       const rolePath = roleDashboards[userExists.role] || "/";
