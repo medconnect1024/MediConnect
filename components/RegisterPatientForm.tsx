@@ -150,11 +150,15 @@ export default function RegisterPatientForm() {
         hospitalId: hospitalId,
       });
 
+      // Clear the form immediately
+      form.reset();
+
+      // Show success message
       setSuccessMessage("Patient has been registered successfully");
       window.scrollTo(0, 0);
 
+      // Clear success message after 5 seconds
       setTimeout(() => {
-        form.reset();
         setSuccessMessage(null);
       }, 5000);
     } catch (error) {
@@ -293,11 +297,13 @@ export default function RegisterPatientForm() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {["Male", "Female", "Other"].map((gender) => (
-                                <SelectItem value={gender} key={gender}>
-                                  {gender}
-                                </SelectItem>
-                              ))}
+                              {["select gender", "Male", "Female", "Other"].map(
+                                (gender) => (
+                                  <SelectItem value={gender} key={gender}>
+                                    {gender}
+                                  </SelectItem>
+                                )
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage className="text-red-500" />
