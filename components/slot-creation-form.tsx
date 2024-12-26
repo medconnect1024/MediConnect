@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,14 @@ import {
   ModalDescription,
 } from "@/components/ui/modal";
 import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export function SlotCreationForm({ doctorId }: { doctorId: string }) {
+interface SlotCreationFormProps {
+  doctorId: string;
+  onClose: () => void;
+}
+
+export function SlotCreationForm({ doctorId, onClose }: SlotCreationFormProps) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [dailyStartTime, setDailyStartTime] = useState("");
@@ -24,38 +30,52 @@ export function SlotCreationForm({ doctorId }: { doctorId: string }) {
   const [breakStartTime, setBreakStartTime] = useState("");
   const [breakEndTime, setBreakEndTime] = useState("");
   const [includeWeekends, setIncludeWeekends] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const createBulkSlots = useMutation(api.slots.createBulkSlots);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await createBulkSlots({
-        doctorId,
-        startDate,
-        endDate,
-        dailyStartTime,
-        dailyEndTime,
-        slotDuration: parseInt(slotDuration),
-        breakStartTime,
-        breakEndTime,
-        includeWeekends,
-      });
-      toast.success("Slots created successfully");
-      // Reset form
-      setStartDate("");
-      setEndDate("");
-      setDailyStartTime("");
-      setDailyEndTime("");
-      setSlotDuration("30");
-      setBreakStartTime("");
-      setBreakEndTime("");
-      setIncludeWeekends(false);
-    } catch (error) {
-      toast.error("Failed to create slots");
-      console.error("Error creating slots:", error);
-    }
-  };
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      try {
+        await createBulkSlots({
+          doctorId,
+          startDate,
+          endDate,
+          dailyStartTime,
+          dailyEndTime,
+          slotDuration: parseInt(slotDuration),
+          breakStartTime,
+          breakEndTime,
+          includeWeekends,
+        });
+
+        setIsSuccess(true);
+
+        // Delay closing the modal to ensure the success message is seen
+        setTimeout(() => {
+          setIsSuccess(false);
+          onClose();
+        }, 2000);
+      } catch (error) {
+        toast.error("Failed to create slots");
+        console.error("Error creating slots:", error);
+      }
+    },
+    [
+      createBulkSlots,
+      doctorId,
+      startDate,
+      endDate,
+      dailyStartTime,
+      dailyEndTime,
+      slotDuration,
+      breakStartTime,
+      breakEndTime,
+      includeWeekends,
+      onClose,
+    ]
+  );
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -65,6 +85,11 @@ export function SlotCreationForm({ doctorId }: { doctorId: string }) {
           Set up your availability for appointments in Indian Standard Time
         </ModalDescription>
       </ModalHeader>
+      {isSuccess && (
+        <Alert className="bg-green-100 border-green-400 text-green-800">
+          <AlertDescription>Slots created successfully</AlertDescription>
+        </Alert>
+      )}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="startDate">Start Date</Label>
@@ -146,7 +171,9 @@ export function SlotCreationForm({ doctorId }: { doctorId: string }) {
         <Label htmlFor="includeWeekends">Include Weekends</Label>
       </div>
       <ModalFooter>
-        <Button type="submit">Create Slots</Button>
+        <Button type="submit" disabled={isSuccess}>
+          Create Slots
+        </Button>
       </ModalFooter>
     </form>
   );

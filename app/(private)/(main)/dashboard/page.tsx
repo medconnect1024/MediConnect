@@ -109,6 +109,7 @@ export default function EnhancedDoctorDashboard() {
   const doctorId = user?.id || "";
   const [showSlotCreationForm, setShowSlotCreationForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   const patientData =
     useQuery(api.patients.getAppoitmentsByDoctor, { doctorId }) || [];
@@ -203,6 +204,10 @@ export default function EnhancedDoctorDashboard() {
     return <LoadingSpinner />;
   }
 
+  const handleClose = () => {
+    setIsOpen(false);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="flex pt-4 sm:pt-16 justify-center items-center w-full">
@@ -211,14 +216,14 @@ export default function EnhancedDoctorDashboard() {
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-0">
               Welcome, Dr {user?.username || user?.firstName || "User"}!
             </h2>
-            <Modal>
+            <Modal open={isOpen} onOpenChange={setIsOpen}>
               <ModalTrigger asChild>
                 <Button className="bg-blue-500 text-sm sm:text-base">
                   Create Slots
                 </Button>
               </ModalTrigger>
               <ModalContent>
-                <SlotCreationForm doctorId={doctorId} />
+                <SlotCreationForm doctorId={doctorId} onClose={handleClose} />
               </ModalContent>
             </Modal>
           </div>

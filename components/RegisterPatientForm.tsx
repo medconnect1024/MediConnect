@@ -8,7 +8,6 @@ import { CalendarIcon, Save } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
-// import { Calendar } from "@/components/ui/calendar";
 import {
   Form,
   FormControl,
@@ -20,12 +19,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { format } from "date-fns";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -36,6 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CardHeader } from "@/components/ui/card";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -98,7 +92,7 @@ export default function RegisterPatientForm() {
   const registerPatient = useMutation(api.patients.registerPatient);
   const [activeTab, setActiveTab] = useState("personal");
   const { user, isSignedIn } = useUser();
-  // const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const { email, phoneNumber } = form.watch();
   const checkDuplicates = useQuery(api.patients.checkDuplicates, {
@@ -110,6 +104,7 @@ export default function RegisterPatientForm() {
   const hospitalId = useQuery(api.users.getHospitalIdByUserId, {
     userId,
   });
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!isSignedIn || !user) {
       toast.error("You must be signed in to register a patient.");
@@ -126,9 +121,6 @@ export default function RegisterPatientForm() {
         return;
       }
 
-      // Assuming the user object has a hospitalId property
-      // const hospitalId = api.user.getHospitalIdByUserId.hospitalId as string;
-
       if (!hospitalId) {
         toast.error("Hospital ID not found for the current user.");
         return;
@@ -139,8 +131,18 @@ export default function RegisterPatientForm() {
         doctorId: user.id,
         hospitalId: hospitalId,
       });
-      toast.success("Patient has been registered successfully");
-      form.reset();
+
+      // Set success message
+      setSuccessMessage("Patient has been registered successfully");
+
+      // Scroll to top to ensure the message is visible
+      window.scrollTo(0, 0);
+
+      // Reset form and clear success message after 5 seconds
+      setTimeout(() => {
+        form.reset();
+        setSuccessMessage(null);
+      }, 5000);
     } catch (error) {
       toast.error("Failed to register patient. Please try again.");
       console.error("Error registering patient:", error);
@@ -154,6 +156,11 @@ export default function RegisterPatientForm() {
           New Patient Registration
         </div>
       </CardHeader>
+      {successMessage && (
+        <Alert className="mb-4 bg-green-100 border-green-400 text-green-800">
+          <AlertDescription>{successMessage}</AlertDescription>
+        </Alert>
+      )}
       <div className="p-4 sm:p-6 md:p-8">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
