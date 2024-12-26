@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { CalendarIcon, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -93,6 +93,7 @@ export default function RegisterPatientForm() {
   const [activeTab, setActiveTab] = useState("personal");
   const { user, isSignedIn } = useUser();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { email, phoneNumber } = form.watch();
   const checkDuplicates = useQuery(api.patients.checkDuplicates, {
@@ -105,22 +106,39 @@ export default function RegisterPatientForm() {
     userId,
   });
 
+  useEffect(() => {
+    if (checkDuplicates?.emailExists) {
+      form.setError("email", {
+        type: "manual",
+        message: "This email is already registered.",
+      });
+    } else {
+      form.clearErrors("email");
+    }
+
+    if (checkDuplicates?.phoneExists) {
+      form.setError("phoneNumber", {
+        type: "manual",
+        message: "This phone number is already registered.",
+      });
+    } else {
+      form.clearErrors("phoneNumber");
+    }
+  }, [checkDuplicates, form]);
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!isSignedIn || !user) {
       toast.error("You must be signed in to register a patient.");
       return;
     }
 
-    try {
-      if (checkDuplicates?.emailExists) {
-        toast.error("This email is already registered.");
-        return;
-      }
-      if (checkDuplicates?.phoneExists) {
-        toast.error("This phone number is already registered.");
-        return;
-      }
+    if (checkDuplicates?.emailExists || checkDuplicates?.phoneExists) {
+      return;
+    }
 
+    setIsSubmitting(true);
+
+    try {
       if (!hospitalId) {
         toast.error("Hospital ID not found for the current user.");
         return;
@@ -132,13 +150,9 @@ export default function RegisterPatientForm() {
         hospitalId: hospitalId,
       });
 
-      // Set success message
       setSuccessMessage("Patient has been registered successfully");
-
-      // Scroll to top to ensure the message is visible
       window.scrollTo(0, 0);
 
-      // Reset form and clear success message after 5 seconds
       setTimeout(() => {
         form.reset();
         setSuccessMessage(null);
@@ -146,6 +160,8 @@ export default function RegisterPatientForm() {
     } catch (error) {
       toast.error("Failed to register patient. Please try again.");
       console.error("Error registering patient:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -716,9 +732,10 @@ export default function RegisterPatientForm() {
             <Button
               type="submit"
               className="w-full bg-blue-500 text-white hover:bg-blue-600"
+              disabled={isSubmitting}
             >
               <Save className="mr-2 h-4 w-4" />
-              Save
+              {isSubmitting ? "Saving..." : "Save"}
             </Button>
           </form>
         </Form>

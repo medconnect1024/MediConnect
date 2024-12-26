@@ -378,28 +378,21 @@ export const getPatientPhone = query({
   },
 });
 export const checkDuplicates = query({
-  args: {
-    email: v.string(),
-    phoneNumber: v.string(),
-  },
+  args: { email: v.string(), phoneNumber: v.string() },
   handler: async (ctx, args) => {
-    const { email, phoneNumber } = args;
-
-    // Check for duplicate email
-    const emailExists = await ctx.db
+    const emailMatches = await ctx.db
       .query("patients")
-      .filter((q) => q.eq(q.field("email"), email))
-      .unique();
+      .filter((q) => q.eq(q.field("email"), args.email))
+      .collect();
 
-    // Check for duplicate phone number
-    const phoneExists = await ctx.db
+    const phoneMatches = await ctx.db
       .query("patients")
-      .filter((q) => q.eq(q.field("phoneNumber"), phoneNumber))
-      .unique();
+      .filter((q) => q.eq(q.field("phoneNumber"), args.phoneNumber))
+      .collect();
 
     return {
-      emailExists: !!emailExists,
-      phoneExists: !!phoneExists,
+      emailExists: emailMatches.length > 0,
+      phoneExists: phoneMatches.length > 0,
     };
   },
 });
