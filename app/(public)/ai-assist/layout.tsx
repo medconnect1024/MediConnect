@@ -1,21 +1,12 @@
+import Header from "@/components/Header";
 import type { Metadata } from "next";
-import localFont from "next/font/local";
-import "./globals.css";
-import ConvexClientProvider from "@/app/ConvexClientProvider";
-import { Toaster } from "@/components/ui/toaster";
+import { Merriweather } from "next/font/google";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
+const merriweather = Merriweather({
+  subsets: ["latin"],
+  weight: ["300", "400"],
 });
 
-//TODO: write content
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.mymedirecords.com"), // Replace with your deployed URL
   title: {
@@ -46,17 +37,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ConvexClientProvider>{children}</ConvexClientProvider>
-        <Toaster />
-      </body>
-    </html>
+    <>
+      <Header />
+      <main className={`${merriweather.className} min-h-[calc(100dvh-4.5rem)]`}>
+        {children}
+      </main>
+    </>
   );
 }

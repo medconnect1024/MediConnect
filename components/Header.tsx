@@ -44,8 +44,8 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white dark:bg-blue-500 shadow-md sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+    <header className="bg-white dark:bg-blue-500 shadow-md sticky top-0 z-50 w-full px-5">
+      <div className="container w-full mx-auto px-4 py-3 flex justify-between items-center">
         {/* Logo */}
         <div className="flex items-center">
           <Logo />
