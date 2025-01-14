@@ -47,7 +47,14 @@ export const createUser = internalMutation({
 
 export const updateUserRole = mutation({
   args: {
-    role: v.optional(v.union(v.literal("Doctor"), v.literal("Patient"),v.literal("Desk"), v.literal("Admin"))),
+    role: v.optional(
+      v.union(
+        v.literal("Doctor"),
+        v.literal("Patient"),
+        v.literal("Desk"),
+        v.literal("Admin")
+      )
+    ),
   },
   async handler(ctx, { role }) {
     const identity = await ctx.auth.getUserIdentity();
@@ -78,7 +85,8 @@ export const updateDisplayName = mutation({
 
     const userRecord = await userQuery(ctx, identity.subject);
 
-    if (!userRecord) throw new ConvexError("No User found to update display name");
+    if (!userRecord)
+      throw new ConvexError("No User found to update display name");
     console.log({ firstName, lastName });
     await ctx.db.patch(userRecord?._id, { firstName, lastName });
   },
@@ -111,14 +119,14 @@ export const checkUserEmail = query({
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", email))
       .unique();
-      
+
     // Return true if a user is found, otherwise false
     return userRecord;
   },
 });
 export const getDoctors = query(async (ctx) => {
-  return await ctx.db.query('users').collect()
-})
+  return await ctx.db.query("users").collect();
+});
 
 export const getDoctorsByHospitalId = query({
   args: { hospitalId: v.optional(v.string()) },
@@ -127,7 +135,7 @@ export const getDoctorsByHospitalId = query({
 
     return await ctx.db
       .query("users")
-      .filter((q) => 
+      .filter((q) =>
         q.and(
           q.eq(q.field("hospitalId"), args.hospitalId),
           q.eq(q.field("role"), "Doctor")
@@ -136,10 +144,6 @@ export const getDoctorsByHospitalId = query({
       .collect();
   },
 });
-
-
-
-
 
 export const getUserDetails = query({
   args: { userId: v.string() },
@@ -174,11 +178,9 @@ export const getUserDetails = query({
       zipCode: user.zipCode ?? undefined,
       website: user.website ?? undefined,
       signatureStorageId: user.signatureStorageId ?? undefined,
-
     };
   },
 });
-
 
 // export const getCurrentUsers = query({
 //   handler: async (ctx) => {
@@ -207,7 +209,9 @@ export const updateUser = mutation({
     specialization: v.optional(v.string()),
     licenseNumber: v.optional(v.string()),
     yearsOfPractice: v.optional(v.number()),
-    practiceType: v.optional(v.union(v.literal("Private"), v.literal("Hospital"), v.literal("Clinic"))),
+    practiceType: v.optional(
+      v.union(v.literal("Private"), v.literal("Hospital"), v.literal("Clinic"))
+    ),
     bio: v.optional(v.string()),
     clinicName: v.optional(v.string()),
     logo: v.optional(v.string()),
@@ -254,8 +258,6 @@ export const updateUser = mutation({
   },
 });
 
-
-
 export const getAllDoctors = query({
   handler: async (ctx) => {
     const doctors = await ctx.db
@@ -263,7 +265,7 @@ export const getAllDoctors = query({
       .filter((q) => q.eq(q.field("role"), "Doctor"))
       .collect();
 
-    return doctors.map(doctor => ({
+    return doctors.map((doctor) => ({
       userId: doctor.userId,
       email: doctor.email,
       firstName: doctor.firstName ?? undefined,

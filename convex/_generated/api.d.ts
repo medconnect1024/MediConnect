@@ -32,6 +32,7 @@ import type * as messages from "../messages.js";
 import type * as patients from "../patients.js";
 import type * as patientsearch from "../patientsearch.js";
 import type * as prescriptions from "../prescriptions.js";
+import type * as quickmedi from "../quickmedi.js";
 import type * as scheduledCalls from "../scheduledCalls.js";
 import type * as service_openai from "../service/openai.js";
 import type * as slots from "../slots.js";
@@ -70,6 +71,7 @@ declare const fullApi: ApiFromModules<{
   patients: typeof patients;
   patientsearch: typeof patientsearch;
   prescriptions: typeof prescriptions;
+  quickmedi: typeof quickmedi;
   scheduledCalls: typeof scheduledCalls;
   "service/openai": typeof service_openai;
   slots: typeof slots;
