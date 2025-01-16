@@ -177,10 +177,18 @@ export const getUserDetails = query({
       state: user.state ?? undefined,
       zipCode: user.zipCode ?? undefined,
       website: user.website ?? undefined,
+      hospitalId: user.hospitalId ?? undefined,
+      stateRegistrationNumber: user.stateRegistrationNumber ?? undefined,
+      nmcRegistrationId: user.nmcRegistrationId ?? undefined,
+      licenseExpiryDate: user.licenseExpiryDate ?? undefined,
+      certificateStorageId: user.certificateStorageId ?? undefined,
       signatureStorageId: user.signatureStorageId ?? undefined,
+      education: user.education ?? undefined,
+      awards: user.awards ?? undefined,
     };
   },
 });
+
 
 // export const getCurrentUsers = query({
 //   handler: async (ctx) => {

@@ -290,7 +290,7 @@ export function DoctorProfile({ userId }: DoctorProfileProps) {
               transition={{ duration: 0.5 }}
             >
               <Image
-                src={profileImageUrl}
+                src={profileImageUrl || "/placeholder.svg"}
                 alt={`Dr. ${doctor.firstName} ${doctor.lastName}`}
                 width={300}
                 height={300}
@@ -466,32 +466,38 @@ export function DoctorProfile({ userId }: DoctorProfileProps) {
             <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
-                  Education & Training
+                  Education
                 </h2>
-                <ul className="space-y-4">
-                  {educationAndTraining.map((item, index) => (
-                    <motion.li
-                      key={index}
-                      className="flex items-start gap-3"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                    >
-                      <Book className="h-5 w-5 text-blue-500 mt-1 flex-shrink-0" />
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {item.degree}
-                        </p>
-                        <p className="text-gray-600 dark:text-gray-400">
-                          {item.institution}
-                        </p>
-                        <p className="text-gray-500 dark:text-gray-500">
-                          {item.year}
-                        </p>
-                      </div>
-                    </motion.li>
-                  ))}
-                </ul>
+                {doctor.education && doctor.education.length > 0 ? (
+                  <ul className="space-y-4">
+                    {doctor.education.map((item, index) => (
+                      <motion.li
+                        key={index}
+                        className="flex items-start gap-3"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                      >
+                        <Book className="h-5 w-5 text-blue-500 mt-1 flex-shrink-0" />
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {item.degree}
+                          </p>
+                          <p className="text-gray-600 dark:text-gray-400">
+                            {item.institution}
+                          </p>
+                          <p className="text-gray-500 dark:text-gray-500">
+                            {item.fromYear} - {item.toYear}
+                          </p>
+                        </div>
+                      </motion.li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-600 dark:text-gray-400">
+                    No education details available.
+                  </p>
+                )}
               </CardContent>
             </Card>
 
@@ -500,30 +506,36 @@ export function DoctorProfile({ userId }: DoctorProfileProps) {
                 <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
                   Awards & Honors
                 </h2>
-                <ul className="space-y-4">
-                  {awardsAndHonors.map((award, index) => (
-                    <motion.li
-                      key={index}
-                      className="flex items-start gap-3"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                    >
-                      <Award className="h-5 w-5 text-blue-500 mt-1 flex-shrink-0" />
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {award.title}
-                        </p>
-                        <p className="text-gray-600 dark:text-gray-400">
-                          {award.year}
-                        </p>
-                        <p className="text-gray-500 dark:text-gray-500">
-                          {award.organization}
-                        </p>
-                      </div>
-                    </motion.li>
-                  ))}
-                </ul>
+                {doctor.awards && doctor.awards.length > 0 ? (
+                  <ul className="space-y-4">
+                    {doctor.awards.map((award, index) => (
+                      <motion.li
+                        key={index}
+                        className="flex items-start gap-3"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                      >
+                        <Award className="h-5 w-5 text-blue-500 mt-1 flex-shrink-0" />
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {award.awardName}
+                          </p>
+                          <p className="text-gray-600 dark:text-gray-400">
+                            {award.year}
+                          </p>
+                          <p className="text-gray-500 dark:text-gray-500">
+                            {award.org}
+                          </p>
+                        </div>
+                      </motion.li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-600 dark:text-gray-400">
+                    No awards or honors available.
+                  </p>
+                )}
               </CardContent>
             </Card>
 
@@ -603,62 +615,6 @@ export function DoctorProfile({ userId }: DoctorProfileProps) {
   );
 }
 
-const educationAndTraining = [
-  {
-    degree: "Fellowship in Reproductive Endocrinology and Infertility",
-    institution: "Johns Hopkins University School of Medicine",
-    year: "2018 - 2021",
-  },
-  {
-    degree: "Residency in Obstetrics and Gynecology",
-    institution: "University of Maryland School of Medicine",
-    year: "2014 - 2018",
-  },
-  {
-    degree: "Doctor of Medicine (MD)",
-    institution: "University of Missouri-Kansas City School of Medicine",
-    year: "2008 - 2014",
-  },
-];
-
-const awardsAndHonors = [
-  {
-    title: "Rising Star in Reproductive Medicine",
-    year: "2023",
-    organization: "American Society for Reproductive Medicine",
-  },
-  {
-    title: "Excellence in Research Award",
-    year: "2022",
-    organization: "Johns Hopkins University School of Medicine",
-  },
-  {
-    title: "Best Clinical Paper Award",
-    year: "2021",
-    organization: "Society for Reproductive Endocrinology and Infertility",
-  },
-];
-
-const recentPublications = [
-  {
-    title:
-      "CRISPR-Cas9 Applications in Reproductive Endocrinology: A Comprehensive Review",
-    authors: "Cayton Vaught K.C., Smith J.R., Johnson A.M.",
-    journal: "Journal of Reproductive Medicine, 2023",
-  },
-  {
-    title:
-      "Fertility Preservation Outcomes in Women with Sickle Cell Disease: A Multi-Center Study",
-    authors: "Cayton Vaught K.C., Brown L.T., Davis R.E., et al.",
-    journal: "Fertility and Sterility, 2022",
-  },
-  {
-    title: "Genetic Markers for Predicting Ovarian Response in IVF Patients",
-    authors: "Johnson A.M., Cayton Vaught K.C., Williams P.L.",
-    journal: "Human Reproduction, 2021",
-  },
-];
-
 const upcomingEvents = [
   {
     title: "Webinar: Understanding PCOS and Fertility",
@@ -694,5 +650,25 @@ const patientTestimonials = [
     rating: 5,
     comment:
       "Dr. Cayton Vaught's knowledge of the latest fertility treatments gave us hope when we thought we had run out of options. We're forever grateful.",
+  },
+];
+
+const recentPublications = [
+  {
+    title:
+      "CRISPR-Cas9 Applications in Reproductive Endocrinology: A Comprehensive Review",
+    authors: "Cayton Vaught K.C., Smith J.R., Johnson A.M.",
+    journal: "Journal of Reproductive Medicine, 2023",
+  },
+  {
+    title:
+      "Fertility Preservation Outcomes in Women with Sickle Cell Disease: A Multi-Center Study",
+    authors: "Cayton Vaught K.C., Brown L.T., Davis R.E., et al.",
+    journal: "Fertility and Sterility, 2022",
+  },
+  {
+    title: "Genetic Markers for Predicting Ovarian Response in IVF Patients",
+    authors: "Johnson A.M., Cayton Vaught K.C., Williams P.L.",
+    journal: "Human Reproduction, 2021",
   },
 ];

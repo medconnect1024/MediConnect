@@ -459,7 +459,7 @@ export default function EnhancedDoctorDashboard() {
             </Card>
           </div>
 
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle className="text-lg sm:text-xl text-gray-800">
                 Follow-up Call Status
@@ -558,7 +558,7 @@ export default function EnhancedDoctorDashboard() {
                 ))}
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
       </div>
     </div>
