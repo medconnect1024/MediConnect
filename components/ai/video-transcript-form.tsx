@@ -14,6 +14,8 @@ export default function VideoTranscriptForm() {
   const [transcript, setTranscript] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [userId, setUserId] = useState("");
+  const [question, setQuestion] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [savedEmbedding, setSavedEmbedding] = useState<SearchVideos>([]);
@@ -50,7 +52,9 @@ export default function VideoTranscriptForm() {
     embeddings: number[],
     input: string,
     video_url: string,
-    video_thumbnail: string
+    video_thumbnail: string,
+    userId: string,
+    question: string
   ) => {
     try {
       const { data, error } = await supabase
@@ -61,6 +65,8 @@ export default function VideoTranscriptForm() {
             content: input,
             video_url,
             video_thumbnail,
+            user_id: userId,
+            question,
           },
         ])
         .select()
@@ -114,7 +120,14 @@ export default function VideoTranscriptForm() {
 
       // TODO: Save data to Supabase
       // await saveToSupabase({ transcript, videoUrl, thumbnailUrl, embeddings })
-      await saveEmbeddings(embeddings, transcript, videoUrl, thumbnailUrl);
+      await saveEmbeddings(
+        embeddings,
+        transcript,
+        videoUrl,
+        thumbnailUrl,
+        userId,
+        question
+      );
 
       // For demonstration purposes, we'll just log the data
       console.log("Form submitted:", { transcript, videoUrl, thumbnailUrl });
@@ -123,6 +136,8 @@ export default function VideoTranscriptForm() {
       setTranscript("");
       setVideoUrl("");
       setThumbnailUrl("");
+      setQuestion("");
+      setUserId("");
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -167,6 +182,28 @@ export default function VideoTranscriptForm() {
                 placeholder="https://img.youtube.com/vi/{videoId}/hqdefault.jpg"
                 value={thumbnailUrl}
                 onChange={(e) => setThumbnailUrl(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="thumbnailUrl">UserId</Label>
+              <Input
+                id="userId"
+                type="text"
+                placeholder="take userId from convex users table"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="thumbnailUrl">Question</Label>
+              <Input
+                id="question"
+                type="text"
+                placeholder="What is this video about?"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
                 required
               />
             </div>

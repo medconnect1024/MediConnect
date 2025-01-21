@@ -23,14 +23,34 @@ export const getDoctorDetails = query({
           userId: user.userId,
           firstName: user.firstName,
           lastName: user.lastName,
-          url: user.signatureStorageId
-            ? await ctx.storage.getUrl(
-                user.signatureStorageId as Id<"_storage">
-              )
+          url: user.profileImageUrl
+            ? await ctx.storage.getUrl(user.profileImageUrl as Id<"_storage">)
             : undefined,
+          specialization: user.specialization ?? "General Physician",
         }))
     );
 
     return usersWithUrl;
+  },
+});
+
+export const getAllDoctors = query({
+  handler: async (ctx) => {
+    const doctors = await ctx.db
+      .query("users")
+      .withIndex("by_role", (q) => q.eq("role", "Doctor"))
+      .collect();
+    const doctorsWithImageUrl = await Promise.all(
+      doctors.map(async (doctor) => {
+        return {
+          ...doctor,
+          imageUrl: doctor.profileImageUrl
+            ? await ctx.storage.getUrl(doctor.profileImageUrl as Id<"_storage">)
+            : undefined,
+        };
+      })
+    );
+
+    return doctorsWithImageUrl;
   },
 });

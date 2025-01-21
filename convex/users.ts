@@ -189,7 +189,6 @@ export const getUserDetails = query({
   },
 });
 
-
 // export const getCurrentUsers = query({
 //   handler: async (ctx) => {
 //     const identity = await ctx.auth.getUserIdentity();
@@ -270,7 +269,7 @@ export const getAllDoctors = query({
   handler: async (ctx) => {
     const doctors = await ctx.db
       .query("users")
-      .filter((q) => q.eq(q.field("role"), "Doctor"))
+      .withIndex("by_role", (q) => q.eq("role", "Doctor"))
       .collect();
 
     return doctors.map((doctor) => ({

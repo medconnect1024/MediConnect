@@ -87,7 +87,8 @@ export default defineSchema({
   })
     .index("by_clerk_id", ["userId"])
     .index("by_email", ["email"])
-    .index("by_hospital", ["hospitalId"]),
+    .index("by_hospital", ["hospitalId"])
+    .index("by_role", ["role"]),
 
   patients: defineTable({
     patientId: v.number(),
