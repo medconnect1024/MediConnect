@@ -331,4 +331,39 @@ export default defineSchema({
     rating: v.optional(v.number()),
     canisterLevel: v.optional(v.number()),
   }),
+  medicalCamp: defineTable({
+    title: v.string(),
+    category: v.string(),
+    bannerImageUrl: v.string(),
+    shortDescription: v.string(),
+    startDateTime: v.number(),
+    endDateTime: v.number(),
+    address: v.string(),
+    city: v.string(),
+    state: v.string(),
+    pincode: v.string(),
+    latitude: v.number(),
+    longitude: v.number(),
+    doctors: v.array(v.string()),
+    services: v.string(),
+    organizerName: v.string(),
+    organizerContact: v.string(),
+    organizerEmail: v.string(),
+    registration: v.object({
+      isRequired: v.boolean(),
+      deadline: v.optional(v.string()),
+      link: v.optional(v.string()),
+      phone: v.optional(v.string()),
+    }),
+    additionalInfo: v.optional(
+      v.object({
+        requirements: v.optional(v.array(v.string())),
+        facilities: v.optional(v.array(v.string())),
+        specialInstructions: v.optional(v.string()),
+      })
+    ),
+  })
+    .index("by_city", ["city"])
+    .index("by_city_start_end", ["city", "endDateTime"])
+    .index("by_start_end", ["endDateTime"]),
 });
