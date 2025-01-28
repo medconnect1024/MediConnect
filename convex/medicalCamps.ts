@@ -90,8 +90,9 @@ export const getAllMedicalCamps = query({
 
 export const getCitySuggestions = query({
   async handler(ctx) {
-    const cities = await ctx.db.query("medicalCamp").take(100);
+    const cities = await ctx.db.query("medicalCamp").take(100)
 
-    return [...new Set(cities.map((c) => c.city).sort())];
+    const uniqueCities = Array.from(new Set(cities.map((c) => c.city)))
+    return uniqueCities.sort()
   },
-});
+})
