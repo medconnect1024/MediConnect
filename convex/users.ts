@@ -185,6 +185,10 @@ export const getUserDetails = query({
       signatureStorageId: user.signatureStorageId ?? undefined,
       education: user.education ?? undefined,
       awards: user.awards ?? undefined,
+      event: user.upcomingEvents ?? undefined,
+      pub:user.recentPublications ?? undefined,
+      testimonial:user.patientTestimonials ?? undefined,
+
     };
   },
 });

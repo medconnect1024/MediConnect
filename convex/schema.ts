@@ -84,6 +84,34 @@ export default defineSchema({
         })
       )
     ),
+    upcomingEvents: v.optional(
+      v.array(
+        v.object({
+          title: v.string(),
+          date: v.string(),
+          time: v.string(),
+          description: v.string(),
+        }),
+      ),
+    ),
+    patientTestimonials: v.optional(
+      v.array(
+        v.object({
+          name: v.string(),
+          rating: v.number(),
+          comment: v.string(),
+        }),
+      ),
+    ),
+    recentPublications: v.optional(
+      v.array(
+        v.object({
+          title: v.string(),
+          authors: v.string(),
+          journal: v.string(),
+        }),
+      ),
+    ),
   })
     .index("by_clerk_id", ["userId"])
     .index("by_email", ["email"])

@@ -115,6 +115,10 @@ export function DoctorProfile({ userId }: DoctorProfileProps) {
   );
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  // New state variables for fetched data
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [patientTestimonials, setPatientTestimonials] = useState([]);
+  const [recentPublications, setRecentPublications] = useState([]);
 
   useEffect(() => {
     const fetchProfileImage = async () => {
@@ -140,6 +144,34 @@ export function DoctorProfile({ userId }: DoctorProfileProps) {
       document.documentElement.classList.remove("dark");
     }
   }, [darkMode]);
+
+  useEffect(() => {
+    const fetchAdditionalData = async () => {
+      try {
+        const eventsResponse = await fetch(`/api/events?userId=${userId}`);
+        const eventsData = await eventsResponse.json();
+        setUpcomingEvents(eventsData);
+
+        const testimonialsResponse = await fetch(
+          `/api/testimonials?userId=${userId}`
+        );
+        const testimonialsData = await testimonialsResponse.json();
+        setPatientTestimonials(testimonialsData);
+
+        const publicationsResponse = await fetch(
+          `/api/publications?userId=${userId}`
+        );
+        const publicationsData = await publicationsResponse.json();
+        setRecentPublications(publicationsData);
+      } catch (error) {
+        console.error("Error fetching additional data:", error);
+      }
+    };
+
+    if (doctor) {
+      fetchAdditionalData();
+    }
+  }, [doctor, userId]);
 
   if (!doctor) {
     return (
@@ -433,30 +465,38 @@ export function DoctorProfile({ userId }: DoctorProfileProps) {
                   Patient Testimonials
                 </h2>
                 <div className="space-y-6">
-                  {patientTestimonials.map((testimonial, index) => (
-                    <motion.div
-                      key={index}
-                      className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-300"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                    >
-                      <div className="flex items-center mb-4">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-5 w-5 ${i < testimonial.rating ? "text-yellow-400" : "text-gray-300"}`}
-                          />
-                        ))}
-                      </div>
-                      <p className="italic mb-4 text-gray-700 dark:text-gray-300">
-                        "{testimonial.comment}"
-                      </p>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm font-semibold">
-                        - {testimonial.name}
-                      </p>
-                    </motion.div>
-                  ))}
+                  {doctor.testimonial && doctor.testimonial.length > 0 ? (
+                    <ul className="space-y-4">
+                      {doctor.testimonial.map((testimonials, index) => (
+                        <motion.div
+                          key={index}
+                          className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow duration-300"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5, delay: index * 0.1 }}
+                        >
+                          <div className="flex items-center mb-4">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`h-5 w-5 ${i < testimonials.rating ? "text-yellow-400" : "text-gray-300"}`}
+                              />
+                            ))}
+                          </div>
+                          <p className="italic mb-4 text-gray-700 dark:text-gray-300">
+                            "{testimonials.comment}"
+                          </p>
+                          <p className="text-gray-600 dark:text-gray-400 text-sm font-semibold">
+                            - {testimonials.name}
+                          </p>
+                        </motion.div>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-gray-600 dark:text-gray-400">
+                      No education details available.
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -544,33 +584,40 @@ export function DoctorProfile({ userId }: DoctorProfileProps) {
                 <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
                   Upcoming Events
                 </h2>
-                <ul className="space-y-4">
-                  {upcomingEvents.map((event, index) => (
-                    <motion.li
-                      key={index}
-                      className="flex items-start gap-3"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                    >
-                      <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg">
-                        <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {event.title}
-                        </p>
-                        <p className="text-gray-600 dark:text-gray-400 text-sm flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          {event.date} | {event.time}
-                        </p>
-                        <p className="text-gray-500 dark:text-gray-500 text-sm mt-1">
-                          {event.description}
-                        </p>
-                      </div>
-                    </motion.li>
-                  ))}
-                </ul>
+
+                {doctor.event && doctor.event.length > 0 ? (
+                  <ul className="space-y-4">
+                    {doctor.event.map((events, index) => (
+                      <motion.li
+                        key={index}
+                        className="flex items-start gap-3"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                      >
+                        <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg">
+                          <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {events.title}
+                          </p>
+                          <p className="text-gray-600 dark:text-gray-400 text-sm flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            {events.date} | {events.time}
+                          </p>
+                          <p className="text-gray-500 dark:text-gray-500 text-sm mt-1">
+                            {events.description}
+                          </p>
+                        </div>
+                      </motion.li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-600 dark:text-gray-400">
+                    No awards or honors available.
+                  </p>
+                )}
               </CardContent>
             </Card>
 
@@ -579,33 +626,39 @@ export function DoctorProfile({ userId }: DoctorProfileProps) {
                 <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
                   Recent Publications
                 </h2>
-                <ul className="space-y-4">
-                  {recentPublications.map((pub, index) => (
-                    <motion.li
-                      key={index}
-                      className="border-b border-gray-200 dark:border-gray-700 last:border-b-0 pb-4 last:pb-0"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                    >
-                      <h3 className="font-medium text-lg mb-1 text-gray-900 dark:text-white">
-                        {pub.title}
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm">
-                        {pub.authors}
-                      </p>
-                      <p className="text-gray-500 dark:text-gray-500 text-sm">
-                        {pub.journal}
-                      </p>
-                      <Button
-                        variant="link"
-                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 p-0 h-auto mt-2"
+                {doctor.pub && doctor.pub.length > 0 ? (
+                  <ul className="space-y-4">
+                    {doctor.pub.map((publi, index) => (
+                      <motion.li
+                        key={index}
+                        className="border-b border-gray-200 dark:border-gray-700 last:border-b-0 pb-4 last:pb-0"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
                       >
-                        Read More <ChevronRight className="h-4 w-4 ml-1" />
-                      </Button>
-                    </motion.li>
-                  ))}
-                </ul>
+                        <h3 className="font-medium text-lg mb-1 text-gray-900 dark:text-white">
+                          {publi.title}
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm">
+                          {publi.authors}
+                        </p>
+                        <p className="text-gray-500 dark:text-gray-500 text-sm">
+                          {publi.journal}
+                        </p>
+                        <Button
+                          variant="link"
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 p-0 h-auto mt-2"
+                        >
+                          Read More <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                      </motion.li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-gray-600 dark:text-gray-400">
+                    No awards or honors available.
+                  </p>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -614,61 +667,3 @@ export function DoctorProfile({ userId }: DoctorProfileProps) {
     </div>
   );
 }
-
-const upcomingEvents = [
-  {
-    title: "Webinar: Understanding PCOS and Fertility",
-    date: "July 15, 2024",
-    time: "2:00 PM - 3:30 PM EST",
-    description:
-      "Join Dr. Cayton Vaught for an informative session on the latest advancements in PCOS management and its impact on fertility.",
-  },
-  {
-    title: "Q&A Session: Fertility Preservation Options",
-    date: "August 5, 2024",
-    time: "6:00 PM - 7:00 PM EST",
-    description:
-      "An open discussion on various fertility preservation methods, ideal for patients considering their future family planning options.",
-  },
-];
-
-const patientTestimonials = [
-  {
-    name: "Sarah M.",
-    rating: 5,
-    comment:
-      "Dr. Cayton Vaught's expertise and compassionate care made our fertility journey so much easier. We're now proud parents of twins!",
-  },
-  {
-    name: "Michael L.",
-    rating: 5,
-    comment:
-      "The personalized treatment plan Dr. Cayton Vaught developed for my wife's PCOS has dramatically improved her quality of life.",
-  },
-  {
-    name: "Emily R.",
-    rating: 5,
-    comment:
-      "Dr. Cayton Vaught's knowledge of the latest fertility treatments gave us hope when we thought we had run out of options. We're forever grateful.",
-  },
-];
-
-const recentPublications = [
-  {
-    title:
-      "CRISPR-Cas9 Applications in Reproductive Endocrinology: A Comprehensive Review",
-    authors: "Cayton Vaught K.C., Smith J.R., Johnson A.M.",
-    journal: "Journal of Reproductive Medicine, 2023",
-  },
-  {
-    title:
-      "Fertility Preservation Outcomes in Women with Sickle Cell Disease: A Multi-Center Study",
-    authors: "Cayton Vaught K.C., Brown L.T., Davis R.E., et al.",
-    journal: "Fertility and Sterility, 2022",
-  },
-  {
-    title: "Genetic Markers for Predicting Ovarian Response in IVF Patients",
-    authors: "Johnson A.M., Cayton Vaught K.C., Williams P.L.",
-    journal: "Human Reproduction, 2021",
-  },
-];
