@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import type React from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { Id } from "@/convex/_generated/dataModel";
+import type { Id } from "@/convex/_generated/dataModel";
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import Hls from "hls.js";
+import { Trash2 } from "lucide-react";
 
 const CLOUDFLARE_ACCOUNT_ID = "6a67adb13c88fbe6f0617915edb45120";
 const CLOUDFLARE_API_TOKEN = "2Miq3pRFI1VEu3IkwLX4RGYqbDO7FPlJ4FHNluX4";
@@ -53,6 +55,7 @@ export default function VideoUploadPage() {
 
   const videos = useQuery(api.videos.list, { userId }) || [];
   const addVideo = useMutation(api.videos.add);
+  const deleteVideo = useMutation(api.videos.remove);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -111,6 +114,14 @@ export default function VideoUploadPage() {
       console.error("Upload failed:", error);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDelete = async (videoId: Id<"videos">) => {
+    try {
+      await deleteVideo({ id: videoId });
+    } catch (error) {
+      console.error("Delete failed:", error);
     }
   };
 
@@ -226,10 +237,18 @@ export default function VideoUploadPage() {
                     <h3 className="text-lg font-semibold text-gray-900 truncate mb-1">
                       {video.metadata.name}
                     </h3>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 mb-2">
                       Uploaded on{" "}
                       {new Date(video.createdAt).toLocaleDateString()}
                     </p>
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => handleDelete(video._id)}
+                        className="text-red-500 hover:text-red-600"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
