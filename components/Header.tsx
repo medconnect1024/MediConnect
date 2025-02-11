@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import {
@@ -18,6 +17,7 @@ import { api } from "@/convex/_generated/api";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const router = useRouter();
   const { user } = useUser();
   const loggedInEmail = user?.emailAddresses[0]?.emailAddress || "";
@@ -43,8 +43,34 @@ export default function Header() {
     }
   };
 
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        setIsScrolled(true);
+      } else if (currentScrollY <= 50) {
+        setIsScrolled(false);
+      }
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
   return (
-    <header className="bg-white dark:bg-blue-500 shadow-md sticky top-0 z-50 w-full px-5">
+    <header
+      className={`transition-all duration-300 ${
+        isScrolled
+          ? "fixed top-0 bg-white shadow-md dark:bg-blue-500"
+          : "absolute top-0 bg-transparent"
+      } z-50 w-full px-5`}
+    >
       <div className="container w-full mx-auto px-4 py-3 flex justify-between items-center">
         {/* Logo */}
         <div className="flex items-center">
@@ -55,19 +81,19 @@ export default function Header() {
         <nav className="hidden md:flex items-center space-x-6">
           <a
             href="#features"
-            className="text-lg text-blue-500 dark:text-gray-300 hover:text-blue-500"
+            className={`text-lg ${isScrolled ? "text-blue-500 dark:text-gray-300" : "text-white"} hover:text-blue-300`}
           >
             Features
           </a>
           <a
             href="#benefits"
-            className="text-lg text-blue-500 dark:text-gray-300 hover:text-blue-500"
+            className={`text-lg ${isScrolled ? "text-blue-500 dark:text-gray-300" : "text-white"} hover:text-blue-300`}
           >
             Benefits
           </a>
           <a
             href="#testimonials"
-            className="text-lg text-blue-500 dark:text-gray-300 hover:text-blue-500"
+            className={`text-lg ${isScrolled ? "text-blue-500 dark:text-gray-300" : "text-white"} hover:text-blue-300`}
           >
             Testimonials
           </a>
@@ -78,13 +104,19 @@ export default function Header() {
             <SignInButton>
               <Button
                 variant="ghost"
-                className="text-base font-bold text-[#2178e9] hover:text-blue-500"
+                className={`text-base font-bold ${isScrolled ? "text-[#2178e9]" : "text-white"} hover:text-blue-300`}
               >
                 Log in
               </Button>
             </SignInButton>
             <SignInButton>
-              <Button className="bg-[#2178e9] text-white hover:bg-[#0067ee]">
+              <Button
+                className={`${
+                  isScrolled
+                    ? "bg-[#2178e9] text-white"
+                    : "bg-white text-[#2178e9]"
+                } hover:bg-[#0067ee] hover:text-white`}
+              >
                 Get Started
               </Button>
             </SignInButton>
@@ -108,7 +140,9 @@ export default function Header() {
             onClick={() => setMenuOpen(!menuOpen)}
             className="ml-auto"
           >
-            <Menu className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+            <Menu
+              className={`h-6 w-6 ${isScrolled ? "text-gray-700 dark:text-gray-300" : "text-white"}`}
+            />
           </Button>
         </div>
       </div>
