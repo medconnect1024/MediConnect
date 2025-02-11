@@ -91,8 +91,8 @@ export default defineSchema({
           date: v.string(),
           time: v.string(),
           description: v.string(),
-        }),
-      ),
+        })
+      )
     ),
     patientTestimonials: v.optional(
       v.array(
@@ -100,8 +100,8 @@ export default defineSchema({
           name: v.string(),
           rating: v.number(),
           comment: v.string(),
-        }),
-      ),
+        })
+      )
     ),
     recentPublications: v.optional(
       v.array(
@@ -109,8 +109,8 @@ export default defineSchema({
           title: v.string(),
           authors: v.string(),
           journal: v.string(),
-        }),
-      ),
+        })
+      )
     ),
   })
     .index("by_clerk_id", ["userId"])
@@ -394,4 +394,13 @@ export default defineSchema({
     .index("by_city", ["city"])
     .index("by_city_start_end", ["city", "endDateTime"])
     .index("by_start_end", ["endDateTime"]),
+  savedVideos: defineTable({
+    userId: v.string(),
+    videoId: v.number(),
+    videoThumbnail: v.string(),
+    videoUrl: v.string(),
+    doctorId: v.string(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_videoId", ["userId", "videoId"]),
 });
