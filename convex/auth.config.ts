@@ -2,7 +2,7 @@
 export default {
     providers: [
         {
-            domain: "https://tender-beetle-34.clerk.accounts.dev",
+            domain: process.env.CLERK_DOMAIN,
             applicationID: "convex",
         },
     ]
