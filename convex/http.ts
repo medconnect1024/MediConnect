@@ -130,7 +130,9 @@ async function validateQuickMediClerkRequest(
     "svix-timestamp": req.headers.get("svix-timestamp")!,
     "svix-signature": req.headers.get("svix-signature")!,
   };
-  const clerkWebhookSecret = ensureEnvironmentVariable("CLERK_WEBHOOK_SECRET");
+  const clerkWebhookSecret = ensureEnvironmentVariable(
+    "CLERK_QUICKMEDI_WEBHOOK_SECRET"
+  );
 
   const wh = new Webhook(clerkWebhookSecret);
   let evt: Event | null = null;
