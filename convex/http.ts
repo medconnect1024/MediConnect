@@ -134,12 +134,14 @@ async function validateQuickMediClerkRequest(
     "CLERK_QUICKMEDI_WEBHOOK_SECRET"
   );
 
+  console.log({ clerkWebhookSecret });
+
   const wh = new Webhook(clerkWebhookSecret);
   let evt: Event | null = null;
   try {
     evt = wh.verify(payloadString, svixHeaders) as Event;
-  } catch (_) {
-    console.log("error verifying");
+  } catch (e) {
+    console.log("error verifying", JSON.stringify(e));
     return;
   }
 
