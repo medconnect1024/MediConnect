@@ -68,33 +68,6 @@ export default function MedicalCampForm() {
         setSuccess(false);
         setError(null);
 
-        let form = {
-            "title": "Mental Health Awareness Seminar",
-            "city": "Chennai",
-            "state": "Tamil Nadu",
-            "pincode": "600001",
-            "category": "Health",
-            "shortDescription": "Interactive session on managing stress and anxiety.",
-            "address": "Anna University Auditorium",
-            "startDateTime": 1747753200000,
-            "endDateTime": 1747758600000,
-            "bannerImageUrl": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=500&auto=format&fit=crop&q=60",
-            "latitude": "13.08",
-            "longitude": "80.27",
-            "doctors": "Dr. Priya Narayanan",
-            "services": "Stress Management Workshop, Counseling, Q&A Session",
-            "organizerName": "Mindful Minds Foundation",
-            "organizerContact": "+91 9962 123 456",
-            "organizerEmail": "hello@mindfulminds.org",
-            "additionalFacilities": "Free mental health kits, 1-on-1 consultation slots, Guided meditation session",
-            "additionalRequirements": "",
-            "additionalSpecialInstructions": "Open to all age groups",
-            "registrationDeadline": "2025-05-20",
-            "registrationIsRequired": true,
-            "registrationLink": "https://mindfulminds.org/register",
-            "registrationPhone": "9812345678"
-        };
-
         try {
             // Prepare data for Convex mutation
             const campData = {
