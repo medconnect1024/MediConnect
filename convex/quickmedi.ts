@@ -1,7 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Doc, Id } from "./_generated/dataModel";
-import { paginationOptsValidator } from "convex/server";
 
 export const getVideoMetadata = query({
   args: {
@@ -152,5 +151,56 @@ export const getBookmarkVideos = query({
     );
     console.log({ doctorsWithUrl });
     return { videos, doctorsWithUrl };
+  },
+});
+
+export const getDoctorDetails = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const profileImageUrl = user.profileImageUrl
+      ? await ctx.storage.getUrl(user.profileImageUrl as Id<"_storage">)
+      : undefined;
+
+    return {
+      userId: user.userId,
+      email: user.email,
+      firstName: user.firstName ?? undefined,
+      lastName: user.lastName ?? undefined,
+      profileImageUrl: profileImageUrl ?? undefined,
+      role: user.role ?? undefined,
+      phone: user.phone ?? undefined,
+      specialization: user.specialization ?? undefined,
+      licenseNumber: user.licenseNumber ?? undefined,
+      yearsOfPractice: user.yearsOfPractice ?? undefined,
+      practiceType: user.practiceType ?? undefined,
+      bio: user.bio ?? undefined,
+      clinicName: user.clinicName ?? undefined,
+      logo: user.logo ?? undefined,
+      address: user.address ?? undefined,
+      city: user.city ?? undefined,
+      state: user.state ?? undefined,
+      zipCode: user.zipCode ?? undefined,
+      website: user.website ?? undefined,
+      hospitalId: user.hospitalId ?? undefined,
+      stateRegistrationNumber: user.stateRegistrationNumber ?? undefined,
+      nmcRegistrationId: user.nmcRegistrationId ?? undefined,
+      licenseExpiryDate: user.licenseExpiryDate ?? undefined,
+      certificateStorageId: user.certificateStorageId ?? undefined,
+      signatureStorageId: user.signatureStorageId ?? undefined,
+      education: user.education ?? undefined,
+      awards: user.awards ?? undefined,
+      event: user.upcomingEvents ?? undefined,
+      pub: user.recentPublications ?? undefined,
+      testimonial: user.patientTestimonials ?? undefined,
+    };
   },
 });
