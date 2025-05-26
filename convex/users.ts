@@ -148,6 +148,7 @@ export const getDoctorsByHospitalId = query({
 export const getUserDetails = query({
   args: { userId: v.string() },
   handler: async (ctx, args) => {
+    console.log("args", args);
     const user = await ctx.db
       .query("users")
       .filter((q) => q.eq(q.field("userId"), args.userId))
@@ -186,9 +187,8 @@ export const getUserDetails = query({
       education: user.education ?? undefined,
       awards: user.awards ?? undefined,
       event: user.upcomingEvents ?? undefined,
-      pub:user.recentPublications ?? undefined,
-      testimonial:user.patientTestimonials ?? undefined,
-
+      pub: user.recentPublications ?? undefined,
+      testimonial: user.patientTestimonials ?? undefined,
     };
   },
 });
