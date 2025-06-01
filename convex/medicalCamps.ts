@@ -165,12 +165,12 @@ Example: ["id1", "id2", "id3"]`;
 
       // Handle markdown code blocks if present
       if (responseContent.includes("```json")) {
-        const jsonMatch = responseContent.match(/```json\s*(.*?)\s*```/s);
+        const jsonMatch = responseContent.match(/```json\s*([\s\S]*?)\s*```/);
         if (jsonMatch) {
           responseContent = jsonMatch[1];
         }
       } else if (responseContent.includes("```")) {
-        const jsonMatch = responseContent.match(/```\s*(.*?)\s*```/s);
+        const jsonMatch = responseContent.match(/```\s*([\s\S]*?)\s*```/);
         if (jsonMatch) {
           responseContent = jsonMatch[1];
         }
