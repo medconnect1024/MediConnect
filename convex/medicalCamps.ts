@@ -1,7 +1,9 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, action, internalQuery } from "./_generated/server";
 import { Doc } from "./_generated/dataModel";
 import { paginationOptsValidator, PaginationResult } from "convex/server";
+import { OpenAI } from "openai";
+import { internal } from "./_generated/api";
 
 export const getAllMedicalCamps = query({
   args: {
@@ -55,38 +57,6 @@ export const getAllMedicalCamps = query({
     };
   },
 });
-
-// export const getAllMedicalCamps = query({
-//   args: {
-//     paginationOpts: paginationOptsValidator,
-//     city: v.string(),
-//     date: v.optional(v.number()),
-//   },
-//   async handler(ctx, { city, paginationOpts, date }) {
-//     let queryBuilder = ctx.db.query("medicalCamp");
-
-//     if (city && city !== "All") {
-//       queryBuilder = queryBuilder
-//         .withIndex("by_city_start_end", (q) => {
-//           let query = q.eq("city", city);
-//           if (date) {
-//             query = query.gte("endDateTime", date).lte("endDateTime", date);
-//           }
-//           return query;
-//         })
-//         .paginate(paginationOpts);
-//     }
-
-//     const camps = await queryBuilder.paginate(paginationOpts);
-
-//     return {
-//       ...camps,
-//       page: camps.page
-//         .filter((camp) => !date || camp.endDateTime >= date)
-//         .sort((a, b) => a.startDateTime - b.startDateTime),
-//     };
-//   },
-// });
 
 export const getCitySuggestions = query({
   async handler(ctx) {
@@ -144,5 +114,76 @@ export const getByIds = query({
   async handler(ctx, { ids }) {
     const camps = await Promise.all(ids.map((id) => ctx.db.get(id)));
     return camps.filter(Boolean);
+  },
+});
+
+// Internal query to fetch camps by IDs
+export const getCampsByIds = internalQuery({
+  args: { ids: v.array(v.id("medicalCamp")) },
+  async handler(ctx, { ids }) {
+    const camps = await Promise.all(ids.map((id) => ctx.db.get(id)));
+    return camps.filter(Boolean);
+  },
+});
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+export const getByIdsV2 = action({
+  args: { ids: v.array(v.id("medicalCamp")), query: v.string() },
+  handler: async (ctx, { ids, query }): Promise<Doc<"medicalCamp">[]> => {
+    // 1. Fetch camps from DB using internal query
+    const campsWithNull = await ctx.runQuery(
+      internal.medicalCamps.getCampsByIds,
+      { ids }
+    );
+    const camps = campsWithNull.filter(
+      (camp): camp is Doc<"medicalCamp"> => camp !== null
+    );
+
+    if (!query.trim() || camps.length === 0) return camps;
+
+    // 3. Send to OpenAI to filter camps
+
+    const prompt = `Given this user query: "${query}"
+
+And these medical camps:
+${JSON.stringify(camps, null, 2)}
+
+Return only the _id values of camps that match the user's query. Consider location, services, medical conditions, and other relevant factors. 
+
+IMPORTANT: Return ONLY a valid JSON array of _id strings, no markdown formatting, no explanations.
+
+Example: ["id1", "id2", "id3"]`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0,
+    });
+
+    try {
+      let responseContent = response.choices[0].message.content || "[]";
+
+      // Handle markdown code blocks if present
+      if (responseContent.includes("```json")) {
+        const jsonMatch = responseContent.match(/```json\s*(.*?)\s*```/s);
+        if (jsonMatch) {
+          responseContent = jsonMatch[1];
+        }
+      } else if (responseContent.includes("```")) {
+        const jsonMatch = responseContent.match(/```\s*(.*?)\s*```/s);
+        if (jsonMatch) {
+          responseContent = jsonMatch[1];
+        }
+      }
+
+      const matchingIds = JSON.parse(responseContent.trim()) as string[];
+
+      // 4. Return only matching camps
+      return camps.filter((camp) => matchingIds.includes(camp._id));
+    } catch (error) {
+      console.error("Error parsing OpenAI response:", error);
+      console.error("Raw response:", response.choices[0].message.content);
+      return camps; // Return all camps if parsing fails
+    }
   },
 });
