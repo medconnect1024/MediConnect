@@ -403,4 +403,64 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_userId_videoId", ["userId", "videoId"]),
+
+  // Products table for medical products
+  products: defineTable({
+    name: v.string(),
+    description: v.string(),
+    price: v.number(),
+    oldPrice: v.number(),
+    discount: v.number(),
+    image: v.string(),
+    category: v.string(),
+    inStock: v.boolean(),
+    stockCount: v.number(),
+    source: v.string(),
+    supplier: v.string(),
+    supplierLogo: v.string(),
+    minOrder: v.optional(v.string()),
+    rating: v.optional(v.number()),
+    reviewCount: v.optional(v.number()),
+    expiryDate: v.string(),
+    variations: v.optional(
+      v.object({
+        colors: v.array(v.string()),
+        sizes: v.array(v.string()),
+        features: v.array(v.string()),
+      })
+    ),
+    images: v.optional(v.array(v.string())),
+    keyAttributes: v.optional(
+      v.object({
+        condition: v.string(),
+        brand: v.string(),
+        model: v.string(),
+        warranty: v.string(),
+        certification: v.string(),
+        origin: v.string(),
+      })
+    ),
+    supplierInfo: v.optional(
+      v.object({
+        yearsInBusiness: v.string(),
+        location: v.string(),
+        responseTime: v.string(),
+        onTimeDelivery: v.string(),
+        totalOrders: v.number(),
+        reorderRate: v.string(),
+      })
+    ),
+    reviews: v.array(
+      v.object({
+        id: v.number(),
+        reviewerName: v.string(),
+        reviewerCountry: v.string(),
+        reviewerInitial: v.string(),
+        date: v.string(),
+        rating: v.number(),
+        text: v.string(),
+        productName: v.optional(v.string()),
+      })
+    ),
+  }),
 });

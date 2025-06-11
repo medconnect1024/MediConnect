@@ -148,9 +148,13 @@ export const getByIdsV2 = action({
 And these medical camps:
 ${JSON.stringify(camps, null, 2)}
 
-Return only the _id values of camps that match the user's query. Consider location, services, medical conditions, and other relevant factors. 
+IMPORTANT INSTRUCTIONS:
+1. If the user query mentions a specific city/location (like "bangalore", "mumbai", etc.), ONLY return camps from that exact city
+2. If no location is mentioned, then consider all camps based on services and medical conditions
+3. Be strict about location matching - "bangalore" should NOT match "tumkur" or other cities
+4. Return only camps that truly match the user's intent
 
-IMPORTANT: Return ONLY a valid JSON array of _id strings, no markdown formatting, no explanations.
+Return ONLY a valid JSON array of _id strings, no markdown formatting, no explanations.
 
 Example: ["id1", "id2", "id3"]`;
 

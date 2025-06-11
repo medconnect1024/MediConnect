@@ -1,6 +1,9 @@
 import { ConvexError, v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalQuery, action } from "./_generated/server";
 import { Doc, Id } from "./_generated/dataModel";
+import { paginationOptsValidator } from "convex/server";
+import { internal } from "./_generated/api";
+import { OpenAI } from "openai";
 
 export const getVideoMetadata = query({
   args: {
@@ -202,5 +205,160 @@ export const getDoctorDetails = query({
       pub: user.recentPublications ?? undefined,
       testimonial: user.patientTestimonials ?? undefined,
     };
+  },
+});
+
+export const addProduct = mutation({
+  args: {
+    name: v.string(),
+    description: v.string(),
+    price: v.number(),
+    oldPrice: v.number(),
+    discount: v.number(),
+    image: v.string(),
+    category: v.string(),
+    inStock: v.boolean(),
+    stockCount: v.number(),
+    source: v.string(),
+    supplier: v.string(),
+    supplierLogo: v.string(),
+    minOrder: v.optional(v.string()),
+    rating: v.optional(v.number()),
+    reviewCount: v.optional(v.number()),
+    expiryDate: v.string(),
+    variations: v.optional(
+      v.object({
+        colors: v.array(v.string()),
+        sizes: v.array(v.string()),
+        features: v.array(v.string()),
+      })
+    ),
+    images: v.optional(v.array(v.string())),
+    keyAttributes: v.optional(
+      v.object({
+        condition: v.string(),
+        brand: v.string(),
+        model: v.string(),
+        warranty: v.string(),
+        certification: v.string(),
+        origin: v.string(),
+      })
+    ),
+    supplierInfo: v.optional(
+      v.object({
+        yearsInBusiness: v.string(),
+        location: v.string(),
+        responseTime: v.string(),
+        onTimeDelivery: v.string(),
+        totalOrders: v.number(),
+        reorderRate: v.string(),
+      })
+    ),
+    reviews: v.array(
+      v.object({
+        id: v.number(),
+        reviewerName: v.string(),
+        reviewerCountry: v.string(),
+        reviewerInitial: v.string(),
+        date: v.string(),
+        rating: v.number(),
+        text: v.string(),
+        productName: v.optional(v.string()),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    // Auto-increment id by counting current products (for demo, not for prod)
+    const allProducts = await ctx.db.query("products").collect();
+
+    const productId = await ctx.db.insert("products", { ...args });
+    return productId;
+  },
+});
+
+export const getAllProducts = query({
+  args: {
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, { paginationOpts }) => {
+    return await ctx.db.query("products").paginate(paginationOpts);
+  },
+});
+
+// Internal query to fetch products by IDs
+export const getProductsByIds = internalQuery({
+  args: { ids: v.array(v.id("products")) },
+  async handler(ctx: any, { ids }: { ids: string[] }) {
+    const products = await Promise.all(ids.map((id: string) => ctx.db.get(id)));
+    return products.filter(Boolean);
+  },
+});
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+export const getProductsByIdsV2 = action({
+  args: { ids: v.array(v.id("products")), query: v.string() },
+  handler: async (
+    ctx: any,
+    { ids, query }: { ids: string[]; query: string }
+  ): Promise<Doc<"products">[]> => {
+    // 1. Fetch products from DB using internal query
+    const productsWithNull = await ctx.runQuery(
+      internal.quickmedi.getProductsByIds,
+      { ids }
+    );
+    const products = productsWithNull.filter(
+      (product: Doc<"products"> | null): product is Doc<"products"> =>
+        product !== null
+    );
+
+    if (!query.trim() || products.length === 0) return products;
+
+    // 3. Send to OpenAI to filter products
+    const prompt = `Given this user query: "${query}"
+
+And these products:
+${JSON.stringify(products, null, 2)}
+
+IMPORTANT INSTRUCTIONS:
+1. Return only products that truly match the user's intent (category, features, brand, etc.)
+2. Be strict about matching, do not return unrelated products
+3. Return ONLY a valid JSON array of _id strings, no markdown formatting, no explanations.
+
+Example: ["id1", "id2", "id3"]`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0,
+    });
+
+    try {
+      let responseContent = response.choices[0].message.content || "[]";
+
+      // Handle markdown code blocks if present
+      if (responseContent.includes("```json")) {
+        const jsonMatch = responseContent.match(/```json\s*([\s\S]*?)\s*```/);
+        if (jsonMatch) {
+          responseContent = jsonMatch[1];
+        }
+      } else if (responseContent.includes("```")) {
+        const jsonMatch = responseContent.match(/```\s*([\s\S]*?)\s*```/);
+        if (jsonMatch) {
+          responseContent = jsonMatch[1];
+        }
+      }
+
+      const matchingIds = JSON.parse(responseContent.trim()) as string[];
+
+      // 4. Return only matching products
+      return products.filter((product: Doc<"products">) =>
+        matchingIds.includes(product._id)
+      );
+    } catch (error) {
+      console.error("Error parsing OpenAI response:", error);
+      console.error("Raw response:", response.choices[0].message.content);
+      return products; // Return all products if parsing fails
+    }
   },
 });
